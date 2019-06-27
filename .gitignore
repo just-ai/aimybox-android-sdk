@@ -1,3 +1,15 @@
+# Idea
+.idea
+local.properties
+.DS_Store
+captures
+*.iml
+
+# Gradle files
+.gradle
+build/
+/*/build/
+
 # Compiled class file
 *.class
 
