@@ -1,4 +1,15 @@
 
+object Submodules {
+    val list = listOf(
+        "core",
+//    "google-cloud-speechkit",
+        "google-platform-speechkit",
+//    "houndify-speechkit",
+        "snowboy-speechkit",
+        "yandex-speechkit"
+    )
+}
+
 object Versions {
     object Sdk {
         const val min = 19
@@ -31,6 +42,8 @@ object Plugins {
     val kotlin = kotlin("gradle-plugin")
     val protobuf = "com.google.protobuf:protobuf-gradle-plugin" version Versions.protobuf
     val dexcount = "com.getkeepsafe.dexcount:dexcount-gradle-plugin" version Versions.dexCount
+    val bintray = "com.jfrog.bintray.gradle:gradle-bintray-plugin" version "1.8.4"
+    val buildInfo = "org.jfrog.buildinfo:build-info-extractor-gradle" version "4.7.5"
 }
 
 object Libraries {
