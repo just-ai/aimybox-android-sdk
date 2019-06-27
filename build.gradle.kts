@@ -1,4 +1,5 @@
 import com.android.build.gradle.BaseExtension
+import com.android.build.gradle.LibraryExtension
 
 val publishList = listOf(
     "core",
@@ -41,12 +42,8 @@ tasks.register("clean", Delete::class) {
 }
 
 fun Project.configureAndroid() {
-    logger.warn("Project name ${project.name}")
-    if (name == "app") {
-        apply(plugin = "com.android.application")
-    } else {
-        apply(plugin = "com.android.library")
-    }
+
+    apply(plugin = "com.android.library")
     apply(plugin = "kotlin-android")
     apply(plugin = "kotlin-android-extensions")
     apply(plugin = "com.getkeepsafe.dexcount")
@@ -85,14 +82,35 @@ fun Project.configureAndroid() {
 }
 
 fun Project.setupPublishing() {
+
+    apply(plugin = "maven-publish")
+
     val sourcesJar = tasks.register<Jar>("sourcesJar") {
         classifier = "sources"
         from(project.the<BaseExtension>().sourceSets["main"].java.srcDirs)
     }
 
-    artifacts.add("archives", sourcesJar)
+    val javadoc = tasks.register<Javadoc>("javadoc") {
+        setSource(project.the<BaseExtension>().sourceSets["main"].java.srcDirs)
+        classpath += files(project.the<BaseExtension>().bootClasspath)
 
-    apply(plugin = "maven-publish")
+        project.the<LibraryExtension>().libraryVariants.configureEach {
+            dependsOn(assemble)
+            classpath += files((javaCompiler as AbstractCompile).classpath)
+        }
+
+        // Ignore warnings about incomplete documentation
+        (options as StandardJavadocDocletOptions).addStringOption("Xdoclint:none", "-quiet")
+    }
+
+    val javadocJar = tasks.register<Jar>("javadocJar") {
+        dependsOn(javadoc)
+        classifier = "javadoc"
+        from(javadoc.get().destinationDir)
+    }
+
+    artifacts.add("archives", sourcesJar)
+    artifacts.add("archives", javadocJar)
 
     configure<PublishingExtension> {
         repositories {
@@ -116,6 +134,8 @@ fun Project.setupPublishing() {
 
                 val releaseAar = "$buildDir/outputs/aar/${project.name}-release.aar"
                 artifact(releaseAar)
+                artifact(sourcesJar.get())
+                artifact(javadocJar.get())
 
                 logger.info(
                     """
@@ -130,17 +150,46 @@ fun Project.setupPublishing() {
                 pom {
                     name.set("Aimybox ${project.name.replace('-', ' ').capitalize()}")
                     description.set("Aimybox Android SDK")
-                    url.set("")
+                    url.set("https://github.com/aimybox/aimybox-android-sdk")
+
                     organization {
-                        name.set("Just AI")
-                        url.set("justai.com")
+                        name.set("Aimybox")
+                        url.set("https://aimybox.com/")
                     }
+
+                    developers {
+                        developer {
+                            id.set("morfeusys")
+                            name.set("Dmitriy Chechyotkin")
+                            email.set("morfeusys@gmail.com")
+                            organization.set("Aimybox")
+                            organizationUrl.set("https://aimybox.com")
+                            roles.set(listOf("Project-Administrator", "Developer"))
+                        }
+                        developer {
+                            id.set("lambdatamer")
+                            name.set("Alexander Sirota")
+                            email.set("lambdatamer@gmail.com")
+                            organization.set("Aimybox")
+                            organizationUrl.set("https://aimybox.com")
+                            roles.set(listOf("Developer"))
+                        }
+                        developer {
+                            id.set("nikkas29")
+                            name.set("Nikita Kasenkov")
+                            organization.set("Aimybox")
+                            organizationUrl.set("https://aimybox.com")
+                            roles.set(listOf("Developer"))
+                        }
+                    }
+
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
                             url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
+
                     withXml {
                         asNode().appendNode("dependencies").apply {
                             fun Dependency.write(scope: String) = appendNode("dependency").apply {
