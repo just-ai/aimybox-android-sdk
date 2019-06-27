@@ -24,3 +24,11 @@ The only solution if you need to embed your own intelligent voice assistant into
 * Works with any NLU providers like Aimylogic or Dialogflow
 * Can interact with any local device services and local networks
 * Fully customizable and extendable
+
+# How to start using
+
+Please refer to the [demo voice assistant](https://github.com/aimybox/aimybox-android-assistant) to see how to use Aimybox library in your own project.
+
+# Documentation
+
+There is a full Aimybox documentation available [here](https://help.aimybox.com)
