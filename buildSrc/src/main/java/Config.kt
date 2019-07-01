@@ -1,14 +1,11 @@
-
-object Submodules {
-    val list = listOf(
-        "core",
-//    "google-cloud-speechkit",
-        "google-platform-speechkit",
-//    "houndify-speechkit",
-        "snowboy-speechkit",
-        "yandex-speechkit"
-    )
-}
+val Submodules = listOf(
+    Library("core", Versions.Aimybox.core, true),
+    Library("google-platform-speechkit", Versions.Aimybox.googlePlatform, true),
+    Library("yandex-speechkit", Versions.Aimybox.yandex, true),
+    Library("snowboy-speechkit", Versions.Aimybox.snowboy, true),
+    Library("google-cloud-speechkit", Versions.Aimybox.googleCloud, false),
+    Library("houndify-speechkit", Versions.Aimybox.houndify, false)
+)
 
 object Versions {
     object Sdk {
@@ -17,10 +14,24 @@ object Versions {
         const val compile = target
     }
 
-    const val aimybox = "0.0.1"
+    object Aimybox {
+        const val core = "0.1.0"
+        const val googlePlatform = "0.1.0"
+        const val googleCloud = "0.1.0"
+        const val yandex = "0.1.0"
+        const val houndify = "0.1.0"
+        const val snowboy = "0.1.0"
+    }
+
+    object Plugins {
+        const val androidGradle = "3.4.1"
+        const val dexCount = "0.8.6"
+        const val bintray = "1.8.4"
+        const val buildInfo = "4.7.5"
+        const val protobuf = "0.8.8"
+    }
 
     const val kotlin = "1.3.40"
-    const val androidGradle = "3.4.1"
 
     const val appCompat = "1.0.2"
     const val coroutines = "1.3.0-M1"
@@ -29,21 +40,17 @@ object Versions {
     const val okHttp = "3.14.1"
     const val kotson = "2.5.0"
 
-    const val dexCount = "0.8.6"
-
-    const val protobuf = "0.8.8"
-
     const val mockk = "1.9"
     const val androidxTest = "1.1.1"
 }
 
 object Plugins {
-    val androidGradle = "com.android.tools.build:gradle" version Versions.androidGradle
     val kotlin = kotlin("gradle-plugin")
-    val protobuf = "com.google.protobuf:protobuf-gradle-plugin" version Versions.protobuf
-    val dexcount = "com.getkeepsafe.dexcount:dexcount-gradle-plugin" version Versions.dexCount
-    val bintray = "com.jfrog.bintray.gradle:gradle-bintray-plugin" version "1.8.4"
-    val buildInfo = "org.jfrog.buildinfo:build-info-extractor-gradle" version "4.7.5"
+    val androidGradle = "com.android.tools.build:gradle" version Versions.Plugins.androidGradle
+    val protobuf = "com.google.protobuf:protobuf-gradle-plugin" version Versions.Plugins.protobuf
+    val dexcount = "com.getkeepsafe.dexcount:dexcount-gradle-plugin" version Versions.Plugins.dexCount
+    val bintray = "com.jfrog.bintray.gradle:gradle-bintray-plugin" version Versions.Plugins.bintray
+    val buildInfo = "org.jfrog.buildinfo:build-info-extractor-gradle" version Versions.Plugins.buildInfo
 }
 
 object Libraries {

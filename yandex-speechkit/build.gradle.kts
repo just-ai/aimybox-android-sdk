@@ -11,13 +11,12 @@ plugins {
 
 android {
     defaultConfig {
-        minSdkVersion(21)
         buildConfigField("String", "TOKEN_API_URL", "\"https://iam.api.cloud.yandex.net/iam/v1/tokens\"")
     }
 }
 
 dependencies {
-    implementation("com.justai.aimybox:core:${Versions.aimybox}")
+    implementation("com.justai.aimybox:core:${Versions.Aimybox.core}")
 
     implementation(Libraries.Android.appCompat)
     implementation(Libraries.Kotlin.stdLib)
