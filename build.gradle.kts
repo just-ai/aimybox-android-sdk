@@ -26,10 +26,27 @@ allprojects {
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
     }
 
-    if (isSubmodule) Submodules.find { it.name == name }?.let { submodule ->
-        configureAndroid(submodule)
-        if (submodule.isPublication) configureBintrayPublishing(submodule.version)
-    } ?: logger.warn("Submodule $name is not defined in Config.kt")
+    if (isSubmodule) {
+        Submodules.find { it.name == name }?.let { submodule ->
+            configureAndroid(submodule)
+            configurePublishing(submodule)
+        } ?: logger.warn("Submodule $name is not defined in Config.kt")
+    } else {
+        afterEvaluate {
+            tasks.register("publishAllToMavenLocal") {
+                dependsOn(*Submodules.map {
+                    "${it.name}:publish${it.name.toPublicationName()}PublicationToMavenLocal"
+                }.toTypedArray())
+            }
+
+            tasks.register("bintrayUploadAll") {
+                dependsOn(*Submodules.map {
+                    "${it.name}:bintrayUpload"
+                }.toTypedArray())
+            }
+        }
+    }
+
 
 }
 
@@ -79,37 +96,13 @@ fun Project.configureAndroid(submodule: Submodule) {
     }
 }
 
-fun Project.configureBintrayPublishing(version: String) {
-    apply(plugin = "com.jfrog.bintray")
+fun Project.configurePublishing(submodule: Submodule) {
 
-    val publicationName = project.name
-        .split('-')
-        .joinToString("", transform = String::capitalize)
+    val publicationName = project.name.toPublicationName()
 
-    configurePublication(publicationName, version)
+    configurePublication(publicationName, submodule.version)
 
-    configure<BintrayExtension> {
-        val bintrayUsername = properties["bintrayUser"] as? String
-            ?: System.getProperty("BINTRAY_USER") ?: System.getenv("BINTRAY_USER")
-        val bintrayKey = properties["bintrayKey"] as? String
-            ?: System.getProperty("BINTRAY_KEY") ?: System.getenv("BINTRAY_KEY")
-
-        user = bintrayUsername
-        key = bintrayKey
-
-        pkg(closureOf<BintrayExtension.PackageConfig> {
-            repo = "aimybox-android-sdk"
-            name = project.name
-            userOrg = "aimybox"
-            setLicenses("Apache-2.0")
-            websiteUrl = "https://aimybox.com"
-            publish = true
-            vcsUrl = "https://github.com/aimybox/aimybox-android-sdk.git"
-            version(closureOf<BintrayExtension.VersionConfig> { name = version })
-        })
-
-        setPublications(publicationName)
-    }
+    if (submodule.isPublication) configureBintrayPublishing(publicationName, submodule.version)
 
     afterEvaluate {
         val generatePomFile = "generatePomFileFor${publicationName}Publication"
@@ -118,7 +111,9 @@ fun Project.configureBintrayPublishing(version: String) {
             dependsOn("assembleRelease", generatePomFile, "sourcesJar")
         }
 
-        tasks.named("bintrayUpload").configure { dependsOn("prepareArtifacts") }
+        if (submodule.isPublication) {
+            tasks.named("bintrayUpload").configure { dependsOn("prepareArtifacts") }
+        }
     }
 }
 
@@ -211,3 +206,32 @@ fun Project.configurePublication(publicationName: String, publicationVersion: St
         }
     }
 }
+
+fun Project.configureBintrayPublishing(publicationName: String, version: String) {
+    apply(plugin = "com.jfrog.bintray")
+
+    configure<BintrayExtension> {
+        val bintrayUsername = properties["bintrayUser"] as? String
+            ?: System.getProperty("BINTRAY_USER") ?: System.getenv("BINTRAY_USER")
+        val bintrayKey = properties["bintrayKey"] as? String
+            ?: System.getProperty("BINTRAY_KEY") ?: System.getenv("BINTRAY_KEY")
+
+        user = bintrayUsername
+        key = bintrayKey
+
+        pkg(closureOf<BintrayExtension.PackageConfig> {
+            repo = "aimybox-android-sdk"
+            name = project.name
+            userOrg = "aimybox"
+            setLicenses("Apache-2.0")
+            websiteUrl = "https://aimybox.com"
+            publish = true
+            vcsUrl = "https://github.com/aimybox/aimybox-android-sdk.git"
+            version(closureOf<BintrayExtension.VersionConfig> { name = version })
+        })
+
+        setPublications(publicationName)
+    }
+}
+
+fun String.toPublicationName() = split('-').joinToString("", transform = String::capitalize)
