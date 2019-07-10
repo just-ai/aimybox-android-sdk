@@ -8,7 +8,6 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.annotation.RequiresPermission
-import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -77,7 +76,10 @@ class GooglePlatformSpeechToText(
         override fun onRmsChanged(rmsdB: Float) = onSoundVolumeRmsChanged(rmsdB)
 
         override fun onError(error: Int) {
-            val exception = SpeechToTextException(IOException("SpeechRecognizer error[$error]: ${error.errorText}"))
+            val exception = GooglePlatformRecognitionException(
+                error,
+                IOException("SpeechRecognizer error[$error]: ${error.errorText}")
+            )
             sendResult(Result.Exception(exception))
             resultChannel.close()
         }
