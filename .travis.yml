@@ -28,3 +28,9 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-29.0.1
