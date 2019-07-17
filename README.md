@@ -11,6 +11,7 @@
 <p align="center">
     <a href="https://gitter.im/aimybox/community"><img src="https://badges.gitter.im/amitmerchant1990/electron-markdownify.svg"></a>
     <a href="https://twitter.com/intent/follow?screen_name=aimybox"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/aimybox.svg?label=Follow%20on%20Twitter&style=popout"></a>
+    <a href="https://travis-ci.com/aimybox/aimybox-android-sdk"><img alt="Travis CI Build" src="https://travis-ci.com/aimybox/aimybox-android-sdk.svg?branch=master"></a>
 </p>
 
 The only solution if you need to embed your own intelligent voice assistant into your existing application or device.
@@ -26,6 +27,23 @@ The only solution if you need to embed your own intelligent voice assistant into
 * Fully customizable and extendable
 
 # How to start using
+
+```kotlin
+    repositories {
+        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+    }
+    
+    dependencies {
+        /* Core Aimybox package */
+        implementation("com.justai.aimybox:core:${version}")
+        
+        /* Optional modules */
+        implementation("com.justai.aimybox:google-platform-speechkit:${version}")
+        implementation("com.justai.aimybox:yandex-speechkit:${version}")
+        implementation("com.justai.aimybox:snowboy-speechkit:${version}")
+        implementation("com.justai.aimybox:houndify-speechkit:${version}")
+    }
+```
 
 Please refer to the [demo voice assistant](https://github.com/aimybox/aimybox-android-assistant) to see how to use Aimybox library in your own project.
 
