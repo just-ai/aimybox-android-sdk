@@ -3,6 +3,12 @@ package com.justai.aimybox.model
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.annotation.RawRes
+import com.justai.aimybox.core.L
+import com.justai.aimybox.extensions.playSuspendable
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import java.io.File
+import java.util.*
 
 /**
  * Represents everything what a device should play as audios.
@@ -37,6 +43,27 @@ sealed class AudioSpeech : Speech() {
         override fun load(context: Context, mediaPlayer: MediaPlayer) {
             context.resources.openRawResourceFd(resourceId).use { asset ->
                 mediaPlayer.setDataSource(asset.fileDescriptor, 0, asset.declaredLength)
+            }
+        }
+    }
+
+    @Suppress("ArrayInDataClass")
+    data class Bytes(val audioData: ByteArray) : AudioSpeech() {
+        override fun load(context: Context, mediaPlayer: MediaPlayer) {
+            val file = try {
+                File.createTempFile("speech_", UUID.randomUUID().toString())
+            } catch (e: Throwable) {
+                L.e("Failed to create temp file", e)
+                return
+            }
+            try {
+                file.writeBytes(audioData)
+                mediaPlayer.apply {
+                    setDataSource(file.path)
+                    prepare()
+                }
+            } finally {
+                file.delete()
             }
         }
     }

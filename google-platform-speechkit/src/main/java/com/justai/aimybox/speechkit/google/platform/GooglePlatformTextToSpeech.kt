@@ -60,8 +60,6 @@ class GooglePlatformTextToSpeech(
         L.i("Google Platform TTS is initialized")
     }
 
-    override fun isSpeaking(): Boolean = synthesizer.isSpeaking
-
     @Suppress("DEPRECATION")
     override suspend fun speak(speech: TextSpeech) {
         initDeferred.await()
@@ -73,7 +71,7 @@ class GooglePlatformTextToSpeech(
                     override fun onStart(utteranceId: String?) {}
                     override fun onDone(utteranceId: String?) = continuation.resume(Unit)
                     override fun onError(utteranceId: String?) = continuation
-                        .resumeWithException(TextToSpeechException(IOException("Exception while synthesizing $speech")))
+                        .resumeWithException(GooglePlatformTextToSpeechException("GooglePlatformSpeechToTextException while synthesizing $speech"))
                 })
                 synthesizer.speak(speech.text, GoogleTTS.QUEUE_FLUSH, null, speech.text)
             } else {

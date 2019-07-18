@@ -1,6 +1,7 @@
 package com.justai.aimybox.core
 
 import com.justai.aimybox.Aimybox
+import java.io.IOException
 
 /**
  * Base class for [Aimybox] exceptions. This class is sealed, to determine which component produced the exception,
@@ -21,32 +22,32 @@ import com.justai.aimybox.Aimybox
  * @see VoiceTriggerException
  * @see ApiException
  * */
-sealed class AimyboxException(cause: Throwable?) : RuntimeException(cause)
+sealed class AimyboxException(message: String? = null, cause: Throwable?) : IOException(message, cause)
 
 /**
  *
  * Exceptions occurred during speech recognition.
  * @see [Aimybox.exceptions]
  * */
-open class SpeechToTextException(cause: Throwable? = null) : AimyboxException(cause)
+open class SpeechToTextException(message: String? = null, cause: Throwable? = null) : AimyboxException(message, cause)
 /**
  * Exceptions occurred during speech synthesis.
  *
  * @see [Aimybox.exceptions]
  * */
-open class TextToSpeechException(cause: Throwable? = null) : AimyboxException(cause)
+open class TextToSpeechException(message: String? = null, cause: Throwable? = null) : AimyboxException(message, cause)
 
 /**
  * Exceptions occurred in voice trigger component.
  *
  * @see [Aimybox.exceptions]
  * */
-open class VoiceTriggerException(cause: Throwable? = null) : AimyboxException(cause)
+open class VoiceTriggerException(message: String? = null, cause: Throwable? = null) : AimyboxException(message, cause)
 /**
  * Exceptions occurred during dialog api communication.
  *
  * @see [Aimybox.exceptions]
  * */
-open class ApiException(cause: Throwable? = null) : AimyboxException(cause)
+open class ApiException(message: String? = null, cause: Throwable? = null) : AimyboxException(message, cause)
 
 class RecognitionTimeoutException : SpeechToTextException()

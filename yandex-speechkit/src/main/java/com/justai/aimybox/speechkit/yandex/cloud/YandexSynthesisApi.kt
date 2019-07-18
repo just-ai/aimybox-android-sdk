@@ -1,8 +1,5 @@
-package com.justai.aimybox.speechkit.yandex.cloud.tts
+package com.justai.aimybox.speechkit.yandex.cloud
 
-import com.justai.aimybox.speechkit.yandex.cloud.IAmTokenGenerator
-import com.justai.aimybox.speechkit.yandex.cloud.L
-import com.justai.aimybox.speechkit.yandex.cloud.Language
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback

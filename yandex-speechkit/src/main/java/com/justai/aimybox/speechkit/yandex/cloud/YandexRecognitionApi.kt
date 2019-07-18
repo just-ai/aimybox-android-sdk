@@ -1,10 +1,6 @@
-package com.justai.aimybox.speechkit.yandex.cloud.stt
+package com.justai.aimybox.speechkit.yandex.cloud
 
 import com.google.protobuf.ByteString
-import com.justai.aimybox.speechkit.yandex.cloud.AudioEncoding
-import com.justai.aimybox.speechkit.yandex.cloud.IAmTokenGenerator
-import com.justai.aimybox.speechkit.yandex.cloud.Language
-import com.justai.aimybox.speechkit.yandex.cloud.VoiceModel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
@@ -16,7 +12,6 @@ import yandex.cloud.ai.stt.v2.SttServiceGrpc
 import yandex.cloud.ai.stt.v2.SttServiceOuterClass
 import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
-import io.grpc.Channel as GRPCChannel
 
 internal class YandexRecognitionApi(
     private val yandexPassportOAuthKey: String,

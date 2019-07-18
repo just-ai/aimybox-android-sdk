@@ -69,12 +69,12 @@ class HoundifySpeechToText(
                 }
 
                 override fun onAbort(info: VoiceSearchInfo) {
-                    sendResult(Result.Exception(SpeechToTextException(IOException("Houndify is aborted"))))
+                    sendResult(Result.Exception(HoundifySpeechToTextException("Houndify is aborted")))
                     resultChannel.close()
                 }
 
                 override fun onError(e: Exception, info: VoiceSearchInfo) {
-                    sendResult(Result.Exception(SpeechToTextException(e)))
+                    sendResult(Result.Exception(HoundifySpeechToTextException(cause = e)))
                     resultChannel.close()
                 }
 

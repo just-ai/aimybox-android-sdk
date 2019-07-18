@@ -1,7 +1,6 @@
 package com.justai.aimybox.speechkit.yandex.cloud
 
 import com.google.gson.annotations.SerializedName
-import com.justai.aimybox.speechkit.yandex.cloud.stt.gson
 import com.squareup.okhttp.Callback
 import com.squareup.okhttp.MediaType
 import com.squareup.okhttp.OkHttpClient

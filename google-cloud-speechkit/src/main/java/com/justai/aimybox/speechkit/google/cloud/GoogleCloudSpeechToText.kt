@@ -103,7 +103,7 @@ class GoogleCloudSpeechToText(
 
             override fun onError(e: Throwable) {
                 stopAudioRecording()
-                channel.sendResult(Result.Exception(SpeechToTextException(e)))
+                channel.sendResult(Result.Exception(GoogleCloudSpeechToTextException(cause = e)))
                 channel.close()
             }
 

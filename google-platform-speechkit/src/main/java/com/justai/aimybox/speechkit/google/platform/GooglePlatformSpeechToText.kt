@@ -17,7 +17,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import java.util.*
 
 class GooglePlatformSpeechToText(
@@ -75,11 +74,8 @@ class GooglePlatformSpeechToText(
 
         override fun onRmsChanged(rmsdB: Float) = onSoundVolumeRmsChanged(rmsdB)
 
-        override fun onError(error: Int) {
-            val exception = GooglePlatformRecognitionException(
-                error,
-                IOException("SpeechRecognizer error[$error]: ${error.errorText}")
-            )
+        override fun onError(code: Int) {
+            val exception = GooglePlatformSpeechToTextException(code, code.errorText)
             sendResult(Result.Exception(exception))
             resultChannel.close()
         }

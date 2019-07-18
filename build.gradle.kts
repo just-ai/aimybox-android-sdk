@@ -33,28 +33,28 @@ allprojects {
         } ?: logger.warn("Submodule $name is not defined in Config.kt")
     } else {
         afterEvaluate {
-            tasks.register("publishAllToMavenLocal") {
-                dependsOn(*Submodules.map {
-                    "${it.name}:publish${it.name.toPublicationName()}PublicationToMavenLocal"
-                }.toTypedArray())
+            tasks.register("bintrayUploadAll") {
+                dependsOn(*Submodules
+                    .filter(Submodule::isPublication)
+                    .map { "${it.name}:bintrayUpload" }
+                    .toTypedArray()
+                )
             }
 
-            tasks.register("bintrayUploadAll") {
-                dependsOn(*Submodules.map {
-                    "${it.name}:bintrayUpload"
-                }.toTypedArray())
+            tasks.register("publishAllToMavenLocal") {
+                dependsOn("prepareArtifacts")
+                dependsOn(*Submodules
+                    .map { "${it.name}:publish${it.name.toPublicationName()}PublicationToMavenLocal" }
+                    .toTypedArray()
+                )
             }
         }
     }
-
-
 }
 
 tasks.register("clean", Delete::class) {
     delete(rootProject.buildDir)
 }
-
-val Project.isSubmodule get() = name != rootProject.name
 
 fun Project.configureAndroid(submodule: Submodule) {
 
@@ -114,6 +114,8 @@ fun Project.configurePublishing(submodule: Submodule) {
         if (submodule.isPublication) {
             tasks.named("bintrayUpload").configure { dependsOn("prepareArtifacts") }
         }
+
+        tasks.named("publishToMavenLocal").configure { dependsOn("prepareArtifacts") }
     }
 }
 
@@ -233,5 +235,7 @@ fun Project.configureBintrayPublishing(publicationName: String, version: String)
         setPublications(publicationName)
     }
 }
+
+val Project.isSubmodule get() = name != rootProject.name
 
 fun String.toPublicationName() = split('-').joinToString("", transform = String::capitalize)
