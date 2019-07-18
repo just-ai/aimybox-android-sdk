@@ -36,7 +36,7 @@ internal class DialogApiComponent(
                 L.w("Request $request was cancelled")
             } catch (e: Throwable) {
                 L.e("Error during request $request:", e)
-                exceptions.send(ApiException(e))
+                exceptions.send(ApiException(cause = e))
             } as? Response
 
             events.send(DialogApi.Event.Receive(response))

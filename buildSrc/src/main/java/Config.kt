@@ -1,10 +1,10 @@
 val Submodules = listOf(
-    Library("core", Versions.Aimybox.core, true),
-    Library("google-platform-speechkit", Versions.Aimybox.googlePlatform, true),
-    Library("yandex-speechkit", Versions.Aimybox.yandex, true),
-    Library("snowboy-speechkit", Versions.Aimybox.snowboy, true),
-    Library("google-cloud-speechkit", Versions.Aimybox.googleCloud, false),
-    Library("houndify-speechkit", Versions.Aimybox.houndify, false)
+    Library("core", Versions.aimybox, true),
+    Library("google-platform-speechkit", Versions.aimybox, true),
+    Library("yandex-speechkit", Versions.aimybox, true),
+    Library("snowboy-speechkit", Versions.aimybox, true),
+    Library("google-cloud-speechkit", Versions.aimybox, false),
+    Library("houndify-speechkit", Versions.aimybox, false)
 )
 
 object Versions {
@@ -12,15 +12,6 @@ object Versions {
         const val min = 19
         const val target = 28
         const val compile = target
-    }
-
-    object Aimybox {
-        const val core = "0.1.0"
-        const val googlePlatform = "0.1.0"
-        const val googleCloud = "0.1.0"
-        const val yandex = "0.1.0"
-        const val houndify = "0.1.0"
-        const val snowboy = "0.1.0"
     }
 
     object Plugins {
@@ -31,10 +22,12 @@ object Versions {
         const val protobuf = "0.8.8"
     }
 
+    const val aimybox = "0.1.1"
+
     const val kotlin = "1.3.40"
+    const val coroutines = "1.3.0-M1"
 
     const val appCompat = "1.0.2"
-    const val coroutines = "1.3.0-M1"
 
     const val retrofit = "2.5.0"
     const val okHttp = "3.14.1"

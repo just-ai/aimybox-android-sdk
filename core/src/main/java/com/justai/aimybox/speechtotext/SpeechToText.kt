@@ -66,6 +66,13 @@ abstract class SpeechToText {
     protected fun onSpeechEnd() = onEvent(Event.SpeechEndDetected)
 
     /**
+     * Call this function if your recognizer can detect record volume changes.
+     *
+     * @see Event.SoundVolumeRmsChanged
+     * */
+    protected fun onSoundVolumeRmsChanged(rmsDb: Float) = onEvent(Event.SoundVolumeRmsChanged(rmsDb))
+
+    /**
      * Events occurred during recognition process.
      * */
     sealed class Event {
@@ -74,18 +81,29 @@ abstract class SpeechToText {
         data class RecognitionResult(val text: String?): Event()
         object EmptyRecognitionResult: Event()
         object RecognitionCancelled: Event()
+
         /**
          * Happens when user starts to talk.
          *
          * *Note: not every recognizer supports this event*
          * */
         object SpeechStartDetected : Event()
+
         /**
          * Happens when user stops talking.
          *
          * *Note: not every recognizer supports this event*
          * */
         object SpeechEndDetected : Event()
+
+        /**
+         * Happens when sound volume of microphone input changes.
+         *
+         * @param rmsDb [Sound RMS in decibels](https://en.wikipedia.org/wiki/Decibel#Acoustics)
+         *
+         * *Note: not every recognizer supports this event*
+         * */
+        data class SoundVolumeRmsChanged(val rmsDb: Float): Event()
     }
 
     sealed class Result {

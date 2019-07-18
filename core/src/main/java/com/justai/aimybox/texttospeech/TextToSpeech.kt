@@ -21,11 +21,6 @@ abstract class TextToSpeech {
     internal lateinit var exceptionChannel: SendChannel<AimyboxException>
 
     /**
-     * Returns true, if speech synthesis is in process now.
-     * */
-    abstract fun isSpeaking(): Boolean
-
-    /**
      * Start synthesis of provided [speechSequence] and suspend until it is finished.
      * */
     abstract suspend fun synthesize(speechSequence: List<Speech>)

@@ -1,15 +1,9 @@
-package com.justai.aimybox.speechkit.yandex.cloud.stt
+package com.justai.aimybox.speechkit.yandex.cloud
 
 import android.Manifest
 import androidx.annotation.RequiresPermission
-import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SpeechToText
-import com.justai.aimybox.speechkit.yandex.cloud.AudioEncoding
-import com.justai.aimybox.speechkit.yandex.cloud.L
-import com.justai.aimybox.speechkit.yandex.cloud.Language
-import com.justai.aimybox.speechkit.yandex.cloud.SampleRate
-import com.justai.aimybox.speechkit.yandex.cloud.VoiceModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,7 +14,6 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
-import yandex.cloud.ai.stt.v2.SttServiceOuterClass.RecognitionSpec.AudioEncoding as InternalAudioEncoding
 
 class YandexSpeechToText(
     yandexPassportOAuthKey: String,
@@ -34,7 +27,12 @@ class YandexSpeechToText(
     private val audioRecorder = AudioRecorder(config.sampleRate.intValue)
 
     private val api =
-        YandexRecognitionApi(yandexPassportOAuthKey, folderId, language, config)
+        YandexRecognitionApi(
+            yandexPassportOAuthKey,
+            folderId,
+            language,
+            config
+        )
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 
@@ -47,7 +45,7 @@ class YandexSpeechToText(
                 val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
                 sendResult(result)
             },
-            { exception -> sendResult(Result.Exception(SpeechToTextException(exception))) },
+            { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
             onCompleted = { close() }
         )
 
@@ -55,7 +53,11 @@ class YandexSpeechToText(
 
         launch {
             audioData.consumeEach { data ->
-                requestStream.onNext(YandexRecognitionApi.createRequest(data))
+                requestStream.onNext(
+                    YandexRecognitionApi.createRequest(
+                        data
+                    )
+                )
             }
         }
 

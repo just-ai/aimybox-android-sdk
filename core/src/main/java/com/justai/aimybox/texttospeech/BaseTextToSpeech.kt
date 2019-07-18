@@ -33,7 +33,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
 
     private val L = Logger("Aimybox-TTS")
 
-    private val audioSynthesizer = AudioSynthesizer(context)
+    protected val audioSynthesizer = AudioSynthesizer(context)
 
     private val parser = SSMLSpeechParser()
 
@@ -61,7 +61,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
                         onEvent(Event.SpeechEnded(speech))
                     } catch (e: Throwable) {
                         L.e("Failed to synthesize $speech", e)
-                        onException(TextToSpeechException(e))
+                        onException(TextToSpeechException(cause = e))
                     }
                 } else {
                     L.w("Speech sequence is cancelled. Skipping $speech.")
