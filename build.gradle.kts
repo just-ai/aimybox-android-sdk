@@ -25,35 +25,13 @@ allprojects {
         maven("https://kotlin.bintray.com/kotlinx")
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
     }
-
-    if (isSubmodule) {
-        Submodules.find { it.name == name }?.let { submodule ->
-            configureAndroid(submodule)
-            configurePublishing(submodule)
-        } ?: logger.warn("Submodule $name is not defined in Config.kt")
-    } else {
-        afterEvaluate {
-            tasks.register("bintrayUploadAll") {
-                dependsOn(*Submodules
-                    .filter(Submodule::isPublication)
-                    .map { "${it.name}:bintrayUpload" }
-                    .toTypedArray()
-                )
-            }
-
-            tasks.register("publishAllToMavenLocal") {
-                dependsOn("prepareArtifacts")
-                dependsOn(*Submodules
-                    .map { "${it.name}:publish${it.name.toPublicationName()}PublicationToMavenLocal" }
-                    .toTypedArray()
-                )
-            }
-        }
-    }
 }
 
-tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
+subprojects {
+    Submodules.find { it.name == name }?.let { submodule ->
+        configureAndroid(submodule)
+        configurePublishing(submodule)
+    } ?: logger.warn("Submodule $name is not defined in Config.kt")
 }
 
 fun Project.configureAndroid(submodule: Submodule) {
@@ -234,6 +212,24 @@ fun Project.configureBintrayPublishing(publicationName: String, version: String)
 
         setPublications(publicationName)
     }
+}
+
+tasks.register("clean", Delete::class) { delete(rootProject.buildDir) }
+
+tasks.register("bintrayUploadAll") {
+    dependsOn(*Submodules
+        .filter(Submodule::isPublication)
+        .map { "${it.name}:bintrayUpload" }
+        .toTypedArray()
+    )
+}
+
+tasks.register("publishAllToMavenLocal") {
+    dependsOn("prepareArtifacts")
+    dependsOn(*Submodules
+        .map { "${it.name}:publish${it.name.toPublicationName()}PublicationToMavenLocal" }
+        .toTypedArray()
+    )
 }
 
 val Project.isSubmodule get() = name != rootProject.name
