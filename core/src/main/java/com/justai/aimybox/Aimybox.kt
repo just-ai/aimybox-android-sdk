@@ -18,6 +18,7 @@ import com.justai.aimybox.texttospeech.TextToSpeech
 import com.justai.aimybox.texttospeech.TextToSpeechComponent
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import com.justai.aimybox.voicetrigger.VoiceTriggerComponent
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -224,9 +225,15 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         } else {
             onEmptyRecognition()
         }
+    }.invokeOnCompletion { cause ->
+        if (cause is CancellationException) standby()
     }
 
     private fun onEmptyRecognition() {
+        if (stateInternal == State.LISTENING) standby()
+    }
+
+    private fun onRecognitionCancelled() {
         if (stateInternal == State.LISTENING) standby()
     }
 
