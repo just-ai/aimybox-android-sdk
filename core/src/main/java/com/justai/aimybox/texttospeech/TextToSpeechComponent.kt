@@ -21,10 +21,11 @@ internal class TextToSpeechComponent(
 
     internal suspend fun speak(speechList: List<Speech>) {
         cancel()
-
+        eventChannel.send(TextToSpeech.Event.SpeechSequenceStarted(speechList))
         withContext(coroutineContext) {
             delegate.synthesize(speechList)
         }
+        eventChannel.send(TextToSpeech.Event.SpeechSequenceCompleted(speechList))
     }
 
     internal fun setDelegate(textToSpeech: TextToSpeech) {

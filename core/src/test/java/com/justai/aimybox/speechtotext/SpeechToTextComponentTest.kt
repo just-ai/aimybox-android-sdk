@@ -1,20 +1,14 @@
 package com.justai.aimybox.speechtotext
 
+import com.justai.aimybox.BaseCoroutineTest
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
-import com.justai.aimybox.mockLog
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.newSingleThreadContext
-import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -22,20 +16,8 @@ import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertSame
-import kotlin.test.fail
 
-class SpeechToTextComponentTest {
-
-    init {
-        mockLog()
-    }
-
-    val testContext = newSingleThreadContext("Test") + CoroutineExceptionHandler { coroutineContext, throwable ->
-        when (throwable) {
-            is CancellationException -> println("Coroutine in $coroutineContext is cancelled")
-            else -> fail(throwable.toString())
-        }
-    }
+class SpeechToTextComponentTest : BaseCoroutineTest() {
 
     private lateinit var mockDelegate: SpeechToText
     private lateinit var eventChannel: Channel<SpeechToText.Event>
@@ -55,14 +37,9 @@ class SpeechToTextComponentTest {
         every { mockDelegate.recognitionTimeoutMs } returns 5000
     }
 
-    @After
-    fun check() {
-        verify { mockDelegate.startRecognition() }
-    }
-
     @Test
     fun `Regular recognition`() {
-        runBlocking(testContext) {
+        runInTestContext {
             val deferred = async { component.recognizeSpeech() }
 
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
@@ -87,7 +64,7 @@ class SpeechToTextComponentTest {
 
     @Test
     fun `Recognition with error`() {
-        runBlocking(testContext) {
+        runInTestContext {
             val deferred = async { component.recognizeSpeech() }
 
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
@@ -107,7 +84,7 @@ class SpeechToTextComponentTest {
 
     @Test
     fun `Recognition canceled`() {
-        runBlocking(testContext) {
+        runInTestContext {
             val deferred = async { component.recognizeSpeech() }
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
 
@@ -126,7 +103,7 @@ class SpeechToTextComponentTest {
 
     @Test
     fun `Recognition result channel closed`() {
-        runBlocking(testContext) {
+        runInTestContext {
             val deferred = async { component.recognizeSpeech() }
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
 
@@ -142,7 +119,7 @@ class SpeechToTextComponentTest {
         }
     }
 
-    private suspend fun checkNoRunningJobs() {
+    private fun checkNoRunningJobs() {
         assertFalse(component.hasRunningJobs, "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}")
     }
 }
