@@ -6,15 +6,23 @@ import com.justai.aimybox.mockLog
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.fail
 
 class SpeechToTextComponentTest {
 
@@ -22,13 +30,18 @@ class SpeechToTextComponentTest {
         mockLog()
     }
 
-    val testContext = newSingleThreadContext("Test")
+    val testContext = newSingleThreadContext("Test") + CoroutineExceptionHandler { coroutineContext, throwable ->
+        when (throwable) {
+            is CancellationException -> println("Coroutine in $coroutineContext is cancelled")
+            else -> fail(throwable.toString())
+        }
+    }
 
-    lateinit var mockDelegate: SpeechToText
-    lateinit var eventChannel: Channel<SpeechToText.Event>
-    lateinit var exceptionChannel: Channel<AimyboxException>
-    lateinit var resultChannel: Channel<SpeechToText.Result>
-    lateinit var component: SpeechToTextComponent
+    private lateinit var mockDelegate: SpeechToText
+    private lateinit var eventChannel: Channel<SpeechToText.Event>
+    private lateinit var exceptionChannel: Channel<AimyboxException>
+    private lateinit var resultChannel: Channel<SpeechToText.Result>
+    private lateinit var component: SpeechToTextComponent
 
     @Before
     fun prepare() {
@@ -37,7 +50,9 @@ class SpeechToTextComponentTest {
         exceptionChannel = Channel(Channel.UNLIMITED)
         resultChannel = Channel(Channel.UNLIMITED)
         component = SpeechToTextComponent(mockDelegate, eventChannel, exceptionChannel)
-        every { mockDelegate.startRecognition() }.returns(resultChannel)
+
+        every { mockDelegate.startRecognition() } returns resultChannel
+        every { mockDelegate.recognitionTimeoutMs } returns 5000
     }
 
     @After
@@ -46,85 +61,88 @@ class SpeechToTextComponentTest {
     }
 
     @Test
-    fun recognizeNormalTest() {
+    fun `Regular recognition`() {
         runBlocking(testContext) {
-
             val deferred = async { component.recognizeSpeech() }
+
+            assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
+
+            verify { mockDelegate.startRecognition() }
 
             resultChannel.send(SpeechToText.Result.Partial("1"))
             resultChannel.send(SpeechToText.Result.Partial("1 2"))
             resultChannel.send(SpeechToText.Result.Partial("1 2 3"))
 
-            eventChannel.receive() as SpeechToText.Event.RecognitionPartialResult
-            eventChannel.receive() as SpeechToText.Event.RecognitionPartialResult
-            eventChannel.receive() as SpeechToText.Event.RecognitionPartialResult
+            assert(eventChannel.receive() is SpeechToText.Event.RecognitionPartialResult)
+            assert(eventChannel.receive() is SpeechToText.Event.RecognitionPartialResult)
+            assert(eventChannel.receive() is SpeechToText.Event.RecognitionPartialResult)
 
             resultChannel.send(SpeechToText.Result.Final("Final"))
 
-            val result = withTimeout(100) { deferred.await() }
-
-            assert(result == "Final") { "Result is received" }
-            assert((eventChannel.receive() as SpeechToText.Event.RecognitionResult).text == "Final")
-            assert(resultChannel.isClosedForSend) { "Result channel is closed" }
-
+            assertEquals("Final", deferred.await())
+            assertEquals("Final", (eventChannel.receive() as SpeechToText.Event.RecognitionResult).text)
+            checkNoRunningJobs()
         }
     }
 
     @Test
-    fun recognizeErrorTest() {
-        runBlocking {
-            every { mockDelegate.startRecognition() }.returns(resultChannel)
+    fun `Recognition with error`() {
+        runBlocking(testContext) {
             val deferred = async { component.recognizeSpeech() }
 
-            resultChannel.send(SpeechToText.Result.Exception(SpeechToTextException(RuntimeException())))
+            assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
 
-            val result = withTimeout(100) { deferred.await() }
+            verify { mockDelegate.startRecognition() }
 
-            eventChannel.receive() as SpeechToText.Event.EmptyRecognitionResult
-            exceptionChannel.receive() as SpeechToTextException
+            resultChannel.send(SpeechToText.Result.Exception(SpeechToTextException("Error")))
 
-            assert(result == null) { "Result is received" }
-            assert(resultChannel.isClosedForSend) { "Result channel is closed" }
-            assertFalse("Every job is finished"){ component.hasRunningJobs }
+            assertSame(eventChannel.receive(), SpeechToText.Event.EmptyRecognitionResult)
+            assert(exceptionChannel.receive() is SpeechToTextException)
+
+            assertNull(deferred.await())
+            assert(resultChannel.isClosedForSend)
+            checkNoRunningJobs()
         }
     }
 
-
     @Test
-    fun recognizeCancelTest() {
-        runBlocking {
+    fun `Recognition canceled`() {
+        runBlocking(testContext) {
             val deferred = async { component.recognizeSpeech() }
+            assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
+
+            verify { mockDelegate.startRecognition() }
 
             component.cancel()
+            assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionCancelled)
 
-            val result = withTimeout(100) { deferred.await() }
+            verify { mockDelegate.cancelRecognition() }
 
-            eventChannel.receive() as SpeechToText.Event.EmptyRecognitionResult
-            exceptionChannel.receive() as SpeechToTextException
-
-            assert(result == null) { "Result is received" }
-            assert(resultChannel.isClosedForSend) { "Result channel is closed" }
-            assertFalse("Every job is finished"){ component.hasRunningJobs }
+            assertFails { deferred.await() }
+            assert(resultChannel.isClosedForSend)
+            checkNoRunningJobs()
         }
     }
 
     @Test
-    fun resultChannelCloseTest() {
-        runBlocking {
+    fun `Recognition result channel closed`() {
+        runBlocking(testContext) {
             val deferred = async { component.recognizeSpeech() }
+            assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
+
+            verify { mockDelegate.startRecognition() }
 
             resultChannel.close()
 
-            component.cancel()
+            assertSame(eventChannel.receive(), SpeechToText.Event.EmptyRecognitionResult)
 
-            val result = withTimeout(100) { deferred.await() }
-
-            eventChannel.receive() as SpeechToText.Event.EmptyRecognitionResult
-            exceptionChannel.receive() as SpeechToTextException
-
-            assert(result == null) { "Result is received" }
-            assert(resultChannel.isClosedForSend) { "Result channel is closed" }
-            assertFalse("Every job is finished"){ component.hasRunningJobs }
+            assertNull(deferred.await())
+            assert(resultChannel.isClosedForSend)
+            checkNoRunningJobs()
         }
+    }
+
+    private suspend fun checkNoRunningJobs() {
+        assertFalse(component.hasRunningJobs, "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}")
     }
 }

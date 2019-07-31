@@ -13,10 +13,6 @@ install:
 script:
   - ./gradlew clean assembleDebug assembleRelease
 
-branches:
-  except:
-    - gh-pages
-
 sudo: false
 
 before_cache:
