@@ -53,6 +53,4 @@ internal class VoiceTriggerComponent(
         }
     }
 
-
-
 }
