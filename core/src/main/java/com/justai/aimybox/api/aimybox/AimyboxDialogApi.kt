@@ -15,7 +15,7 @@ import com.justai.aimybox.model.Response
 class AimyboxDialogApi(
     var apiKey: String,
     private val unitId: String,
-    url: String = "https://zb02.just-ai.com/"
+    url: String = "https://api.aimybox.com/"
 ) : DialogApi {
 
     private val httpWorker = getHttpWorker(url)
