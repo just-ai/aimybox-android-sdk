@@ -42,12 +42,17 @@ interface DialogApi {
          * Changing [Request.data]  will not take any effect,
          * to change it before request is sent, write a [CustomSkill] and add it to [Config].
          * */
-        data class Send(val request: Request) : Event()
+        data class RequestSent(val request: Request) : Event()
 
         /**
          * Dispatched when the [response] is received.
          * */
-        data class Receive(val response: Response?) : Event()
+        data class ResponseReceived(val response: Response?) : Event()
+
+        /**
+         * Dispatched when the [request] has been cancelled.
+         * */
+        data class RequestCancelled(val request: Request): Event()
     }
 
 }

@@ -26,7 +26,7 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
     private lateinit var component: SpeechToTextComponent
 
     @Before
-    fun prepare() {
+    fun setUp() {
         mockDelegate = mockk(relaxed = true)
         eventChannel = Channel(Channel.UNLIMITED)
         exceptionChannel = Channel(Channel.UNLIMITED)
@@ -119,7 +119,8 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
         }
     }
 
-    private fun checkNoRunningJobs() {
-        assertFalse(component.hasRunningJobs, "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}")
-    }
+    private fun checkNoRunningJobs() = assertFalse(
+        component.hasRunningJobs,
+        "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}"
+    )
 }

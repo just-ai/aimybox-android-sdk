@@ -86,10 +86,8 @@ class TextToSpeechComponentTest : BaseCoroutineTest() {
     }
 
 
-    private fun checkNoRunningJobs() {
-        assertFalse(
-            component.hasRunningJobs,
-            "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}"
-        )
-    }
+    private fun checkNoRunningJobs() = assertFalse(
+        component.hasRunningJobs,
+        "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}"
+    )
 }

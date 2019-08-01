@@ -1,6 +1,7 @@
 package com.justai.aimybox.core
 
 import com.justai.aimybox.Aimybox
+import com.justai.aimybox.model.Request
 import java.io.IOException
 
 /**
@@ -51,3 +52,8 @@ open class VoiceTriggerException(message: String? = null, cause: Throwable? = nu
 open class ApiException(message: String? = null, cause: Throwable? = null) : AimyboxException(message, cause)
 
 class RecognitionTimeoutException : SpeechToTextException()
+
+class ApiRequestTimeoutException(
+    request: Request,
+    timeout: Long
+) : ApiException("Request timeout: $request. Server didn't respond within $timeout ms.")
