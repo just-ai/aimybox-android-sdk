@@ -11,7 +11,7 @@ install:
   - yes | sdkmanager --licenses &>/dev/null
 
 script:
-  - ./gradlew clean assembleDebug assembleRelease testReleaseUnitTest
+  - ./gradlew clean assembleDebug assembleRelease testDebugUnitTest
 
 sudo: false
 

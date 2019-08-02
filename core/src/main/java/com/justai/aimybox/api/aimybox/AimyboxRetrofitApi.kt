@@ -6,6 +6,6 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 internal interface AimyboxRetrofitApi {
-    @POST("/api/request")
+    @POST("/")
     fun performRequestAsync(@Body request: AimyboxRequest) : Deferred<JsonObject>
 }

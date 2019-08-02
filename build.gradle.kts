@@ -224,14 +224,6 @@ tasks.register("bintrayUploadAll") {
     )
 }
 
-tasks.register("publishAllToMavenLocal") {
-    dependsOn("prepareArtifacts")
-    dependsOn(*Submodules
-        .map { "${it.name}:publish${it.name.toPublicationName()}PublicationToMavenLocal" }
-        .toTypedArray()
-    )
-}
-
 val Project.isSubmodule get() = name != rootProject.name
 
 fun String.toPublicationName() = split('-').joinToString("", transform = String::capitalize)
