@@ -22,12 +22,15 @@ internal class VoiceTriggerComponent(
             if (!isStarted) {
                 isStarted = true
                 events.send(VoiceTrigger.Event.Started)
-                delegate.startDetection(onTriggered = { phrase ->
-                    onTriggered
-                    events.offer(VoiceTrigger.Event.Triggered(phrase))
-                }, onException = { e ->
-                    exceptions.offer(VoiceTriggerException(cause = e))
-                })
+                delegate.startDetection(
+                    onTriggered = { phrase ->
+                        onTriggered
+                        events.offer(VoiceTrigger.Event.Triggered(phrase))
+                    },
+                    onException = { e ->
+                        exceptions.offer(VoiceTriggerException(cause = e))
+                    }
+                )
             }
         }
     }
@@ -52,7 +55,5 @@ internal class VoiceTriggerComponent(
             }
         }
     }
-
-
 
 }
