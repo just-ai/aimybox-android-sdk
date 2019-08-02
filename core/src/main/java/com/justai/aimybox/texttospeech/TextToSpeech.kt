@@ -1,7 +1,7 @@
 package com.justai.aimybox.texttospeech
 
-import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.Aimybox
+import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.TextToSpeechException
 import com.justai.aimybox.media.AudioSynthesizer
 import com.justai.aimybox.model.Speech
