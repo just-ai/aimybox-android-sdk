@@ -5,7 +5,7 @@ plugins {
 dependencies {
     implementation(Libraries.Android.appCompat)
     implementation(Libraries.Kotlin.stdLib)
-    batchImplementation(Libraries.Kotlin.coroutines)
+    batchApi(Libraries.Kotlin.coroutines)
 
     implementation("com.squareup.retrofit2:retrofit:${Versions.retrofit}")
     implementation("com.squareup.okhttp3:logging-interceptor:${Versions.okHttp}")

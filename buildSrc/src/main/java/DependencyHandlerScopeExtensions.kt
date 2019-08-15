@@ -8,3 +8,7 @@ fun DependencyHandlerScope.batchTestImplementation(batch: List<String>) =
 
 fun DependencyHandlerScope.batchAndroidTestImplementation(batch: List<String>) =
     batch.forEach { add("androidTestImplementation", it) }
+
+
+fun DependencyHandlerScope.batchApi(batch: List<String>) =
+    batch.forEach { add("api", it) }

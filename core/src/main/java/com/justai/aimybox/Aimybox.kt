@@ -27,11 +27,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.broadcast
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
-import kotlin.properties.Delegates
 
 /**
  * The main library class, provides access to all library features.
@@ -295,7 +292,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    private fun process(response: Response) = responseHandler.handle(response)
+    private suspend fun process(response: Response) = responseHandler.handle(response)
 
     private fun onEmptyResponse(request: Request) {
         L.w("Response is empty for $request")

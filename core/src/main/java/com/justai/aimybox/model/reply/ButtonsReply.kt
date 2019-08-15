@@ -1,6 +1,7 @@
 package com.justai.aimybox.model.reply
 
 import com.github.salomonbrys.kotson.array
+import com.github.salomonbrys.kotson.nullString
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -13,11 +14,20 @@ data class ButtonsReply(
     /**
      * A list of buttons to display.
      * */
-    val buttons: List<String> = sourceJson["buttons"].array.map(JsonElement::string)
+    val buttons: List<String>
 ) : Reply {
+
     companion object {
         const val TYPE = "buttons"
     }
 
-    override val type = ImageReply.TYPE
-}
+    object Parser : Reply.Parser<ButtonsReply> {
+        override fun parse(json: JsonObject) = if (json["type"].nullString == TYPE) {
+            val buttons = json["buttons"].array.map(JsonElement::string)
+            ButtonsReply(json, buttons)
+        } else {
+            null
+        }
+    }
+
+}   
