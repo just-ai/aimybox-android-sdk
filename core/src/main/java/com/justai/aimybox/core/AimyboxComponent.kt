@@ -6,6 +6,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.runBlocking
 
 internal abstract class AimyboxComponent(name: String) : CoroutineScope {
     private  var job = Job()
@@ -16,5 +18,8 @@ internal abstract class AimyboxComponent(name: String) : CoroutineScope {
     override val coroutineContext = Dispatchers.IO + job + CoroutineName("Aimybox Component $name")
 
     @CallSuper
-    open fun cancel() = coroutineContext.cancelChildren()
+    open fun cancel() = runBlocking {
+        job.cancelChildren()
+        job.children.toList().joinAll()
+    }
 }

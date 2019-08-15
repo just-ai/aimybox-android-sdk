@@ -8,7 +8,6 @@ import com.justai.aimybox.media.AudioSynthesizer
 import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.model.Speech
 import com.justai.aimybox.model.TextSpeech
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.flattenConcat
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
@@ -44,10 +42,8 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
     abstract suspend fun speak(speech: TextSpeech)
 
     final override suspend fun synthesize(speechSequence: List<Speech>) = withContext(coroutineContext) {
-        onEvent(Event.SpeechSequenceStarted(speechSequence))
         speechSequence.asFlow()
-            .map { extractSSML(it) }
-            .flattenConcat()
+            .extractSSML()
             .collect { speech ->
                 if (isActive) {
                     try {
@@ -69,7 +65,6 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
                 }
             }
         L.i("Speech sequence synthesis completed")
-        onEvent(Event.SpeechSequenceCompleted(speechSequence))
     }
 
     @CallSuper
@@ -83,10 +78,10 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
         audioSynthesizer.release()
     }
 
-    private fun extractSSML(speech: Speech): Flow<Speech> {
-        return when(speech) {
+    private fun Flow<Speech>.extractSSML() = map { speech ->
+        when (speech) {
             is AudioSpeech -> flowOf(speech)
             is TextSpeech -> parser.extractSSML(speech.text)
         }
-    }
+    }.flattenConcat()
 }

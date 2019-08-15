@@ -11,11 +11,7 @@ install:
   - yes | sdkmanager --licenses &>/dev/null
 
 script:
-  - ./gradlew clean assembleDebug assembleRelease
-
-branches:
-  except:
-    - gh-pages
+  - ./gradlew clean assembleDebug assembleRelease test
 
 sudo: false
 

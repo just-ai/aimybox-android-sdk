@@ -27,6 +27,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.broadcast
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
@@ -45,8 +46,7 @@ import kotlin.properties.Delegates
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 class Aimybox(initialConfig: Config) : CoroutineScope {
 
-    override val coroutineContext: CoroutineContext =
-        Dispatchers.IO + SupervisorJob() + CoroutineName("Aimybox Root Scope")
+    override val coroutineContext = Dispatchers.IO + SupervisorJob() + CoroutineName("Aimybox Root Scope")
 
     /**
      * Read only current configuration.
@@ -110,12 +110,14 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      *
      * @see State
      * */
-    val state = ConflatedBroadcastChannel(State.STANDBY)
+    val stateChannel = ConflatedBroadcastChannel(State.STANDBY)
 
-    private var stateInternal by Delegates.observable(State.STANDBY) { _, _, new ->
-        L.i("State changed: $new")
-        state.sendBlocking(new)
-    }
+    /**
+     * Current state of Aimybox.
+     * */
+    var state: State
+        get() = stateChannel.value
+        private set(value) = stateChannel.sendBlocking(value)
 
     init {
         updateConfiguration(initialConfig)
@@ -151,7 +153,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         speechToText.cancel()
         textToSpeech.cancel()
         launch { voiceTrigger.start() }
-        stateInternal = State.STANDBY
+
+        state = State.STANDBY
     }
 
     /* TTS */
@@ -191,7 +194,9 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY) = launch {
         cancelRecognition()
         voiceTrigger.stop()
-        stateInternal = State.SPEAKING
+
+        state = State.SPEAKING
+
         textToSpeech.speak(speeches)
 
         when (nextAction) {
@@ -217,7 +222,9 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     fun startRecognition() = launch {
         textToSpeech.cancel()
         voiceTrigger.stop()
-        stateInternal = State.LISTENING
+
+        state = State.LISTENING
+
         val speech = speechToText.recognizeSpeech()
         if (!speech.isNullOrBlank()) {
             if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) voiceTrigger.start()
@@ -230,11 +237,11 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     }
 
     private fun onEmptyRecognition() {
-        if (stateInternal == State.LISTENING) standby()
+        if (state == State.LISTENING) standby()
     }
 
     private fun onRecognitionCancelled() {
-        if (stateInternal == State.LISTENING) standby()
+        if (state == State.LISTENING) standby()
     }
 
     /**
@@ -257,7 +264,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun toggleRecognition() {
-        if (stateInternal == State.LISTENING) {
+        if (state == State.LISTENING) {
             cancelRecognition()
         } else {
             config.earcon?.start()
@@ -274,7 +281,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun send(request: Request) = launch {
-        stateInternal = State.PROCESSING
+        state = State.PROCESSING
         config.skills.forEach { it.onRequest(request) }
 
         val response = dialogApi.send(request)

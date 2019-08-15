@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
 import androidx.annotation.RawRes
-import com.justai.aimybox.core.L
+import com.justai.aimybox.extensions.playSuspendable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,9 +17,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
 
 private const val PLAYER_STATE_POLLING_DELAY_MS = 250L
 
@@ -98,20 +96,6 @@ class AudioPlayer(context: Context) : CoroutineScope {
             observeStateJob.cancel()
             mediaPlayer?.release()
             mediaPlayer = null
-        }
-    }
-
-    private suspend fun MediaPlayer.playSuspendable() {
-        suspendCancellableCoroutine<Unit> { continuation ->
-            setOnCompletionListener {
-                continuation.resume(Unit)
-            }
-            setOnErrorListener { _, what, _ ->
-                L.e("AudioPlayer error code $what. Stopping player.")
-                continuation.resume(Unit)
-                true
-            }
-            start()
         }
     }
 

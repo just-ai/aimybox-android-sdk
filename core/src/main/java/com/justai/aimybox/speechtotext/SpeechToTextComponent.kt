@@ -65,6 +65,7 @@ internal class SpeechToTextComponent(
                         }
                     }
                 }
+                timeoutTask.cancel()
             }.join()
 
             eventChannel.send(
