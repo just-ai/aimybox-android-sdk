@@ -42,7 +42,7 @@ internal class LegacyHttpWorker(private val apiUrl: String, private val timeout:
                 }
 
                 BufferedWriter(OutputStreamWriter(connection.outputStream, "UTF-8")).apply {
-                    write(gsonInstance.toJson(request))
+                    write(request.toJson())
                     close()
                 }
 
