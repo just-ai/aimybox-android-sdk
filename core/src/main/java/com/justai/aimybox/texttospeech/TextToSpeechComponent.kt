@@ -19,7 +19,7 @@ internal class TextToSpeechComponent(
 
     private val L = Logger("Aimybox-TTS")
 
-    internal suspend fun speak(speechList: List<Speech>) {
+    suspend fun speak(speechList: List<Speech>) {
         cancel()
         eventChannel.send(TextToSpeech.Event.SpeechSequenceStarted(speechList))
         withContext(coroutineContext) {
@@ -28,7 +28,7 @@ internal class TextToSpeechComponent(
         eventChannel.send(TextToSpeech.Event.SpeechSequenceCompleted(speechList))
     }
 
-    internal fun setDelegate(textToSpeech: TextToSpeech) {
+    fun setDelegate(textToSpeech: TextToSpeech) {
         if (delegate != textToSpeech) {
             cancel()
             delegate.destroy()

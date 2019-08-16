@@ -4,6 +4,10 @@ import android.os.Build
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
+import com.justai.aimybox.model.reply.ButtonsReply
+import com.justai.aimybox.model.reply.ImageReply
+import com.justai.aimybox.model.reply.Reply
+import com.justai.aimybox.model.reply.TextReply
 
 /**
  * Aimybox dialog api implementation.
@@ -13,17 +17,28 @@ import com.justai.aimybox.model.Response
  * @param url Aimybox dialog API URL
  * */
 class AimyboxDialogApi(
-    var apiKey: String,
+    private val apiKey: String,
     private val unitId: String,
-    url: String = "https://api.aimybox.com/"
+    url: String = DEFAULT_API_URL,
+    private val replyParsers: Set<Reply.Parser<*>> = DEFAULT_PARSERS
 ) : DialogApi {
+
+    companion object {
+        private const val DEFAULT_API_URL = "https://api.aimybox.com/"
+        val DEFAULT_PARSERS = setOf(
+            TextReply.Parser,
+            ImageReply.Parser,
+            ButtonsReply.Parser
+        )
+    }
 
     private val httpWorker = getHttpWorker(url)
 
     override suspend fun send(request: Request): Response? {
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
-        val apiResponse = AimyboxResponse.fromJson(httpWorker.requestAsync(apiRequest))
-        return apiResponse.run { Response(query, text, action, intent, question, replies, source) }
+        val apiResponse = httpWorker.requestAsync(apiRequest)
+        val response = AimyboxResponse.fromJson(apiResponse, replyParsers)
+        return response.run { Response(query, text, action, intent, question, replies, source) }
     }
 
     override fun destroy() {

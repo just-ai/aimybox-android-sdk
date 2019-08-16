@@ -57,7 +57,6 @@ sealed class AudioSpeech : Speech() {
                 file.writeBytes(audioData)
                 mediaPlayer.apply {
                     setDataSource(file.path)
-                    prepare()
                 }
             } finally {
                 file.delete()

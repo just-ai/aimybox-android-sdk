@@ -6,6 +6,7 @@ import com.justai.aimybox.core.Config
 import com.justai.aimybox.core.CustomSkill
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
+import com.justai.aimybox.model.reply.Reply
 
 /**
  * Interface for dialog api implementation.
@@ -53,6 +54,11 @@ interface DialogApi {
          * Dispatched when the [request] has been cancelled.
          * */
         data class RequestCancelled(val request: Request): Event()
+
+        /**
+         * Dispatched when the [reply] is going to be processed.
+         * */
+        data class NextReply(val reply: Reply) : Event()
     }
 
 }
