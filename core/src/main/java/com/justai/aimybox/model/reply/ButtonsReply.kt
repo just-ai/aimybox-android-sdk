@@ -14,5 +14,5 @@ data class ButtonsReply(override val json: JsonObject) : Reply {
 
 data class ReplyButton(val json: JsonObject) {
     val text by json.byString
-    val tts by json.byNullableString
+    val url by json.byNullableString
 }
