@@ -6,6 +6,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.justai.aimybox.core.L
 import com.justai.aimybox.model.reply.Reply
+import com.justai.aimybox.model.reply.UnknownReply
 
 internal data class AimyboxResponse(
     val query: String?,
@@ -19,7 +20,7 @@ internal data class AimyboxResponse(
 
     companion object {
 
-        fun fromJson(json: JsonObject, parsers: Set<Reply.Parser<*>>) = AimyboxResponse(
+        fun fromJson(json: JsonObject, replyTypes: Map<String, Class<out Reply>>) = AimyboxResponse(
             json["query"].nullString,
             json["text"].nullString,
             json["action"].nullString,
@@ -29,20 +30,21 @@ internal data class AimyboxResponse(
                 ?.takeIf(JsonElement::isJsonArray)
                 ?.asJsonArray
                 ?.filterIsInstance(JsonObject::class.java)
-                ?.mapNotNull { parseReply(it, parsers) }
+                ?.map { resolveReplyType(it, replyTypes) }
                 .orEmpty(),
             json
         )
 
-        private fun parseReply(json: JsonObject, parsers: Set<Reply.Parser<*>>): Reply? {
-            parsers.forEach { parser ->
-                parser.parse(json)?.let { parsedReply ->
-                    return parsedReply
-                }
+        private fun resolveReplyType(json: JsonObject, replyTypes: Map<String, Class<out Reply>>): Reply {
+            val type = json["type"].nullString
+            val replyClass = replyTypes[type] ?: UnknownReply::class.java
+            if (replyClass == UnknownReply::class.java) {
+                L.w("Reply with type \"$type\" is unresolved. Register reply class in AimyboxDialogApi constructor.")
             }
-            L.w("No parsers found for reply: $json")
-            return null
+            require(replyClass.constructors.size == 1) {
+                "Reply must have strictly one constructor. See Reply interface documentation."
+            }
+            return replyClass.constructors.first().newInstance(json) as Reply
         }
-
     }
 }
