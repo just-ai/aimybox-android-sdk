@@ -10,5 +10,5 @@ data class ImageReply(override val json: JsonObject) : Reply {
     /**
      * Image url.
      * */
-    val url by json.byString("imageUlr")
+    val url by json.byString("imageUrl")
 }
