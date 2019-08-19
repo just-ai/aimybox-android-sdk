@@ -4,8 +4,12 @@ import com.google.gson.JsonObject
 import kotlinx.coroutines.Deferred
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 internal interface AimyboxRetrofitApi {
-    @POST("/")
-    fun performRequestAsync(@Body request: AimyboxRequest) : Deferred<JsonObject>
+    @POST("{endpoint}")
+    fun performRequestAsync(
+        @Path("endpoint", encoded = true) endpoint: String,
+        @Body request: AimyboxRequest
+    ): Deferred<JsonObject>
 }

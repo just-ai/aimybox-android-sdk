@@ -19,12 +19,14 @@ import com.justai.aimybox.model.reply.TextReply
 class AimyboxDialogApi(
     private val apiKey: String,
     private val unitId: String,
-    url: String = DEFAULT_API_URL,
+    baseUrl: String = DEFAULT_API_URL,
+    endpoint: String = DEFAULT_ENDPOINT,
     private val replyTypes: Map<String, Class<out Reply>> = DEFAULT_REPLY_TYPES
 ) : DialogApi {
 
     companion object {
-        private const val DEFAULT_API_URL = "https://api.aimybox.com/"
+        private const val DEFAULT_API_URL = "https://api.aimybox.com"
+        private const val DEFAULT_ENDPOINT = "/"
         val DEFAULT_REPLY_TYPES = mapOf(
             "text" to TextReply::class.java,
             "image" to ImageReply::class.java,
@@ -32,7 +34,7 @@ class AimyboxDialogApi(
         )
     }
 
-    private val httpWorker = getHttpWorker(url)
+    private val httpWorker = getHttpWorker(baseUrl, endpoint)
 
     override suspend fun send(request: Request): Response? {
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
@@ -46,10 +48,10 @@ class AimyboxDialogApi(
     }
 
     @Suppress("DEPRECATION")
-    private fun getHttpWorker(apiUrl: String) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        RetrofitHttpWorker(apiUrl)
+    private fun getHttpWorker(baseUrl: String, endpoint: String) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        RetrofitHttpWorker(baseUrl, endpoint)
     } else {
-        LegacyHttpWorker(apiUrl)
+        LegacyHttpWorker(baseUrl + endpoint)
     }
 
 }

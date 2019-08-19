@@ -18,8 +18,7 @@ internal abstract class AimyboxComponent(name: String) : CoroutineScope {
     override val coroutineContext = Dispatchers.IO + job + CoroutineName("Aimybox Component $name")
 
     @CallSuper
-    open fun cancel() = runBlocking {
+    open fun cancel() {
         job.cancelChildren()
-        job.children.toList().joinAll()
     }
 }
