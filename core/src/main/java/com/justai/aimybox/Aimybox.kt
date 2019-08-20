@@ -95,7 +95,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     private val speechToText = SpeechToTextComponent(config.speechToText, speechToTextEvents, exceptions)
     private val textToSpeech = TextToSpeechComponent(config.textToSpeech, textToSpeechEvents, exceptions)
     private val dialogApi = DialogApiComponent(config.dialogApi, dialogApiEvents, exceptions)
-    private val responseHandler = AimyboxResponseHandler(this, config.skills)
+    private val responseHandler = AimyboxResponseHandler(this, dialogApiEvents, config.skills)
     private val voiceTrigger = VoiceTriggerComponent(voiceTriggerEvents, exceptions, onTriggered = ::toggleRecognition)
 
     private val components = listOf(speechToText, textToSpeech, dialogApi, responseHandler)

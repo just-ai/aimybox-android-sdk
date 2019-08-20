@@ -22,6 +22,8 @@ class YandexSpeechToText(
     config: Config = Config()
 ) : SpeechToText(), CoroutineScope {
 
+    override val recognitionTimeoutMs = 10000L
+
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
     private val audioRecorder = AudioRecorder(config.sampleRate.intValue)
@@ -53,17 +55,13 @@ class YandexSpeechToText(
 
         launch {
             audioData.consumeEach { data ->
-                requestStream.onNext(
-                    YandexRecognitionApi.createRequest(
-                        data
-                    )
-                )
+                requestStream.onNext(YandexRecognitionApi.createRequest(data))
             }
         }
 
         invokeOnClose {
-            requestStream.onCompleted()
             audioData.cancel()
+            requestStream.onCompleted()
         }
     }
 

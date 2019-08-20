@@ -7,10 +7,12 @@ import com.justai.aimybox.extensions.className
 import com.justai.aimybox.model.Response
 import com.justai.aimybox.model.reply.TextReply
 import com.justai.aimybox.model.reply.asTextSpeech
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
 internal class AimyboxResponseHandler(
     private val aimybox: Aimybox,
+    private val events: SendChannel<DialogApi.Event>,
     private var skills: Collection<CustomSkill>
 ) : AimyboxComponent("Response Handling") {
 
@@ -41,7 +43,7 @@ internal class AimyboxResponseHandler(
             val lastTextReply = response.replies.last { it is TextReply }
 
             response.replies.forEach { reply ->
-                aimybox.dialogApiEvents.send(DialogApi.Event.NextReply(reply))
+                events.send(DialogApi.Event.NextReply(reply))
                 if (reply is TextReply) {
                     val nextAction = if (reply == lastTextReply) {
                         Aimybox.NextAction.byQuestion(response.question)
