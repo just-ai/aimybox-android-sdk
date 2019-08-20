@@ -22,7 +22,7 @@ import java.util.*
 class GooglePlatformSpeechToText(
     private val context: Context,
     var language: Locale = Locale.getDefault(),
-    var preferOffline: Boolean = true
+    var preferOffline: Boolean = false
 ) : SpeechToText(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.Main + Job()

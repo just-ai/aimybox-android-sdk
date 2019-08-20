@@ -22,7 +22,7 @@ object Versions {
         const val protobuf = "0.8.8"
     }
 
-    const val aimybox = "0.1.5"
+    const val aimybox = "0.2.0"
 
     const val kotlin = "1.3.40"
     const val coroutines = "1.3.0-M1"
