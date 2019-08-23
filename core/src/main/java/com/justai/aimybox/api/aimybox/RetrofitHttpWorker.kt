@@ -9,7 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-internal class RetrofitHttpWorker(baseUrl: String, private val endpoint: String) : BaseHttpWorker() {
+internal class RetrofitHttpWorker(baseUrl: String, private val path: String) : BaseHttpWorker() {
     private val retrofit = Retrofit.Builder()
         .client(createHttpClient())
         .baseUrl(baseUrl)
@@ -19,7 +19,7 @@ internal class RetrofitHttpWorker(baseUrl: String, private val endpoint: String)
 
     private val api = retrofit.create(AimyboxRetrofitApi::class.java)
 
-    override suspend fun requestAsync(request: AimyboxRequest) = api.performRequestAsync(endpoint, request).await()
+    override suspend fun requestAsync(request: AimyboxRequest) = api.performRequestAsync(path, request).await()
 
     private fun createHttpClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()
