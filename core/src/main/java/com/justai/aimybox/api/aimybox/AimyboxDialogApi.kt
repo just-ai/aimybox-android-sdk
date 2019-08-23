@@ -1,5 +1,6 @@
 package com.justai.aimybox.api.aimybox
 
+import android.net.Uri
 import android.os.Build
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.model.Request
@@ -19,14 +20,12 @@ import com.justai.aimybox.model.reply.TextReply
 class AimyboxDialogApi(
     private val apiKey: String,
     private val unitId: String,
-    baseUrl: String = DEFAULT_API_URL,
-    endpoint: String = DEFAULT_ENDPOINT,
+    url: String = DEFAULT_API_URL,
     private val replyTypes: Map<String, Class<out Reply>> = DEFAULT_REPLY_TYPES
 ) : DialogApi {
 
     companion object {
-        private const val DEFAULT_API_URL = "https://api.aimybox.com"
-        private const val DEFAULT_ENDPOINT = "/"
+        private const val DEFAULT_API_URL = "https://api.aimybox.com/"
         val DEFAULT_REPLY_TYPES = mapOf(
             "text" to TextReply::class.java,
             "image" to ImageReply::class.java,
@@ -34,7 +33,16 @@ class AimyboxDialogApi(
         )
     }
 
-    private val httpWorker = getHttpWorker(baseUrl, endpoint)
+    private val baseUrl: String
+    private val path: String
+
+    init {
+        val uri = Uri.parse(url)
+        baseUrl = uri.scheme?.let { "$it://" }.orEmpty() + uri.authority
+        path = uri.path ?: "/"
+    }
+
+    private val httpWorker = getHttpWorker(baseUrl, path)
 
     override suspend fun send(request: Request): Response? {
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
@@ -48,10 +56,11 @@ class AimyboxDialogApi(
     }
 
     @Suppress("DEPRECATION")
-    private fun getHttpWorker(baseUrl: String, endpoint: String) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        RetrofitHttpWorker(baseUrl, endpoint)
-    } else {
-        LegacyHttpWorker(baseUrl + endpoint)
-    }
+    private fun getHttpWorker(baseUrl: String, path: String) =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            RetrofitHttpWorker(baseUrl, path)
+        } else {
+            LegacyHttpWorker(baseUrl + path)
+        }
 
 }

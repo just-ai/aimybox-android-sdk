@@ -7,9 +7,9 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 internal interface AimyboxRetrofitApi {
-    @POST("{endpoint}")
+    @POST("{path}")
     fun performRequestAsync(
-        @Path("endpoint", encoded = true) endpoint: String,
+        @Path("path", encoded = true) path: String,
         @Body request: AimyboxRequest
     ): Deferred<JsonObject>
 }
