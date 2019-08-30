@@ -4,7 +4,7 @@ Speech recognition and synthesis by Google Services
 
 ## How to start using
 
-1. Make sure your device has Google Play Services installed.
+1. Make sure your device has Google Play Services installed
 2. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {

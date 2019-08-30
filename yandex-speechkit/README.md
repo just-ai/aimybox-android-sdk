@@ -4,10 +4,10 @@ Speech recognition and synthesis by Yandex Cloud
 
 ## How to start using
 
-1. Login or register at [Yandex Cloud Console](https://console.cloud.yandex.ru/).
-2. Make sure that your [billing account](https://cloud.yandex.ru/docs/billing/concepts/billing-account) is active.
-3. Get a [folder ID](https://cloud.yandex.ru/docs/resource-manager/operations/folder/get-id).
-4. Create an [API key](https://cloud.yandex.ru/docs/iam/operations/api-key/create).
+1. Login or register at [Yandex Cloud Console](https://console.cloud.yandex.ru/)
+2. Make sure that your [billing account](https://cloud.yandex.ru/docs/billing/concepts/billing-account) is active
+3. Get a [folder ID](https://cloud.yandex.ru/docs/resource-manager/operations/folder/get-id)
+4. Create an [API key](https://cloud.yandex.ru/docs/iam/operations/api-key/create)
 5. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
