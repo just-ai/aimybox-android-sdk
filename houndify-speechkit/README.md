@@ -4,7 +4,7 @@ Speech recognition by Houndify
 
 ## How to start using
 
-1. Login into your [Houndify daashboard](https://www.houndify.com/dashboard)
+1. Login into your [Houndify dashboard](https://www.houndify.com/dashboard)
 2. Select or create client
 3. Copy Client ID and Client Key
 4. Add dependencies to your module's build.gradle:

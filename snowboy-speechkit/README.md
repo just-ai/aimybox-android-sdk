@@ -29,13 +29,13 @@ Hot word detection by Snowboy
         val dialogApi = AimyboxDialogApi(AIMYBOX_API_KEY, unitId)
         
         val config = Config.create(speechToText, textToSpeech, dialogApi) {
-            voiceTrigger = createSnowboy()
+            voiceTrigger = createSnowboy(context)
         }
     
         return Aimybox(config)
     }
     
-    fun createSnowboy(context: Context):SnowboyVoiceTrigger {
+    fun createSnowboy(context: Context): SnowboyVoiceTrigger {
         // If you provide snowboy assets with your APK
         val assets = SnowboyAssets
             .fromApkAssets(context, "model_file_name", "resource_file_name")
