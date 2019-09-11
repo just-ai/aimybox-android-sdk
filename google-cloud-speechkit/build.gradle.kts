@@ -3,7 +3,7 @@ dependencies {
 
     implementation(Libraries.Android.appCompat)
     implementation(Libraries.Kotlin.stdLib)
-    batchImplementation(Libraries.Kotlin.coroutines)
+    implementation(Libraries.Kotlin.coroutines)
 
     implementation("io.grpc:grpc-okhttp:1.10.0")
     implementation("com.google.cloud:google-cloud-speech:1.0.0")

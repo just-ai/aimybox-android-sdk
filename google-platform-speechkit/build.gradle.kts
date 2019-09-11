@@ -3,5 +3,5 @@ dependencies {
 
     implementation(Libraries.Android.appCompat)
     implementation(Libraries.Kotlin.stdLib)
-    batchImplementation(Libraries.Kotlin.coroutines)
+    implementation(Libraries.Kotlin.coroutines)
 }

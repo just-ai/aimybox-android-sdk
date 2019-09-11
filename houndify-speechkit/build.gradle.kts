@@ -7,7 +7,7 @@ dependencies {
 
     implementation(Libraries.Kotlin.stdLib)
     implementation(Libraries.Android.appCompat)
-    batchImplementation(Libraries.Kotlin.coroutines)
+    implementation(Libraries.Kotlin.coroutines)
 
     implementation("hound.android:hound-sdk:1.4.0")
 }

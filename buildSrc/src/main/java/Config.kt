@@ -22,12 +22,12 @@ object Versions {
         const val protobuf = "0.8.8"
     }
 
-    const val aimybox = "0.2.2"
+    const val aimybox = "0.2.21"
 
-    const val kotlin = "1.3.40"
-    const val coroutines = "1.3.0-M1"
+    const val kotlin = "1.3.50"
+    const val coroutines = "1.3.1"
 
-    const val appCompat = "1.0.2"
+    const val appCompat = "1.1.0"
 
     const val retrofit = "2.5.0"
     const val okHttp = "3.14.1"
@@ -50,10 +50,7 @@ object Libraries {
     object Kotlin {
         val stdLib = kotlin("stdlib")
 
-        val coroutinesCore = kotlinx("coroutines-core", Versions.coroutines)
-        val coroutinesAndroid = kotlinx("coroutines-android", Versions.coroutines)
-
-        val coroutines = listOf(coroutinesCore, coroutinesAndroid)
+        val coroutines = kotlinx("coroutines-android", Versions.coroutines)
     }
 
     object Android {
