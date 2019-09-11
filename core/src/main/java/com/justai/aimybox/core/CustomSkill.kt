@@ -32,5 +32,9 @@ interface CustomSkill {
      * @see Aimybox.NextAction
      * @see Aimybox.speak
      * */
-    suspend fun onResponse(response: Response, aimybox: Aimybox) {}
+    suspend fun onResponse(
+        response: Response,
+        aimybox: Aimybox,
+        callDefaultHandler: suspend (Response) -> Unit
+    ) {}
 }

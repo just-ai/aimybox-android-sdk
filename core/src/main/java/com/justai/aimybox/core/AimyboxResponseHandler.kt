@@ -28,7 +28,7 @@ internal class AimyboxResponseHandler(
         launch {
             skills.find { it.canHandle(response) }?.let { skill ->
                 L.i("Found skill \"${skill.className}\" for action \"${response.action}\". ")
-                skill.onResponse(response, aimybox)
+                skill.onResponse(response, aimybox, ::handleDefault)
             } ?: handleDefault(response)
         }
     }

@@ -48,7 +48,9 @@ class AimyboxDialogApi(
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
         val apiResponse = httpWorker.requestAsync(apiRequest)
         val response = AimyboxResponse.fromJson(apiResponse, replyTypes)
-        return response.run { Response(query, text, action, intent, question, replies, source) }
+        return response.run {
+            Response(query, text, action, intent, question, replies, data, source)
+        }
     }
 
     override fun destroy() {
