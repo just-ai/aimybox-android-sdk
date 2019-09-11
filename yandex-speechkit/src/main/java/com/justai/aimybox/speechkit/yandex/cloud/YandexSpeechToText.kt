@@ -4,15 +4,10 @@ import android.Manifest
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 class YandexSpeechToText(
@@ -28,13 +23,7 @@ class YandexSpeechToText(
 
     private val audioRecorder = AudioRecorder(config.sampleRate.intValue)
 
-    private val api =
-        YandexRecognitionApi(
-            yandexPassportOAuthKey,
-            folderId,
-            language,
-            config
-        )
+    private val api = YandexRecognitionApi(yandexPassportOAuthKey, folderId, language, config)
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 

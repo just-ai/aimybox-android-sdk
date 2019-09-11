@@ -1,6 +1,7 @@
 package com.justai.aimybox.api.aimybox
 
 import com.github.salomonbrys.kotson.nullBool
+import com.github.salomonbrys.kotson.nullObj
 import com.github.salomonbrys.kotson.nullString
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -15,6 +16,7 @@ internal data class AimyboxResponse(
     val intent: String?,
     val question: Boolean?,
     val replies: List<Reply>,
+    val data: JsonObject?,
     val source: JsonObject
 ) {
 
@@ -32,10 +34,14 @@ internal data class AimyboxResponse(
                 ?.filterIsInstance(JsonObject::class.java)
                 ?.map { resolveReplyType(it, replyTypes) }
                 .orEmpty(),
+            json["data"].nullObj,
             json
         )
 
-        private fun resolveReplyType(json: JsonObject, replyTypes: Map<String, Class<out Reply>>): Reply {
+        private fun resolveReplyType(
+            json: JsonObject,
+            replyTypes: Map<String, Class<out Reply>>
+        ): Reply {
             val type = json["type"].nullString
             val replyClass = replyTypes[type] ?: UnknownReply::class.java
             if (replyClass == UnknownReply::class.java) {

@@ -50,9 +50,7 @@ class AudioRecorder(
     private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
 ) : CoroutineScope {
 
-    private val recordingDispatcher = Dispatchers.AudioRecord
-
-    override val coroutineContext: CoroutineContext = recordingDispatcher + Job()
+    override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
     /**
      * Launch new coroutine and start audio recording.
@@ -84,9 +82,8 @@ class AudioRecorder(
             audioRecord.startRecording()
 
             launch {
-                val buffer = ByteArray(bufferSize)
                 while (isActive) {
-                    buffer.fill(0)
+                    val buffer = ByteArray(bufferSize)
                     val bytesRead = audioRecord.read(buffer, 0, buffer.size)
                     if (!isClosedForSend) {
                         send(buffer)

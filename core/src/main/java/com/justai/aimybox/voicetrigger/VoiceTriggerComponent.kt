@@ -24,7 +24,7 @@ internal class VoiceTriggerComponent(
                 events.send(VoiceTrigger.Event.Started)
                 delegate.startDetection(
                     onTriggered = { phrase ->
-                        onTriggered
+                        onTriggered()
                         events.offer(VoiceTrigger.Event.Triggered(phrase))
                     },
                     onException = { e ->
