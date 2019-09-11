@@ -20,7 +20,7 @@ dependencies {
 
     implementation(Libraries.Android.appCompat)
     implementation(Libraries.Kotlin.stdLib)
-    batchImplementation(Libraries.Kotlin.coroutines)
+    implementation(Libraries.Kotlin.coroutines)
 
     implementation("com.squareup.okhttp3:okhttp:${Versions.okHttp}")
     implementation("com.squareup.okhttp3:logging-interceptor:${Versions.okHttp}")

@@ -50,10 +50,7 @@ object Libraries {
     object Kotlin {
         val stdLib = kotlin("stdlib")
 
-        val coroutinesCore = kotlinx("coroutines-core", Versions.coroutines)
-        val coroutinesAndroid = kotlinx("coroutines-android", Versions.coroutines)
-
-        val coroutines = listOf(coroutinesCore, coroutinesAndroid)
+        val coroutines = kotlinx("coroutines-android", Versions.coroutines)
     }
 
     object Android {
