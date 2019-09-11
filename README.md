@@ -30,6 +30,13 @@ The only solution if you need to embed your own intelligent voice assistant into
 # How to start using
 
 ```kotlin
+    android {
+        compileOptions {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+        }
+    }
+    
     repositories {
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
     }
