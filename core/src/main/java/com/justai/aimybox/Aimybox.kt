@@ -146,9 +146,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * Stop recognition, synthesis, API call and launch voice trigger if present.
      * */
     fun standby() {
-        dialogApi.cancel()
-        speechToText.cancel()
-        textToSpeech.cancel()
+        cancelCurrentTask()
         launch { voiceTrigger.start() }
 
         state = State.STANDBY
@@ -189,10 +187,10 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY) = launch {
+        state = State.SPEAKING
+
         cancelRecognition()
         voiceTrigger.stop()
-
-        state = State.SPEAKING
 
         textToSpeech.speak(speeches)
 
@@ -217,10 +215,11 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun startRecognition() = launch {
+        state = State.LISTENING
+
         textToSpeech.cancel()
         voiceTrigger.stop()
 
-        state = State.LISTENING
 
         val speech = speechToText.recognizeSpeech()
         if (!speech.isNullOrBlank()) {
@@ -279,6 +278,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun send(request: Request) = launch {
         state = State.PROCESSING
+
+        cancelRecognition()
         config.skills.forEach { it.onRequest(request) }
 
         val response = dialogApi.send(request)
@@ -295,8 +296,10 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     private fun process(response: Response) = responseHandler.handle(response)
 
     private fun onEmptyResponse(request: Request) {
-        L.w("Response is empty for $request")
-        standby()
+        if (state == State.PROCESSING) {
+            L.w("Response is empty for $request")
+            standby()
+        }
     }
 
     /**
