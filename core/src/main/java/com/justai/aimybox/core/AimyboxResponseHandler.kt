@@ -24,38 +24,37 @@ internal class AimyboxResponseHandler(
     }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    internal fun handle(response: Response) {
-        launch {
-            skills.find { it.canHandle(response) }?.let { skill ->
-                L.i("Found skill \"${skill.className}\" for action \"${response.action}\". ")
-                skill.onResponse(response, aimybox, ::handleDefault)
-            } ?: handleDefault(response)
+    internal fun handle(response: Response) = launch {
+        val skill = skills.find { it.canHandle(response) }
+        if (skill != null) {
+            L.i("Found skill \"${skill.className}\" for action \"${response.action}\". ")
+            skill.onResponse(response, aimybox, ::handleDefault)
+        } else {
+            if (!response.action.isNullOrBlank()) {
+                L.i("No suitable skills for action \"${response.action}\". Handling by default...")
+            }
+            handleDefault(response)
         }
     }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    private suspend fun handleDefault(response: Response) {
-        if (!response.action.isNullOrBlank()) {
-            L.i("No suitable skills for action \"${response.action}\". Handling by default...")
-        }
+    private suspend fun handleDefault(response: Response): Unit = try {
+        L.d("Begin handling")
+        val lastTextReply = response.replies.lastOrNull { it is TextReply }
 
-        try {
-            val lastTextReply = response.replies.last { it is TextReply }
-
-            response.replies.forEach { reply ->
-                events.send(DialogApi.Event.NextReply(reply))
-                if (reply is TextReply) {
-                    val nextAction = if (reply == lastTextReply) {
-                        Aimybox.NextAction.byQuestion(response.question)
-                    } else {
-                        Aimybox.NextAction.STANDBY
-                    }
-                    aimybox.speak(reply.asTextSpeech(), nextAction).join()
+        response.replies.forEach { reply ->
+            L.d("Reply $reply")
+            events.send(DialogApi.Event.NextReply(reply))
+            if (reply is TextReply) {
+                val nextAction = if (reply == lastTextReply) {
+                    Aimybox.NextAction.byQuestion(response.question)
+                } else {
+                    Aimybox.NextAction.STANDBY
                 }
+                aimybox.speak(reply.asTextSpeech(), nextAction).join()
             }
-        } catch (e: Throwable) {
-            L.e("Failed to parse replies from $response", e)
         }
+    } catch (e: Throwable) {
+        L.e("Failed to parse replies from $response", e)
     }
-
 }

@@ -230,7 +230,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
             onEmptyRecognition()
         }
     }.invokeOnCompletion { cause ->
-        if (cause is CancellationException) standby()
+        if (cause is CancellationException) onRecognitionCancelled()
     }
 
     private fun onEmptyRecognition() {
@@ -292,7 +292,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    private suspend fun process(response: Response) = responseHandler.handle(response)
+    private fun process(response: Response) = responseHandler.handle(response)
 
     private fun onEmptyResponse(request: Request) {
         L.w("Response is empty for $request")
