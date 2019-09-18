@@ -5,16 +5,9 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
 
@@ -23,6 +16,8 @@ private val L = Logger("AudioRecorder")
 /**
  * Coroutine scope audio recorder intended to use in [SpeechToText]
  * */
+@Suppress("unused")
+@ExperimentalCoroutinesApi
 class AudioRecorder(
     /**
      * Recording sample rate in Hertz
@@ -41,20 +36,24 @@ class AudioRecorder(
      * */
     private val channelConfig: Int = AudioFormat.CHANNEL_IN_MONO,
     /**
-     * Data sample duration in milliseconds.
+     * Data chunk duration in milliseconds.
      * */
-    private val sampleSizeMs: Int = 400,
+    private val periodMs: Int = 400,
     /**
-     * Output channel capacity in chunks. One chunk contains [sampleSizeMs] milliseconds of audio data.
+     * Output channel capacity in frames. One frame contains [periodMs] milliseconds of audio data.
      * */
     private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
 ) : CoroutineScope {
+
+    companion object {
+        private const val MILLISECONDS_IN_SECOND = 1000
+    }
 
     override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
     /**
      * Launch new coroutine and start audio recording.
-     * Will produce chunks of audio data each [sampleSizeMs] milliseconds.
+     * Will produce one frame of audio data each [periodMs] milliseconds.
      *
      * @return a channel of ByteArrays which contains recorded audio data.
      * */
@@ -78,7 +77,7 @@ class AudioRecorder(
         )
 
         try {
-            L.d("Start recording")
+            L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize b")
             audioRecord.startRecording()
 
             launch {
@@ -88,17 +87,15 @@ class AudioRecorder(
                     if (!isClosedForSend) {
                         send(buffer)
                     } else {
-                        L.w(
-                            """Output channel is closed to send, $bytesRead bytes omitted.
-                                Check channel capacity to prevent data loss.""".trimIndent()
+                        L.i(
+                            """Output channel is closed to send, 
+                                |$bytesRead bytes of recorded data omitted.""".trimMargin()
                         )
                     }
                 }
             }
 
             invokeOnClose {
-                L.i("Stopping recorder")
-                audioRecord.tryStop()
                 L.i("Releasing recorder")
                 audioRecord.release()
             }
@@ -107,8 +104,9 @@ class AudioRecorder(
         } catch (e: Throwable) {
             close(e)
             L.e("Uncaught AudioRecord exception", e)
+        } finally {
+            L.i("Recording finished")
         }
-
     }
 
     /**
@@ -118,12 +116,6 @@ class AudioRecorder(
     fun stopAudioRecording() = runBlocking {
         coroutineContext.cancelChildren()
         coroutineContext[Job]?.children?.toList()?.joinAll()
-    }
-
-    private fun AudioRecord.tryStop() = try {
-        stop()
-    } catch (e: IllegalStateException) {
-        // Ignore
     }
 
     private fun calculateBufferSize(): Int {
@@ -139,6 +131,10 @@ class AudioRecorder(
             AudioFormat.CHANNEL_IN_STEREO -> 1
             else -> throw IllegalArgumentException("Unsupported channel config")
         }
-        return sampleSize * sampleRate * channelsCount * sampleSizeMs / 1000
+
+        val frameSize = sampleSize * channelsCount
+        val dataRate = frameSize * sampleRate
+
+        return dataRate * periodMs / MILLISECONDS_IN_SECOND
     }
 }

@@ -54,11 +54,6 @@ interface DialogApi {
          * Dispatched when the [request] has been cancelled.
          * */
         data class RequestCancelled(val request: Request): Event()
-
-        /**
-         * Dispatched when the [reply] is going to be processed.
-         * */
-        data class NextReply(val reply: Reply) : Event()
     }
 
 }
