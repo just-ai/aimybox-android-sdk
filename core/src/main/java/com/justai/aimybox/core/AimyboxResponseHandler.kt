@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 
 internal class AimyboxResponseHandler(
     private val aimybox: Aimybox,
-    private val events: SendChannel<DialogApi.Event>,
     private var skills: Collection<CustomSkill>
 ) : AimyboxComponent("Response Handling") {
 
@@ -39,20 +38,15 @@ internal class AimyboxResponseHandler(
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
     private suspend fun handleDefault(response: Response): Unit = try {
-        L.d("Begin handling")
         val lastTextReply = response.replies.lastOrNull { it is TextReply }
 
-        response.replies.forEach { reply ->
-            L.d("Reply $reply")
-            events.send(DialogApi.Event.NextReply(reply))
-            if (reply is TextReply) {
-                val nextAction = if (reply == lastTextReply) {
-                    Aimybox.NextAction.byQuestion(response.question)
-                } else {
-                    Aimybox.NextAction.STANDBY
-                }
-                aimybox.speak(reply.asTextSpeech(), nextAction).join()
+        response.replies.filterIsInstance<TextReply>().forEach { reply ->
+            val nextAction = if (reply == lastTextReply) {
+                Aimybox.NextAction.byQuestion(response.question)
+            } else {
+                Aimybox.NextAction.STANDBY
             }
+            aimybox.speak(reply.asTextSpeech(), nextAction)?.join()
         }
     } catch (e: Throwable) {
         L.e("Failed to parse replies from $response", e)

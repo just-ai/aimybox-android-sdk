@@ -3,12 +3,7 @@ package com.justai.aimybox
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.api.DialogApiComponent
-import com.justai.aimybox.core.AimyboxComponent
-import com.justai.aimybox.core.AimyboxException
-import com.justai.aimybox.core.AimyboxResponseHandler
-import com.justai.aimybox.core.Config
-import com.justai.aimybox.core.CustomSkill
-import com.justai.aimybox.core.L
+import com.justai.aimybox.core.*
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
 import com.justai.aimybox.model.Speech
@@ -43,7 +38,8 @@ import kotlinx.coroutines.launch
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 class Aimybox(initialConfig: Config) : CoroutineScope {
 
-    override val coroutineContext = Dispatchers.IO + SupervisorJob() + CoroutineName("Aimybox Root Scope")
+    override val coroutineContext =
+        Dispatchers.IO + SupervisorJob() + CoroutineName("Aimybox Root Scope")
 
     /**
      * Read only current configuration.
@@ -92,11 +88,16 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
     /* Components */
 
-    private val speechToText = SpeechToTextComponent(config.speechToText, speechToTextEvents, exceptions)
-    private val textToSpeech = TextToSpeechComponent(config.textToSpeech, textToSpeechEvents, exceptions)
-    private val dialogApi = DialogApiComponent(config.dialogApi, dialogApiEvents, exceptions)
-    private val responseHandler = AimyboxResponseHandler(this, dialogApiEvents, config.skills)
-    private val voiceTrigger = VoiceTriggerComponent(voiceTriggerEvents, exceptions, onTriggered = ::toggleRecognition)
+    private val speechToText =
+        SpeechToTextComponent(config.speechToText, speechToTextEvents, exceptions)
+    private val textToSpeech =
+        TextToSpeechComponent(config.textToSpeech, textToSpeechEvents, exceptions)
+    private val dialogApi =
+        DialogApiComponent(config.dialogApi, dialogApiEvents, exceptions)
+    private val responseHandler =
+        AimyboxResponseHandler(this, config.skills)
+    private val voiceTrigger =
+        VoiceTriggerComponent(voiceTriggerEvents, exceptions, onTriggered = ::toggleRecognition)
 
     private val components = listOf(speechToText, textToSpeech, dialogApi, responseHandler)
 
@@ -115,6 +116,13 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     var state: State
         get() = stateChannel.value
         private set(value) = stateChannel.sendBlocking(value)
+
+    /**
+     * When muted, Aimybox can send requests and receive responses,
+     * but synthesis and recognition is disabled.
+     * */
+    var isMuted = false
+        private set
 
     init {
         updateConfiguration(initialConfig)
@@ -146,10 +154,24 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * Stop recognition, synthesis, API call and launch voice trigger if present.
      * */
     fun standby() {
+        state = State.STANDBY
+
         cancelCurrentTask()
         launch { voiceTrigger.start() }
+    }
 
+    fun mute() = launch {
         state = State.STANDBY
+
+        voiceTrigger.stop()
+        speechToText.cancel()
+        textToSpeech.cancel()
+        isMuted = true
+    }
+
+    fun unmute() = launch {
+        voiceTrigger.start()
+        isMuted = false
     }
 
     /* TTS */
@@ -163,13 +185,14 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      *
      * @param nextAction defines which action runs after synthesis completion
      *
-     * @return [Job] which completes once the synthesis is done
+     * @return [Job] which completes once the synthesis is done, or [null] if [isMuted].
      *
      * @see Speech
      * @see NextAction
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY) = speak(listOf(speech), nextAction)
+    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY) =
+        speak(listOf(speech), nextAction)
 
     /**
      * Start synthesis of the provided [speeches].
@@ -180,26 +203,31 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      *
      * @param nextAction defines which action runs after synthesis completion
      *
-     * @return [Job] which completes when the synthesis is done
+     * @return [Job] which completes when the synthesis is done, or [null] if [isMuted].
      *
      * @see Speech
      * @see NextAction
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY) = launch {
-        state = State.SPEAKING
+    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY) =
+        if (!isMuted) launch {
+            state = State.SPEAKING
 
-        cancelRecognition()
-        voiceTrigger.stop()
+            cancelRecognition()
+            voiceTrigger.stop()
 
-        textToSpeech.speak(speeches)
+            textToSpeech.speak(speeches)
+        }.apply {
+            invokeOnCompletion {
+                when (nextAction) {
+                    NextAction.NOTHING -> Unit
+                    NextAction.RECOGNITION -> startRecognition()
+                    NextAction.STANDBY -> standby()
+                }
+            }
+        } else null
 
-        when (nextAction) {
-            NextAction.NOTHING -> Unit
-            NextAction.RECOGNITION -> startRecognition()
-            NextAction.STANDBY -> standby()
-        }
-    }
+    fun stopSpeaking() = textToSpeech.cancel()
 
     /* STT */
 
@@ -210,27 +238,30 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * in case nothing is recognized, [SpeechToText.Event.EmptyRecognitionResult] will be sent
      * to [speechToTextEvents], and Aimybox will go to [State.STANDBY] state.
      *
-     * @return [Job] which completes when recognition is finished
+     * @return [Job] which completes when recognition is finished, or [null] if [isMuted].
      *
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun startRecognition() = launch {
+    fun startRecognition() = if (!isMuted) launch {
         state = State.LISTENING
 
         textToSpeech.cancel()
         voiceTrigger.stop()
 
-
         val speech = speechToText.recognizeSpeech()
         if (!speech.isNullOrBlank()) {
-            if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) voiceTrigger.start()
+            if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) {
+                voiceTrigger.start()
+            }
             send(Request(speech))
         } else {
             onEmptyRecognition()
         }
-    }.invokeOnCompletion { cause ->
-        if (cause is CancellationException) onRecognitionCancelled()
-    }
+    }.apply {
+        invokeOnCompletion { cause ->
+            if (cause is CancellationException) onRecognitionCancelled()
+        }
+    } else null
 
     private fun onEmptyRecognition() {
         if (state == State.LISTENING) standby()
