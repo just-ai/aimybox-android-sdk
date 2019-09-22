@@ -1,6 +1,6 @@
 # Houndify Speech Recognition for Aimybox Android SDK
 
-Speech recognition by Houndify
+Speech recognition by [Houndify](https://www.houndify.com/)
 
 ## How to start using
 
