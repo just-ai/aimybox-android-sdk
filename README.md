@@ -61,32 +61,18 @@ implementation("com.justai.aimybox:google-platform-speechkit:0.3.0")
 4. Instantiate [Aimybox](https://github.com/just-ai/aimybox-android-sdk/blob/master/core/src/main/java/com/justai/aimybox/Aimybox.kt) in your [Application](https://github.com/just-ai/aimybox-android-assistant/blob/master/app/src/main/java/com/justai/aimybox/assistant/AimyboxApplication.kt) class like that
 
 ```kotlin
-class AimyboxApplication : Application(), AimyboxProvider {
-
-    companion object {
-        private const val AIMYBOX_API_KEY = "your Aimybox project key"
-    }
-
-    override val aimybox by lazy { createAimybox(this) }
-
-    private fun createAimybox(context: Context): Aimybox {
-        val unitId = UUID.randomUUID().toString()
-
-        val textToSpeech = GooglePlatformTextToSpeech(context)
-        val speechToText = GooglePlatformSpeechToText(context)
-
-        val dialogApi = AimyboxDialogApi(AIMYBOX_API_KEY, unitId)
-
-        return Aimybox(Config.create(speechToText, textToSpeech, dialogApi))
-    }
-}
+val unitId = UUID.randomUUID().toString()
+val textToSpeech = GooglePlatformTextToSpeech(context)
+val speechToText = GooglePlatformSpeechToText(context)
+val dialogApi = AimyboxDialogApi("your Aimybox project API key", unitId)
+val aimybox = Aimybox(Config.create(speechToText, textToSpeech, dialogApi))
 ```
 
 Now you can start talking with your voice assistant using `startRecognition()` method of [Aimybox](https://github.com/just-ai/aimybox-android-sdk/blob/master/core/src/main/java/com/justai/aimybox/Aimybox.kt).
 
 # More details
 
-Please refer to the [demo voice assistant](https://github.com/aimybox/aimybox-android-assistant) to see how to use Aimybox library in your project.
+Please refer to the [demo voice assistant](https://github.com/aimybox/aimybox-android-assistant) to see how to use Aimybox library in your project. There are much more features described in [our Android SDK documentation](https://help.aimybox.com/en/article/android-sdk-overview-1ih4xn7/).
 
 # Documentation
 
