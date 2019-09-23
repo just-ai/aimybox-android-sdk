@@ -1,6 +1,6 @@
 # Yandex Speechkit for Aimybox Android SDK
 
-Speech recognition and synthesis by Yandex Cloud
+Speech recognition and synthesis by [Yandex Cloud Speechkit](https://cloud.yandex.ru/services/speechkit)
 
 ## How to start using
 

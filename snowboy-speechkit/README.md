@@ -1,6 +1,6 @@
 # Snowboy Voice Trigger for Aimybox Android SDK
 
-Hot word detection by Snowboy 
+Hot word detection by [Snowboy](https://snowboy.kitt.ai/) 
 
 ## How to start using
 

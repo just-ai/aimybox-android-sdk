@@ -1,6 +1,6 @@
 # Google Platform Speechkit for Aimybox Android SDK
 
-Speech recognition and synthesis by Google Services
+Speech recognition and synthesis by Google Services available on the most Android devices out of the box.
 
 ## How to start using
 
