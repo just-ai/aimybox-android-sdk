@@ -51,8 +51,4 @@ class AimyboxDialogApi(
             Response(query, text, action, intent, question, replies, data, source)
         }
     }
-
-    override fun destroy() {
-        //Do nothing
-    }
 }

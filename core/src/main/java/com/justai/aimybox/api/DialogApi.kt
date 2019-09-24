@@ -6,7 +6,6 @@ import com.justai.aimybox.core.Config
 import com.justai.aimybox.core.CustomSkill
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
-import com.justai.aimybox.model.reply.Reply
 
 /**
  * Interface for dialog api implementation.
@@ -31,7 +30,11 @@ interface DialogApi {
      * */
     suspend fun send(request: Request): Response?
 
-    fun destroy()
+    /**
+     * Free all claimed resources and prepare the object to destroy.
+     * This is only required if you consider to change the component in runtime.
+     * */
+    fun destroy() = Unit
 
     /**
      * Events, which you can receive using [Aimybox.dialogApiEvents] channel.
@@ -53,7 +56,7 @@ interface DialogApi {
         /**
          * Dispatched when the [request] has been cancelled.
          * */
-        data class RequestCancelled(val request: Request): Event()
+        data class RequestCancelled(val request: Request) : Event()
     }
 
 }

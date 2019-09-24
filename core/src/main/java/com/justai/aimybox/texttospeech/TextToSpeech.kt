@@ -31,9 +31,10 @@ abstract class TextToSpeech {
     abstract fun stop()
 
     /**
-     * Release all claimed resources.
+     * Free all claimed resources and prepare the object to destroy.
+     * This is only required if you consider to change the component in runtime.
      * */
-    abstract fun destroy()
+    open fun destroy() = Unit
 
     /**
      * Call this function to send the [event] to the [Aimybox.textToSpeechEvents] channel.

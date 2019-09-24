@@ -15,9 +15,10 @@ interface VoiceTrigger {
     suspend fun stopDetection()
 
     /**
-     * Release all claimed resources.
+     * Free all claimed resources and prepare the object to destroy.
+     * This is only required if you consider to change the component in runtime.
      * */
-    fun destroy()
+    fun destroy() = Unit
 
     sealed class Event {
         object Started : Event()

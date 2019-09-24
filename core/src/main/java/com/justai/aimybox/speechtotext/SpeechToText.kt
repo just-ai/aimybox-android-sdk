@@ -38,7 +38,11 @@ abstract class SpeechToText {
     @RequiresPermission("android.permission.RECORD_AUDIO")
     abstract fun startRecognition(): ReceiveChannel<Result>
 
-    abstract fun destroy()
+    /**
+     * Free all claimed resources and prepare the object to destroy.
+     * This is only required if you consider to change the component in runtime.
+     * */
+    open fun destroy() = Unit
 
     private fun onEvent(event: Event) {
         eventChannel.offer(event)
@@ -70,17 +74,18 @@ abstract class SpeechToText {
      *
      * @see Event.SoundVolumeRmsChanged
      * */
-    protected fun onSoundVolumeRmsChanged(rmsDb: Float) = onEvent(Event.SoundVolumeRmsChanged(rmsDb))
+    protected fun onSoundVolumeRmsChanged(rmsDb: Float) =
+        onEvent(Event.SoundVolumeRmsChanged(rmsDb))
 
     /**
      * Events occurred during recognition process.
      * */
     sealed class Event {
         object RecognitionStarted : Event()
-        data class RecognitionPartialResult(val text: String?): Event()
-        data class RecognitionResult(val text: String?): Event()
-        object EmptyRecognitionResult: Event()
-        object RecognitionCancelled: Event()
+        data class RecognitionPartialResult(val text: String?) : Event()
+        data class RecognitionResult(val text: String?) : Event()
+        object EmptyRecognitionResult : Event()
+        object RecognitionCancelled : Event()
 
         /**
          * Happens when user starts to talk.
@@ -103,12 +108,12 @@ abstract class SpeechToText {
          *
          * *Note: not every recognizer supports this event*
          * */
-        data class SoundVolumeRmsChanged(val rmsDb: Float): Event()
+        data class SoundVolumeRmsChanged(val rmsDb: Float) : Event()
     }
 
     sealed class Result {
-        data class Partial(val text : String?): Result()
+        data class Partial(val text: String?) : Result()
         data class Final(val text: String?) : Result()
-        data class Exception(val exception: SpeechToTextException): Result()
+        data class Exception(val exception: SpeechToTextException) : Result()
     }
 }

@@ -52,7 +52,6 @@ class HoundifySpeechToText(
         voiceSearch?.abort()
     }
 
-
     private fun createVoiceFactory(context: Context, clientId: String, clientKey: String) = object {
         fun build(resultChannel: SendChannel<Result>) = VoiceSearch.Builder().apply {
             audioStream = SimpleAudioByteStreamSource()
