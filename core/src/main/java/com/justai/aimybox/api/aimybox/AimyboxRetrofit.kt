@@ -1,15 +1,12 @@
 package com.justai.aimybox.api.aimybox
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-internal class RetrofitHttpWorker(baseUrl: String, private val path: String) : BaseHttpWorker() {
+internal class AimyboxRetrofit(baseUrl: String, private val path: String) {
     private val retrofit = Retrofit.Builder()
         .client(createHttpClient())
         .baseUrl(baseUrl)
@@ -17,9 +14,10 @@ internal class RetrofitHttpWorker(baseUrl: String, private val path: String) : B
         .addConverterFactory(GsonConverterFactory.create(gsonInstance))
         .build()
 
-    private val api = retrofit.create(AimyboxRetrofitApi::class.java)
+    private val api = retrofit.create(AimyboxApi::class.java)
 
-    override suspend fun requestAsync(request: AimyboxRequest) = api.performRequestAsync(path, request).await()
+    suspend fun requestAsync(request: AimyboxRequest) =
+        api.performRequestAsync(path, request).await()
 
     private fun createHttpClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()

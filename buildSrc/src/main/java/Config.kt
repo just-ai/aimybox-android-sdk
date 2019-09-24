@@ -9,8 +9,8 @@ val Submodules = listOf(
 
 object Versions {
     object Sdk {
-        const val min = 19
-        const val target = 28
+        const val min = 21
+        const val target = 29
         const val compile = target
     }
 
@@ -22,7 +22,7 @@ object Versions {
         const val protobuf = "0.8.8"
     }
 
-    const val aimybox = "0.3.0"
+    const val aimybox = "0.3.1"
 
     const val kotlin = "1.3.50"
     const val coroutines = "1.3.1"

@@ -1,7 +1,6 @@
 package com.justai.aimybox.api.aimybox
 
 import android.net.Uri
-import android.os.Build
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
@@ -42,11 +41,11 @@ class AimyboxDialogApi(
         path = uri.path ?: "/"
     }
 
-    private val httpWorker = getHttpWorker(baseUrl, path)
+    private val retrofit = AimyboxRetrofit(baseUrl, path)
 
     override suspend fun send(request: Request): Response? {
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
-        val apiResponse = httpWorker.requestAsync(apiRequest)
+        val apiResponse = retrofit.requestAsync(apiRequest)
         val response = AimyboxResponse.fromJson(apiResponse, replyTypes)
         return response.run {
             Response(query, text, action, intent, question, replies, data, source)
@@ -56,13 +55,4 @@ class AimyboxDialogApi(
     override fun destroy() {
         //Do nothing
     }
-
-    @Suppress("DEPRECATION")
-    private fun getHttpWorker(baseUrl: String, path: String) =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            RetrofitHttpWorker(baseUrl, path)
-        } else {
-            LegacyHttpWorker(baseUrl + path)
-        }
-
 }
