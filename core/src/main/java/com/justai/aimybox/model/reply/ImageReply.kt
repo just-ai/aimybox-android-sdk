@@ -3,9 +3,9 @@ package com.justai.aimybox.model.reply
 /**
  * Reply which contains an image URL.
  * */
-interface ImageReply : Reply {
+open class ImageReply(
     /**
      * Image url.
      * */
     val url: String
-}
+) : Reply

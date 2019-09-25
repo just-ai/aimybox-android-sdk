@@ -48,26 +48,23 @@ class AimyboxDialogApi(
 
     override suspend fun send(request: Request): Response {
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
-        val apiResponse = retrofit.requestAsync(apiRequest)
-        return parseResponse(apiResponse, replyTypes)
+        return retrofit.requestAsync(apiRequest).parseResponse(replyTypes)
     }
 
-    private fun parseResponse(
-        json: JsonObject,
-        replyTypes: Map<String, Class<out AimyboxReply>>
-    ) = AimyboxResponse(
-        json["query"].nullString,
-        json["text"].nullString,
-        json["action"].nullString,
-        json["intent"].nullString,
-        json["question"].nullBool,
-        json["replies"].parseReplies(replyTypes),
-        json["data"].nullObj,
-        json
-    )
+    private fun JsonObject.parseResponse(replyTypes: Map<String, Class<out AimyboxReply>>) =
+        AimyboxResponse(
+            get("query").nullString,
+            get("text").nullString,
+            get("action").nullString,
+            get("intent").nullString,
+            get("question").nullBool,
+            getReplies(replyTypes),
+            get("data").nullObj,
+            this
+        )
 
-    private fun JsonElement?.parseReplies(replyTypes: Map<String, Class<out AimyboxReply>>) =
-        this?.takeIf(JsonElement::isJsonArray)
+    private fun JsonObject.getReplies(replyTypes: Map<String, Class<out AimyboxReply>>) =
+        get("replies")?.takeIf(JsonElement::isJsonArray)
             ?.asJsonArray
             ?.filterIsInstance(JsonObject::class.java)
             ?.map { resolveReplyType(it, replyTypes) }

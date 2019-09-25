@@ -3,11 +3,6 @@ package com.justai.aimybox.model.reply
 /**
  * Designed to create clickable buttons with which the user can quickly respond without using STT.
  * */
-interface ButtonsReply : Reply {
-    val buttons: List<ReplyButton>
-}
+open class ButtonsReply(val buttons: List<ReplyButton>) : Reply
 
-interface ReplyButton {
-    val text: String
-    val url: String?
-}
+open class ReplyButton(val text: String, val url: String?)
