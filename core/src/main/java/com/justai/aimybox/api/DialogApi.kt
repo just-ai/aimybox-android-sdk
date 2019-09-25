@@ -28,7 +28,7 @@ interface DialogApi {
      *
      * @return [Response]
      * */
-    suspend fun send(request: Request): Response?
+    suspend fun send(request: Request): Response
 
     /**
      * Free all claimed resources and prepare the object to destroy.
@@ -51,7 +51,7 @@ interface DialogApi {
         /**
          * Dispatched when the [response] is received.
          * */
-        data class ResponseReceived(val response: Response?) : Event()
+        data class ResponseReceived(val response: Response) : Event()
 
         /**
          * Dispatched when the [request] has been cancelled.

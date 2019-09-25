@@ -34,7 +34,7 @@ internal class DialogApiComponent(
 
                 withTimeout(timeout) {
                     response.await()
-                }?.also {
+                }.also {
                     events.send(DialogApi.Event.ResponseReceived(it))
                 }
             }

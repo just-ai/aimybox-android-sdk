@@ -185,7 +185,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      *
      * @param nextAction defines which action runs after synthesis completion
      *
-     * @return [Job] which completes once the synthesis is done, or [null] if [isMuted].
+     * @return [Job] which completes once the synthesis is done, or null if [isMuted].
      *
      * @see Speech
      * @see NextAction
@@ -203,7 +203,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      *
      * @param nextAction defines which action runs after synthesis completion
      *
-     * @return [Job] which completes when the synthesis is done, or [null] if [isMuted].
+     * @return [Job] which completes when the synthesis is done, or null if [isMuted].
      *
      * @see Speech
      * @see NextAction
@@ -238,7 +238,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * in case nothing is recognized, [SpeechToText.Event.EmptyRecognitionResult] will be sent
      * to [speechToTextEvents], and Aimybox will go to [State.STANDBY] state.
      *
-     * @return [Job] which completes when recognition is finished, or [null] if [isMuted].
+     * @return [Job] which completes when recognition is finished, or null if [isMuted].
      *
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
