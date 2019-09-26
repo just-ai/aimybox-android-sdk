@@ -3,42 +3,98 @@ package com.justai.aimybox.logging
 import android.util.Log
 import com.justai.aimybox.BuildConfig
 
-class Logger(private val tag: String) {
+class Logger(
+    private val tag: String,
+    private val debug: Boolean = BuildConfig.DEBUG,
+    private val messageFormatter: (any: Any?) -> String = DEFAULT_FORMAT
+) {
 
-    private fun format(text: String) = "[${Thread.currentThread().name}] $text"
-
-    fun w(text: String) {
-        Log.w(tag, format(text))
+    companion object {
+        internal val DEFAULT_FORMAT = { any: Any? -> "[${Thread.currentThread().name}] $any" }
     }
 
-    fun w(text: String, throwable: Throwable) {
-        Log.w(tag, format(text), throwable)
+    // Verbose
+    fun v(throwable: Throwable) = v("", throwable)
+
+    fun v(any: Any?) {
+        Log.v(tag, messageFormatter(any))
     }
 
-    fun e(text: String) {
-        Log.e(tag, format(text))
+    fun v(any: Any?, throwable: Throwable) {
+        Log.v(tag, messageFormatter(any), throwable)
     }
 
-    fun e(text: String, throwable: Throwable) {
-        Log.e(tag, format(text), throwable)
+    // Debug
+    fun d(throwable: Throwable) = d("", throwable)
+
+    fun d(any: Any?) {
+        Log.d(tag, messageFormatter(any))
     }
 
+    fun d(any: Any?, throwable: Throwable) {
+        Log.d(tag, messageFormatter(any), throwable)
+    }
+
+    // Info
+    fun i(throwable: Throwable) = i("", throwable)
+
+    fun i(any: Any?) {
+        Log.i(tag, messageFormatter(any))
+    }
+
+    fun i(any: Any?, throwable: Throwable) {
+        Log.i(tag, messageFormatter(any), throwable)
+    }
+
+    // Warning
+    fun w(throwable: Throwable) = w("", throwable)
+
+    fun w(any: Any?) {
+        Log.w(tag, messageFormatter(any))
+    }
+
+    fun w(any: Any?, throwable: Throwable) {
+        Log.w(tag, messageFormatter(any), throwable)
+    }
+
+    // Error
     fun e(throwable: Throwable) = e("", throwable)
 
-    fun d(text: String) {
-        Log.d(tag, format(text))
+    fun e(any: Any?) {
+        Log.e(tag, messageFormatter(any))
     }
 
-    fun i(text: String) {
-        Log.i(tag, format(text))
+    fun e(any: Any?, throwable: Throwable) {
+        Log.e(tag, messageFormatter(any), throwable)
     }
 
-    fun a(text: String, e: Throwable? = null) {
-        if (BuildConfig.DEBUG) {
-            throw AssertionError(text, e)
+    // Assert
+    fun assert(condition: Boolean, e: Throwable? = null, lazyMessage: () -> Any? = { "" }) {
+        if(condition) return
+        if (debug) {
+            throw AssertionError(messageFormatter(lazyMessage()), e)
         } else {
-            Log.e(tag, text, e)
+            Log.e(tag, messageFormatter(lazyMessage()), e)
         }
     }
 
+    //Ping
+    @Deprecated("Only for debugging.")
+    fun ping() {
+        getCallSite()?.apply {
+            d("*PING* ($className.$methodName:$lineNumber)")
+        }
+    }
+
+    private fun getCallSite() = try {
+        Thread.currentThread().stackTrace.firstOrNull {
+
+            !it.isNativeMethod
+                    && it.className != Thread::class.java.name
+                    && it.className != Logger::class.java.name
+        }
+    } catch (e: Throwable) {
+        e(e)
+        null
+    }
 }

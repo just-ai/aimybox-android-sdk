@@ -7,10 +7,10 @@ import com.justai.aimybox.model.reply.Reply
 internal data class AimyboxResponse(
     override val query: String?,
     override val text: String?,
-    override val action: String?,
-    override val intent: String?,
-    override val question: Boolean?,
-    override val replies: List<Reply>,
-    override val data: JsonObject?,
+    override val action: String? = null,
+    override val intent: String? = null,
+    override val question: Boolean? = null,
+    override val replies: List<Reply> = emptyList(),
+    override val data: JsonObject? = null,
     override val json: JsonObject
 ) : Response

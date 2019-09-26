@@ -1,24 +1,22 @@
 package com.justai.aimybox.core
 
 import androidx.annotation.CallSuper
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
+import com.justai.aimybox.extensions.contextJob
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.runBlocking
 
 internal abstract class AimyboxComponent(name: String) : CoroutineScope {
-    private  var job = Job()
+
+    override val coroutineContext = Dispatchers.IO + Job() + CoroutineName("Aimybox($name)")
 
     val hasRunningJobs: Boolean
-        get() = job.children.any(Job::isActive)
-
-    override val coroutineContext = Dispatchers.IO + job + CoroutineName("Aimybox Component $name")
+        get() = contextJob.children.any(Job::isActive)
 
     @CallSuper
-    open fun cancel() {
-        job.cancelChildren()
+    open suspend fun cancel() {
+       if (hasRunningJobs) contextJob.cancelChildrenAndJoin()
     }
 }

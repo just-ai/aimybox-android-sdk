@@ -68,8 +68,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
     }
 
     @CallSuper
-    override fun stop() {
-        coroutineContext.cancelChildren()
+    override suspend fun stop() {
         audioSynthesizer.cancel()
     }
 

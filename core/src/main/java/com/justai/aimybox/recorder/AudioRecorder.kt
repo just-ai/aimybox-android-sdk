@@ -3,15 +3,17 @@ package com.justai.aimybox.recorder
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
+import com.justai.aimybox.extensions.className
+import com.justai.aimybox.extensions.retry
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.channels.ReceiveChannel
+import java.io.IOException
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
-
-private val L = Logger("AudioRecorder")
 
 /**
  * Coroutine scope audio recorder intended to use in [SpeechToText]
@@ -19,6 +21,10 @@ private val L = Logger("AudioRecorder")
 @Suppress("unused")
 @ExperimentalCoroutinesApi
 class AudioRecorder(
+    /**
+     * Name of the recorder
+     * */
+    name: String,
     /**
      * Recording sample rate in Hertz
      * */
@@ -34,7 +40,7 @@ class AudioRecorder(
      *
      * @see AudioFormat
      * */
-    private val channelConfig: Int = AudioFormat.CHANNEL_IN_MONO,
+    private val channelCount: Int = 1,
     /**
      * Data chunk duration in milliseconds.
      * */
@@ -49,7 +55,12 @@ class AudioRecorder(
         private const val MILLISECONDS_IN_SECOND = 1000
     }
 
+    private val L = Logger("$className($name)")
+
     override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
+
+    private val minBufferSize = calculateMinBufferSize()
+    private val bufferSize = calculateBufferSize(minBufferSize)
 
     /**
      * Launch new coroutine and start audio recording.
@@ -57,68 +68,85 @@ class AudioRecorder(
      *
      * @return a channel of ByteArrays which contains recorded audio data.
      * */
-    fun startAudioRecording() = produce(capacity = outputChannelBufferSizeChunks) {
-        val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-        require(minBufferSize != AudioRecord.ERROR && minBufferSize != AudioRecord.ERROR_BAD_VALUE) {
-            "Sample rate $sampleRate is not supported."
-        }
+    fun startAudioRecording(): ReceiveChannel<ByteArray> {
+        val channel = Channel<ByteArray>(outputChannelBufferSizeChunks)
 
-        val bufferSize = calculateBufferSize()
-        check(bufferSize > minBufferSize) {
-            "Buffer is too small. Current size: $bufferSize, min size: $minBufferSize"
-        }
+        lateinit var recorder: AudioRecord
 
-        val audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            channelConfig,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize
-        )
+        launch {
+            try {
+                L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
 
-        try {
-            L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize b")
-            audioRecord.startRecording()
-
-            launch {
-                while (isActive) {
-                    val buffer = ByteArray(bufferSize)
-                    val bytesRead = audioRecord.read(buffer, 0, buffer.size)
-                    if (!isClosedForSend) {
-                        send(buffer)
-                    } else {
-                        L.i(
-                            """Output channel is closed to send, 
-                                |$bytesRead bytes of recorded data omitted.""".trimMargin()
-                        )
+                retry(5, delay = 100) { attempt ->
+                    recorder = createRecorder()
+                    if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+                        L.e("Failed to init AudioRecord, attempt $attempt")
+                        recorder.release()
+                        throw IOException("Failed to init AudioRecord after 5 retries")
                     }
+
+                    recorder.startRecording()
+
+                    val buffer = ByteArray(bufferSize)
+                    loop@ while (isActive) {
+                        val bytesRead = recorder.read(buffer, 0, buffer.size)
+
+                        L.d("Read $bytesRead bytes")
+
+                        when {
+                            bytesRead <= 0 -> {
+                                recorder.release()
+                                throw IOException("Read $bytesRead bytes from recorder")
+                            }
+                            channel.isClosedForSend -> {
+                                L.w("Output channel is closed to send, $bytesRead bytes of recorded data omitted.")
+                                break@loop
+                            }
+                            else -> channel.send(buffer.copyOf())
+                        }
+                    }
+
+                    recorder.release()
+                }
+            } catch (e: CancellationException) {
+                // Ignore
+            } catch (e: Throwable) {
+                channel.close(e)
+                L.e("Uncaught AudioRecord exception", e)
+            } finally {
+                withContext(NonCancellable) {
+                    recorder.release()
+                    L.i("Recording finished")
+                    channel.close()
                 }
             }
-
-            invokeOnClose {
-                L.i("Releasing recorder")
-                audioRecord.release()
-            }
-        } catch (e: CancellationException) {
-            // Ignore
-        } catch (e: Throwable) {
-            close(e)
-            L.e("Uncaught AudioRecord exception", e)
-        } finally {
-            L.i("Recording finished")
         }
+
+        return channel
     }
 
     /**
      * Stop the current recording.
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
-    fun stopAudioRecording() = runBlocking {
-        coroutineContext.cancelChildren()
-        coroutineContext[Job]?.children?.toList()?.joinAll()
-    }
+    suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
 
-    private fun calculateBufferSize(): Int {
+    private fun createRecorder() = AudioRecord(
+        MediaRecorder.AudioSource.MIC,
+        sampleRate,
+        channelCount,
+        AudioFormat.ENCODING_PCM_16BIT,
+        bufferSize
+    )
+
+    private fun calculateMinBufferSize() =
+        AudioRecord.getMinBufferSize(sampleRate, channelCount, audioFormat).also {
+            require(it != AudioRecord.ERROR && it != AudioRecord.ERROR_BAD_VALUE) {
+                "Sample rate $sampleRate is not supported."
+            }
+        }
+
+    private fun calculateBufferSize(minBufferSize: Int): Int {
         val sampleSize = when (audioFormat) {
             AudioFormat.ENCODING_PCM_FLOAT -> 2
             AudioFormat.ENCODING_PCM_16BIT -> 2
@@ -126,15 +154,15 @@ class AudioRecorder(
             else -> throw IllegalArgumentException("Unsupported format")
         }
 
-        val channelsCount = when (channelConfig) {
-            AudioFormat.CHANNEL_IN_MONO -> 1
-            AudioFormat.CHANNEL_IN_STEREO -> 1
-            else -> throw IllegalArgumentException("Unsupported channel config")
-        }
-
-        val frameSize = sampleSize * channelsCount
+        val frameSize = sampleSize * channelCount
         val dataRate = frameSize * sampleRate
 
-        return dataRate * periodMs / MILLISECONDS_IN_SECOND
+        val bufferSize = dataRate * periodMs / MILLISECONDS_IN_SECOND
+
+        require(bufferSize > minBufferSize) {
+            "Buffer is too small. Current size: $bufferSize, min size: $minBufferSize"
+        }
+
+        return bufferSize
     }
 }

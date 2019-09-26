@@ -51,7 +51,7 @@ internal class DialogApiComponent(
         } as? Response
     }
 
-    internal fun setDelegate(dialogApi: DialogApi) {
+    internal suspend fun setDelegate(dialogApi: DialogApi) {
         if (delegate != dialogApi) {
             cancel()
             delegate.destroy()

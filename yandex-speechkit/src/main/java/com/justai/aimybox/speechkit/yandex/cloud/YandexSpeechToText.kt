@@ -21,7 +21,7 @@ class YandexSpeechToText(
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
-    private val audioRecorder = AudioRecorder(config.sampleRate.intValue)
+    private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 
     private val api = YandexRecognitionApi(yandexPassportOAuthKey, folderId, language, config)
 
@@ -54,11 +54,11 @@ class YandexSpeechToText(
         }
     }
 
-    override fun stopRecognition() {
+    override suspend fun stopRecognition() {
         audioRecorder.stopAudioRecording()
     }
 
-    override fun cancelRecognition() {
+    override suspend fun cancelRecognition() {
         coroutineContext.cancelChildren()
     }
 

@@ -9,4 +9,4 @@ import com.justai.aimybox.model.reply.ImageReply
  * */
 data class AimyboxImageReply(
     override val json: JsonObject
-) : ImageReply(json["url"].string), AimyboxReply
+) : ImageReply(json["imageUrl"].string), AimyboxReply

@@ -10,12 +10,13 @@ import kotlinx.coroutines.channels.SendChannel
 /**
  * Base class for speech recognizers.
  * */
+@Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class SpeechToText {
 
     /**
      * Recognition will be canceled if no results received within this interval.
      * */
-    open val recognitionTimeoutMs = 5000L
+    open val recognitionTimeoutMs = 10000L
 
     internal lateinit var eventChannel: SendChannel<Event>
     internal lateinit var exceptionChannel: SendChannel<AimyboxException>
@@ -23,12 +24,12 @@ abstract class SpeechToText {
     /**
      * Stop audio recording, but await for final result.
      * */
-    abstract fun stopRecognition()
+    abstract suspend fun stopRecognition()
 
     /**
      * Cancel recognition entirely and abandon all results.
      * */
-    abstract fun cancelRecognition()
+    abstract suspend fun cancelRecognition()
 
     /**
      * Start recognition.

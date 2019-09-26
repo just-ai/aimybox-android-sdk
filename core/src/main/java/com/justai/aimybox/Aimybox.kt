@@ -1,9 +1,12 @@
 package com.justai.aimybox
 
+import android.annotation.SuppressLint
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.api.DialogApiComponent
 import com.justai.aimybox.core.*
+import com.justai.aimybox.extensions.className
+import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
 import com.justai.aimybox.model.Speech
@@ -13,17 +16,11 @@ import com.justai.aimybox.texttospeech.TextToSpeech
 import com.justai.aimybox.texttospeech.TextToSpeechComponent
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import com.justai.aimybox.voicetrigger.VoiceTriggerComponent
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.broadcast
 import kotlinx.coroutines.channels.sendBlocking
-import kotlinx.coroutines.launch
 
 /**
  * The main library class, provides access to all library features.
@@ -37,6 +34,8 @@ import kotlinx.coroutines.launch
  * */
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 class Aimybox(initialConfig: Config) : CoroutineScope {
+
+    private val L = Logger(className)
 
     override val coroutineContext =
         Dispatchers.IO + SupervisorJob() + CoroutineName("Aimybox Root Scope")
@@ -96,6 +95,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         DialogApiComponent(config.dialogApi, dialogApiEvents, exceptions)
     private val responseHandler =
         AimyboxResponseHandler(this, config.skills)
+
+    @SuppressLint("MissingPermission")
     private val voiceTrigger =
         VoiceTriggerComponent(voiceTriggerEvents, exceptions, onTriggered = ::toggleRecognition)
 
@@ -125,7 +126,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         private set
 
     init {
-        updateConfiguration(initialConfig)
+        launch { updateConfiguration(initialConfig) }
     }
 
     /* Common */
@@ -133,31 +134,31 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     /**
      * Loads new [Aimybox] configuration. If one of components changes, the old one will be destroyed.
      * */
-    fun updateConfiguration(config: Config) {
+    suspend fun updateConfiguration(config: Config) {
         speechToText.setDelegate(config.speechToText)
         textToSpeech.setDelegate(config.textToSpeech)
         voiceTrigger.setDelegate(config.voiceTrigger)
         dialogApi.setDelegate(config.dialogApi)
         responseHandler.setSkills(config.skills)
-        this.config = config
-        standby()
+        this@Aimybox.config = config
+        standby().join()
     }
 
     /**
      * Cancels any active component.
      * */
-    fun cancelCurrentTask() {
-        components.forEach(AimyboxComponent::cancel)
+    suspend fun cancelCurrentTask() {
+        components.forEach { it.cancel() }
     }
 
     /**
      * Stop recognition, synthesis, API call and launch voice trigger if present.
      * */
-    fun standby() {
+    fun standby() = launch {
         state = State.STANDBY
 
         cancelCurrentTask()
-        launch { voiceTrigger.start() }
+        voiceTrigger.start()
     }
 
     fun mute() = launch {
@@ -191,7 +192,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * @see NextAction
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY) =
+    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY): Job? =
         speak(listOf(speech), nextAction)
 
     /**
@@ -209,11 +210,11 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * @see NextAction
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY) =
+    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY): Job? =
         if (!isMuted) launch {
             state = State.SPEAKING
 
-            cancelRecognition()
+            cancelRecognition().join()
             voiceTrigger.stop()
 
             textToSpeech.speak(speeches)
@@ -227,7 +228,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
             }
         } else null
 
-    fun stopSpeaking() = textToSpeech.cancel()
+    fun stopSpeaking() = launch { textToSpeech.cancel() }
 
     /* STT */
 
@@ -242,10 +243,10 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      *
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun startRecognition() = if (!isMuted) launch {
+    fun startRecognition(): Job? = if (!isMuted) launch {
         state = State.LISTENING
 
-        textToSpeech.cancel()
+        stopSpeaking().join()
         voiceTrigger.stop()
 
         val speech = speechToText.recognizeSpeech()
@@ -275,12 +276,12 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * Stops the current recognition, but not cancels it completely. If something was recognized,
      * then the request to a dialog API will be executed asynchronously after calling this method.
      * */
-    fun stopRecognition() = speechToText.stopRecognition()
+    fun stopRecognition(): Job = launch { speechToText.stopRecognition() }
 
     /**
      * Cancels the current recognition and discard partial recognition results.
      * */
-    fun cancelRecognition() = speechToText.cancel()
+    fun cancelRecognition(): Job = launch { speechToText.cancel() }
 
     /**
      * Toggle speech recognition.
@@ -290,9 +291,9 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * @see [Config.Builder.setEarconRes]
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    fun toggleRecognition() {
+    fun toggleRecognition(): Job = launch {
         if (state == State.LISTENING) {
-            cancelRecognition()
+            cancelRecognition().join()
         } else {
             config.earcon?.start()
             startRecognition()
@@ -310,7 +311,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     fun send(request: Request) = launch {
         state = State.PROCESSING
 
-        cancelRecognition()
+        cancelRecognition().join()
         config.skills.forEach { it.onRequest(request) }
 
         val response = dialogApi.send(request)

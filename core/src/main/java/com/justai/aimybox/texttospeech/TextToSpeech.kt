@@ -28,7 +28,7 @@ abstract class TextToSpeech {
     /**
      * Stop current synthesis.
      * */
-    abstract fun stop()
+    abstract suspend fun stop()
 
     /**
      * Free all claimed resources and prepare the object to destroy.

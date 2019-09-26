@@ -26,12 +26,14 @@ class SnowboyAssets private constructor(val modelFilePath: String, val resources
             assetsDirectory: String = "",
             externalStorageDirectory: String = "Android/data/snowboy-assets/"
         ): SnowboyAssets {
-            val directory = "${Environment.getExternalStorageDirectory().absolutePath}/$externalStorageDirectory"
+            val directory =
+                "${Environment.getExternalStorageDirectory().absolutePath}/$externalStorageDirectory"
 
             if (!File(directory + modelFileName).exists() || !File(directory + resourcesFileName).exists()) {
                 L.i("Asset files is not present on external storage. Copying...")
                 File(directory).mkdirs()
-                copyAssets(context, assetsDirectory, directory)
+                copyAssetToExternalStorage(context, assetsDirectory, modelFileName, directory)
+                copyAssetToExternalStorage(context, assetsDirectory, resourcesFileName, directory)
             } else {
                 L.i("Asset files is already present on external storage directory.")
             }
@@ -39,28 +41,34 @@ class SnowboyAssets private constructor(val modelFilePath: String, val resources
             return fromExternalStoragePath(directory, modelFileName, resourcesFileName)
         }
 
-        private fun copyAssets(context: Context, assetsDirectory: String, destination: String) {
+        private fun copyAssetToExternalStorage(
+            context: Context,
+            assetsDirectory: String,
+            filename: String,
+            destination: String
+        ) {
             val assetManager = context.assets
 
+            val filePath = if (assetsDirectory.isNotBlank()) {
+                "$assetsDirectory/$filename"
+            } else {
+                filename
+            }
+
             try {
-                assetManager.list(assetsDirectory)
-            } catch (e: Throwable) {
-                L.e("Failed to get asset file list", e)
-                null
-            }.orEmpty().forEach { file ->
-                try {
-                    assetManager.open("$assetsDirectory/$file").use { inputStream ->
-                        File(destination + file)
-                            .apply { createNewFile() }
-                            .outputStream()
-                            .use { outputStream ->
-                                inputStream.copyTo(outputStream, 1024)
-                                outputStream.flush()
-                            }
-                    }
-                } catch (e: Throwable) {
-                    L.e("Failed to copy $file from assets to SD", e)
+                assetManager.open(filePath).use { inputStream ->
+                    File(destination + filename)
+                        .apply {
+                            createNewFile()
+                        }
+                        .outputStream()
+                        .use { outputStream ->
+                            inputStream.copyTo(outputStream, 1024)
+                            outputStream.flush()
+                        }
                 }
+            } catch (e: Throwable) {
+                L.e("Failed to copy $filename from assets to SD", e)
             }
         }
     }
