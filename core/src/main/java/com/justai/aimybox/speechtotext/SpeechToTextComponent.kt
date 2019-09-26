@@ -32,6 +32,7 @@ internal class SpeechToTextComponent(
         cancel()
         return withContext(coroutineContext) {
 
+            L.i("Begin recognition")
             val recognitionChannel = delegate.startRecognition()
             eventChannel.send(SpeechToText.Event.RecognitionStarted)
 
@@ -83,12 +84,11 @@ internal class SpeechToTextComponent(
     }
 
     override suspend fun cancel() {
-        super.cancel()
         if (hasRunningJobs) {
             delegate.cancelRecognition()
             eventChannel.send(SpeechToText.Event.RecognitionCancelled)
-            L.w("Recognition cancelled")
         }
+        super.cancel()
     }
 
     private fun startTimeout(timeout: Long) = launch {

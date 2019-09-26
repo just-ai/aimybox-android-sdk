@@ -219,11 +219,15 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
             textToSpeech.speak(speeches)
         }.apply {
-            invokeOnCompletion {
-                when (nextAction) {
-                    NextAction.NOTHING -> Unit
-                    NextAction.RECOGNITION -> startRecognition()
-                    NextAction.STANDBY -> standby()
+            invokeOnCompletion { cause ->
+                if (cause is CancellationException) {
+                    if (state == State.SPEAKING) standby()
+                } else {
+                    when (nextAction) {
+                        NextAction.NOTHING -> Unit
+                        NextAction.RECOGNITION -> startRecognition()
+                        NextAction.STANDBY -> standby()
+                    }
                 }
             }
         } else null
@@ -269,6 +273,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     }
 
     private fun onRecognitionCancelled() {
+        L.w("Recognition cancelled")
         if (state == State.LISTENING) standby()
     }
 
@@ -312,6 +317,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         state = State.PROCESSING
 
         cancelRecognition().join()
+        stopSpeaking().join()
+
         config.skills.forEach { it.onRequest(request) }
 
         val response = dialogApi.send(request)

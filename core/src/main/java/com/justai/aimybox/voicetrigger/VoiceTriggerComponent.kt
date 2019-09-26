@@ -13,7 +13,7 @@ internal class VoiceTriggerComponent(
     private val events: SendChannel<VoiceTrigger.Event>,
     private val exceptions: SendChannel<AimyboxException>,
     private val onTriggered: () -> Job
-) : AimyboxComponent("VT") {
+) : AimyboxComponent("VoiceTrigger") {
 
     private var delegate: VoiceTrigger? = null
     private var isStarted = AtomicBoolean(false)

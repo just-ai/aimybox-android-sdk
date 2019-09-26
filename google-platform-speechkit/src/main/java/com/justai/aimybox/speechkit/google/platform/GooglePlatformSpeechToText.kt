@@ -50,7 +50,6 @@ class GooglePlatformSpeechToText(
     override suspend fun cancelRecognition() {
         withContext(Dispatchers.Main) {
             recognizer?.cancel()
-            recognizer?.destroy()
         }
     }
 
@@ -105,7 +104,7 @@ class GooglePlatformSpeechToText(
 
             private fun finish() {
                 resultChannel.close()
-                recognizer?.destroy()
+                recognizer?.cancel()
             }
         }
 

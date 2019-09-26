@@ -45,8 +45,12 @@ class GooglePlatformTextToSpeech(
         suspendCancellableCoroutine<Unit> { continuation ->
             continuation.invokeOnCancellation { synthesizer.stop() }
 
-            synthesizer.setOnUtteranceProgressListener(object :
-                UtteranceProgressListener() {
+            synthesizer.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+
+                override fun onStop(utteranceId: String?, interrupted: Boolean) =
+                    continuation.resume(Unit)
+
+                override fun onError(utteranceId: String?, errorCode: Int) = onError(utteranceId)
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) = continuation.resume(Unit)
                 override fun onError(utteranceId: String?) =
@@ -58,6 +62,11 @@ class GooglePlatformTextToSpeech(
             })
             synthesizer.speak(speech.text, GoogleTTS.QUEUE_FLUSH, null, speech.text)
         }
+    }
+
+    override suspend fun stop() {
+        super.stop()
+        synthesizer.stop()
     }
 
     suspend fun getVoice(): Voice {

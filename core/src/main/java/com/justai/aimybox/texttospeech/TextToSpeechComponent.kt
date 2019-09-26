@@ -6,7 +6,7 @@ import com.justai.aimybox.extensions.className
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class TextToSpeechComponent(
@@ -32,11 +32,11 @@ internal class TextToSpeechComponent(
     }
 
     override suspend fun cancel() {
-        super.cancel()
         if (hasRunningJobs) {
             delegate.stop()
             L.w("Speech cancelled")
         }
+        super.cancel()
     }
 
     private fun provideChannelsForDelegate() {

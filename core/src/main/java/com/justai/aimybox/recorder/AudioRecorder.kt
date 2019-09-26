@@ -77,7 +77,7 @@ class AudioRecorder(
             try {
                 L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
 
-                retry(5, delay = 100) { attempt ->
+                retry(5, delay = 300) { attempt ->
                     recorder = createRecorder()
                     if (recorder.state != AudioRecord.STATE_INITIALIZED) {
                         L.e("Failed to init AudioRecord, attempt $attempt")

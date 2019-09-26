@@ -6,10 +6,13 @@ import com.getkeepsafe.relinker.ReLinker
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.voicetrigger.VoiceTrigger
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.map
+import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.coroutines.CoroutineContext
@@ -72,8 +75,8 @@ class SnowboyVoiceTrigger(
         job.cancelChildrenAndJoin()
     }
 
-    override fun destroy() = runBlocking {
-        stopDetection()
+    override fun destroy() {
+        launch { stopDetection() }
         detector.delete()
     }
 

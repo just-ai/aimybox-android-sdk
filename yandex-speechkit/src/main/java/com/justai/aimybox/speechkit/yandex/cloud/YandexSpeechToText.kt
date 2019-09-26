@@ -2,6 +2,7 @@ package com.justai.aimybox.speechkit.yandex.cloud
 
 import android.Manifest
 import androidx.annotation.RequiresPermission
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
@@ -10,6 +11,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("unused")
 class YandexSpeechToText(
     yandexPassportOAuthKey: String,
     folderId: String,
@@ -59,7 +61,7 @@ class YandexSpeechToText(
     }
 
     override suspend fun cancelRecognition() {
-        coroutineContext.cancelChildren()
+        coroutineContext.cancelChildrenAndJoin()
     }
 
     override fun destroy() {
