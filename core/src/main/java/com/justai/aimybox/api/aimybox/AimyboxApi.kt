@@ -6,7 +6,7 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-internal interface AimyboxRetrofitApi {
+internal interface AimyboxApi {
     @POST("{path}")
     fun performRequestAsync(
         @Path("path", encoded = true) path: String,

@@ -2,16 +2,12 @@ package com.justai.aimybox.media
 
 import android.content.Context
 import android.media.MediaPlayer
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
+import com.justai.aimybox.extensions.contextJob
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.texttospeech.TextToSpeech
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 
@@ -22,32 +18,34 @@ import kotlin.coroutines.resume
  * */
 class AudioSynthesizer(private val context: Context) : CoroutineScope {
 
-    private val L = Logger("Aimybox-AudioSynthesizer")
+    private val L = Logger("Aimybox(AudioSynthesizer)")
 
-    private val job = Job()
-
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + job
+    override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
     private var mediaPlayer = MediaPlayer()
 
     suspend fun play(source: AudioSpeech) {
-        when {
-            job.isCancelled -> L.a("Can't play $source: AudioSynthesizer is released.")
-            job.children.any() -> L.e("Can't play $source: AudioSynthesizer is busy.")
-            else -> launchPlayer(source).join()
+        L.assert(contextJob.isActive) {
+            "Can't play $source: AudioSynthesizer is released."
         }
+        L.assert(!contextJob.children.any { it.isActive }) {
+            "Can't play $source: AudioSynthesizer is busy."
+        }
+
+        launchPlayer(source).join()
     }
 
-    fun cancel() {
-        job.cancelChildren()
+    suspend fun cancel() {
+        contextJob.cancelChildrenAndJoin()
     }
 
     fun release() {
         mediaPlayer.release()
-        job.cancel()
+        contextJob.cancel()
     }
 
     private fun launchPlayer(source: AudioSpeech) = launch {
+        val scope = this
         try {
             source.load(context, mediaPlayer)
             mediaPlayer.prepare()
@@ -55,19 +53,19 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
                 mediaPlayer.setOnCompletionListener { continuation.resume(Unit) }
                 mediaPlayer.setOnErrorListener { _, what, _ ->
                     L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
-                    cancel()
+                    scope.cancel()
                     true
                 }
                 mediaPlayer.start()
             }
         } catch (e: CancellationException) {
-            L.e("AudioSynthesizer is cancelled.")
+            L.w("AudioSynthesizer is cancelled.")
         } catch (e: Throwable) {
-            mediaPlayer.release()
-            mediaPlayer = MediaPlayer()
             L.e(e)
         } finally {
-            mediaPlayer.reset()
+            withContext(NonCancellable) {
+                mediaPlayer.reset()
+            }
         }
     }
 }

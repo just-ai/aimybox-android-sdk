@@ -1,26 +1,26 @@
-@file:Suppress("unused")
-
 package com.justai.aimybox.voicetrigger
 
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.VoiceTriggerException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
+@Suppress("unused")
 internal class VoiceTriggerComponent(
     private val events: SendChannel<VoiceTrigger.Event>,
     private val exceptions: SendChannel<AimyboxException>,
-    private val onTriggered: () -> Unit
-) : AimyboxComponent("VT") {
+    private val onTriggered: () -> Job
+) : AimyboxComponent("VoiceTrigger") {
 
     private var delegate: VoiceTrigger? = null
-    private var isStarted = false
+    private var isStarted = AtomicBoolean(false)
 
     internal suspend fun start() {
         delegate?.let { delegate ->
-            if (!isStarted) {
-                isStarted = true
+            if (isStarted.compareAndSet(false, true)) {
                 events.send(VoiceTrigger.Event.Started)
                 delegate.startDetection(
                     onTriggered = { phrase ->
@@ -37,8 +37,7 @@ internal class VoiceTriggerComponent(
 
     internal suspend fun stop() {
         delegate?.let { delegate ->
-            if (isStarted) {
-                isStarted = false
+            if (isStarted.compareAndSet(true, false)) {
                 delegate.stopDetection()
                 events.send(VoiceTrigger.Event.Stopped)
             }
@@ -49,8 +48,7 @@ internal class VoiceTriggerComponent(
         if (delegate != voiceTrigger) {
             delegate?.destroy()
             delegate = voiceTrigger
-            if (isStarted) {
-                isStarted = false
+            if (isStarted.get()) {
                 launch { start() }
             }
         }

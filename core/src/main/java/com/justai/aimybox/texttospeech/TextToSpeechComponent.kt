@@ -2,24 +2,27 @@ package com.justai.aimybox.texttospeech
 
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
+import com.justai.aimybox.extensions.className
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class TextToSpeechComponent(
     private var delegate: TextToSpeech,
     private val eventChannel: SendChannel<TextToSpeech.Event>,
     private val exceptionChannel: SendChannel<AimyboxException>
-) : AimyboxComponent("TTS") {
+) : AimyboxComponent("TextToSpeech") {
 
     init {
         provideChannelsForDelegate()
     }
 
-    private val L = Logger("Aimybox-TTS")
+    private val L = Logger(className)
 
     suspend fun speak(speechList: List<Speech>) {
+        L.assert(!hasRunningJobs) { "Synthesis is already running" }
         cancel()
         eventChannel.send(TextToSpeech.Event.SpeechSequenceStarted(speechList))
         withContext(coroutineContext) {
@@ -28,13 +31,12 @@ internal class TextToSpeechComponent(
         eventChannel.send(TextToSpeech.Event.SpeechSequenceCompleted(speechList))
     }
 
-    fun setDelegate(textToSpeech: TextToSpeech) {
-        if (delegate != textToSpeech) {
-            cancel()
-            delegate.destroy()
-            delegate = textToSpeech
-            provideChannelsForDelegate()
+    override suspend fun cancel() {
+        if (hasRunningJobs) {
+            delegate.stop()
+            L.w("Speech cancelled")
         }
+        super.cancel()
     }
 
     private fun provideChannelsForDelegate() {
@@ -42,11 +44,12 @@ internal class TextToSpeechComponent(
         delegate.exceptionChannel = exceptionChannel
     }
 
-    override fun cancel() {
-        if (hasRunningJobs) {
-            delegate.stop()
-            super.cancel()
-            L.w("Speech cancelled")
+    suspend fun setDelegate(textToSpeech: TextToSpeech) {
+        if (delegate != textToSpeech) {
+            cancel()
+            delegate.destroy()
+            delegate = textToSpeech
+            provideChannelsForDelegate()
         }
     }
 }

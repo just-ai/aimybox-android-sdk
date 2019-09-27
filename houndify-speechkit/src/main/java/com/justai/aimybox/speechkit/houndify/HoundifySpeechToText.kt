@@ -9,17 +9,16 @@ import com.hound.android.sdk.audio.SimpleAudioByteStreamSource
 import com.hound.android.sdk.util.HoundRequestInfoFactory
 import com.hound.core.model.sdk.HoundResponse
 import com.hound.core.model.sdk.PartialTranscript
-import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import java.io.IOException
 import java.util.*
 
 private val L = Logger("Houndify")
 
+@Suppress("unused")
 class HoundifySpeechToText(
     context: Context,
     clientId: String,
@@ -42,16 +41,13 @@ class HoundifySpeechToText(
         return channel
     }
 
-    override fun stopRecognition() {
-        L.d("stopRecognition")
+    override suspend fun stopRecognition() {
         voiceSearch?.stopRecording()
     }
 
-    override fun cancelRecognition() {
-        L.d("cancelRecognition")
+    override suspend fun cancelRecognition() {
         voiceSearch?.abort()
     }
-
 
     private fun createVoiceFactory(context: Context, clientId: String, clientKey: String) = object {
         fun build(resultChannel: SendChannel<Result>) = VoiceSearch.Builder().apply {
@@ -99,10 +95,11 @@ class HoundifySpeechToText(
         }.build()
     }
 
-    private fun buildRequestInfo(context: Context) = HoundRequestInfoFactory.getDefault(context).apply {
-        userId = UserIdFactory.get(context)
-        requestId = UUID.randomUUID().toString()
-    }
+    private fun buildRequestInfo(context: Context) =
+        HoundRequestInfoFactory.getDefault(context).apply {
+            userId = UserIdFactory.get(context)
+            requestId = UUID.randomUUID().toString()
+        }
 
     override fun destroy() {
         voiceSearch?.abort()

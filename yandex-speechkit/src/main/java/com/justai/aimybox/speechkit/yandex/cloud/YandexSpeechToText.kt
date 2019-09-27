@@ -2,6 +2,7 @@ package com.justai.aimybox.speechkit.yandex.cloud
 
 import android.Manifest
 import androidx.annotation.RequiresPermission
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
@@ -10,6 +11,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlin.coroutines.CoroutineContext
 
+@Suppress("unused")
 class YandexSpeechToText(
     yandexPassportOAuthKey: String,
     folderId: String,
@@ -21,7 +23,7 @@ class YandexSpeechToText(
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
-    private val audioRecorder = AudioRecorder(config.sampleRate.intValue)
+    private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 
     private val api = YandexRecognitionApi(yandexPassportOAuthKey, folderId, language, config)
 
@@ -40,7 +42,7 @@ class YandexSpeechToText(
             onCompleted = { close() }
         )
 
-        val audioData = audioRecorder.startAudioRecording()
+        val audioData = audioRecorder.startRecordingBytes()
 
         launch {
             audioData.consumeEach { data ->
@@ -54,12 +56,12 @@ class YandexSpeechToText(
         }
     }
 
-    override fun stopRecognition() {
+    override suspend fun stopRecognition() {
         audioRecorder.stopAudioRecording()
     }
 
-    override fun cancelRecognition() {
-        coroutineContext.cancelChildren()
+    override suspend fun cancelRecognition() {
+        coroutineContext.cancelChildrenAndJoin()
     }
 
     override fun destroy() {

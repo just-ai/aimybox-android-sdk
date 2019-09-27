@@ -6,7 +6,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 
 private val dispatcher = Executors.newSingleThreadExecutor { runnable ->
-    object : Thread(runnable) {
+    object : Thread(runnable, "AudioRecord thread") {
         init {
             Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
         }

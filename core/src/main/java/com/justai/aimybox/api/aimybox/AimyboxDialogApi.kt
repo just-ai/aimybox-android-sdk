@@ -1,14 +1,16 @@
 package com.justai.aimybox.api.aimybox
 
 import android.net.Uri
-import android.os.Build
+import com.github.salomonbrys.kotson.nullBool
+import com.github.salomonbrys.kotson.nullObj
+import com.github.salomonbrys.kotson.nullString
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.justai.aimybox.api.DialogApi
+import com.justai.aimybox.core.L
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
-import com.justai.aimybox.model.reply.ButtonsReply
-import com.justai.aimybox.model.reply.ImageReply
-import com.justai.aimybox.model.reply.Reply
-import com.justai.aimybox.model.reply.TextReply
+import com.justai.aimybox.model.reply.aimybox.*
 
 /**
  * Aimybox dialog api implementation.
@@ -21,15 +23,15 @@ class AimyboxDialogApi(
     private val apiKey: String,
     private val unitId: String,
     url: String = DEFAULT_API_URL,
-    private val replyTypes: Map<String, Class<out Reply>> = DEFAULT_REPLY_TYPES
+    private val replyTypes: Map<String, Class<out AimyboxReply>> = DEFAULT_REPLY_TYPES
 ) : DialogApi {
 
     companion object {
         private const val DEFAULT_API_URL = "https://api.aimybox.com/"
         val DEFAULT_REPLY_TYPES = mapOf(
-            "text" to TextReply::class.java,
-            "image" to ImageReply::class.java,
-            "buttons" to ButtonsReply::class.java
+            "text" to AimyboxTextReply::class.java,
+            "image" to AimyboxImageReply::class.java,
+            "buttons" to AimyboxButtonsReply::class.java
         )
     }
 
@@ -42,27 +44,45 @@ class AimyboxDialogApi(
         path = uri.path ?: "/"
     }
 
-    private val httpWorker = getHttpWorker(baseUrl, path)
+    private val retrofit = AimyboxRetrofit(baseUrl, path)
 
-    override suspend fun send(request: Request): Response? {
+    override suspend fun send(request: Request): Response {
         val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
-        val apiResponse = httpWorker.requestAsync(apiRequest)
-        val response = AimyboxResponse.fromJson(apiResponse, replyTypes)
-        return response.run {
-            Response(query, text, action, intent, question, replies, data, source)
-        }
+        return retrofit.requestAsync(apiRequest).parseResponse(replyTypes)
     }
 
-    override fun destroy() {
-        //Do nothing
-    }
+    private fun JsonObject.parseResponse(replyTypes: Map<String, Class<out AimyboxReply>>) =
+        AimyboxResponse(
+            get("query").nullString,
+            get("text").nullString,
+            get("action").nullString,
+            get("intent").nullString,
+            get("question").nullBool,
+            getReplies(replyTypes),
+            get("data").nullObj,
+            this
+        )
 
-    @Suppress("DEPRECATION")
-    private fun getHttpWorker(baseUrl: String, path: String) =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            RetrofitHttpWorker(baseUrl, path)
-        } else {
-            LegacyHttpWorker(baseUrl + path)
+    private fun JsonObject.getReplies(replyTypes: Map<String, Class<out AimyboxReply>>) =
+        get("replies")?.takeIf(JsonElement::isJsonArray)
+            ?.asJsonArray
+            ?.filterIsInstance(JsonObject::class.java)
+            ?.map { resolveReplyType(it, replyTypes) }
+            .orEmpty()
+
+    private fun resolveReplyType(
+        json: JsonObject,
+        replyTypes: Map<String, Class<out AimyboxReply>>
+    ): AimyboxReply {
+        val type = json["type"].nullString
+        val replyClass = replyTypes[type] ?: UnknownAimyboxReply::class.java
+        if (replyClass == UnknownAimyboxReply::class.java) L.w(
+            """AimyboxReply with type "$type" is unresolved. 
+                |register reply class in AimyboxDialogApi constructor.""".trimMargin()
+        )
+        require(replyClass.constructors.size == 1) {
+            "AimyboxReply must have strictly one constructor. See AimyboxReply interface documentation."
         }
-
+        return replyClass.constructors.first().newInstance(json) as AimyboxReply
+    }
 }

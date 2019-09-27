@@ -34,7 +34,7 @@ internal class DialogApiComponent(
 
                 withTimeout(timeout) {
                     response.await()
-                }?.also {
+                }.also {
                     events.send(DialogApi.Event.ResponseReceived(it))
                 }
             }
@@ -51,7 +51,7 @@ internal class DialogApiComponent(
         } as? Response
     }
 
-    internal fun setDelegate(dialogApi: DialogApi) {
+    internal suspend fun setDelegate(dialogApi: DialogApi) {
         if (delegate != dialogApi) {
             cancel()
             delegate.destroy()
