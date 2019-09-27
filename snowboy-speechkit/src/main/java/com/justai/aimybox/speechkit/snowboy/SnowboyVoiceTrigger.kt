@@ -42,7 +42,7 @@ class SnowboyVoiceTrigger(
     private val recorder = AudioRecorder("Snowboy")
 
     private fun startRecording(onTriggered: (phrase: String?) -> Unit) {
-        val audioDataChannel = recorder.startAudioRecording().convertBytesToShorts()
+        val audioDataChannel = recorder.startRecordingShorts()
 
         launch {
             audioDataChannel.consumeEach { audioData ->
@@ -78,16 +78,6 @@ class SnowboyVoiceTrigger(
     override fun destroy() {
         launch { stopDetection() }
         detector.delete()
-    }
-
-    private fun ReceiveChannel<ByteArray>.convertBytesToShorts() = map { audioBytes ->
-        check(audioBytes.size % 2 == 0)
-        val audioData = ShortArray(audioBytes.size / 2)
-        ByteBuffer.wrap(audioBytes)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .asShortBuffer()
-            .get(audioData)
-        audioData
     }
 
 }

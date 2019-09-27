@@ -11,7 +11,10 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.map
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
 
@@ -68,7 +71,7 @@ class AudioRecorder(
      *
      * @return a channel of ByteArrays which contains recorded audio data.
      * */
-    fun startAudioRecording(): ReceiveChannel<ByteArray> {
+    fun startRecordingBytes(): ReceiveChannel<ByteArray> {
         val channel = Channel<ByteArray>(outputChannelBufferSizeChunks)
 
         lateinit var recorder: AudioRecord
@@ -123,6 +126,14 @@ class AudioRecorder(
     }
 
     /**
+     * Launch new coroutine and start audio recording.
+     * Will produce one frame of audio data each [periodMs] milliseconds.
+     *
+     * @return a channel of ShortArrays which contains recorded audio data.
+     * */
+    fun startRecordingShorts() = startRecordingBytes().convertBytesToShorts()
+
+    /**
      * Stop the current recording.
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
@@ -161,5 +172,15 @@ class AudioRecorder(
         }
 
         return bufferSize
+    }
+
+    private fun ReceiveChannel<ByteArray>.convertBytesToShorts() = map { audioBytes ->
+        check(audioBytes.size % 2 == 0)
+        val audioData = ShortArray(audioBytes.size / 2)
+        ByteBuffer.wrap(audioBytes)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .asShortBuffer()
+            .get(audioData)
+        audioData
     }
 }

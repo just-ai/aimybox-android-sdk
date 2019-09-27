@@ -42,7 +42,7 @@ class YandexSpeechToText(
             onCompleted = { close() }
         )
 
-        val audioData = audioRecorder.startAudioRecording()
+        val audioData = audioRecorder.startRecordingBytes()
 
         launch {
             audioData.consumeEach { data ->
