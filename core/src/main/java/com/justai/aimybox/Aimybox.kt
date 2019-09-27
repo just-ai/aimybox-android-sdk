@@ -255,10 +255,6 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         stopSpeaking().join()
         stopReponseProcessing().join()
 
-        if (config.recognitionBehavior == Config.RecognitionBehavior.SYNCHRONOUS) {
-
-        }
-
         voiceTrigger.stop()
 
         val speech = speechToText.recognizeSpeech()

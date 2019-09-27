@@ -3,6 +3,7 @@ package com.justai.aimybox.speechtotext
 import com.justai.aimybox.BaseCoroutineTest
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -93,7 +94,7 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
             component.cancel()
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionCancelled)
 
-            verify { mockDelegate.cancelRecognition() }
+            coVerify { mockDelegate.cancelRecognition() }
 
             assertFails { deferred.await() }
             assert(resultChannel.isClosedForSend)
