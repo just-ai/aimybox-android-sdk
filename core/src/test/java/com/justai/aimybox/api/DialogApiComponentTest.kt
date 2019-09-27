@@ -2,7 +2,6 @@ package com.justai.aimybox.api
 
 import com.google.gson.JsonObject
 import com.justai.aimybox.BaseCoroutineTest
-import com.justai.aimybox.api.aimybox.AimyboxResponse
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.ApiRequestTimeoutException
 import com.justai.aimybox.model.Request
