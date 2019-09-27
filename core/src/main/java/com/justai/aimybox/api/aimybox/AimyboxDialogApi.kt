@@ -2,12 +2,12 @@ package com.justai.aimybox.api.aimybox
 
 import android.net.Uri
 import com.github.salomonbrys.kotson.nullBool
-import com.github.salomonbrys.kotson.nullObj
 import com.github.salomonbrys.kotson.nullString
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.core.L
+import com.justai.aimybox.model.JsonResponse
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
 import com.justai.aimybox.model.reply.aimybox.*
@@ -52,16 +52,7 @@ class AimyboxDialogApi(
     }
 
     private fun JsonObject.parseResponse(replyTypes: Map<String, Class<out AimyboxReply>>) =
-        AimyboxResponse(
-            get("query").nullString,
-            get("text").nullString,
-            get("action").nullString,
-            get("intent").nullString,
-            get("question").nullBool,
-            getReplies(replyTypes),
-            get("data").nullObj,
-            this
-        )
+        JsonResponse(this, replies = getReplies(replyTypes))
 
     private fun JsonObject.getReplies(replyTypes: Map<String, Class<out AimyboxReply>>) =
         get("replies")?.takeIf(JsonElement::isJsonArray)
