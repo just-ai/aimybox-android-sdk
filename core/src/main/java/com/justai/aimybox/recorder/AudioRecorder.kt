@@ -90,9 +90,6 @@ class AudioRecorder(
                     val buffer = ByteArray(bufferSize)
                     loop@ while (isActive) {
                         val bytesRead = recorder.read(buffer, 0, buffer.size)
-
-                        L.d("Read $bytesRead bytes")
-
                         when {
                             bytesRead <= 0 -> {
                                 recorder.release()

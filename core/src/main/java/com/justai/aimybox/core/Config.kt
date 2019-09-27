@@ -61,7 +61,7 @@ data class Config internal constructor(
         /**
          * @see RecognitionBehavior
          * */
-        var recognitionBehavior: RecognitionBehavior = RecognitionBehavior.ALLOW_OVERRIDE
+        var recognitionBehavior: RecognitionBehavior = RecognitionBehavior.SYNCHRONOUS
     ) {
 
         private var earcon: MediaPlayer? = null

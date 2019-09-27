@@ -212,9 +212,10 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY): Job? =
         if (!isMuted) launch {
+            if (state == State.SPEAKING) return@launch
             state = State.SPEAKING
 
-            cancelRecognition().join()
+            stopSpeaking().join()
             voiceTrigger.stop()
 
             textToSpeech.speak(speeches)
@@ -248,16 +249,20 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun startRecognition(): Job? = if (!isMuted) launch {
+        if (state == State.LISTENING) return@launch
         state = State.LISTENING
 
         stopSpeaking().join()
+        stopReponseProcessing().join()
+
+        if (config.recognitionBehavior == Config.RecognitionBehavior.SYNCHRONOUS) {
+
+        }
+
         voiceTrigger.stop()
 
         val speech = speechToText.recognizeSpeech()
         if (!speech.isNullOrBlank()) {
-            if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) {
-                voiceTrigger.start()
-            }
             send(Request(speech))
         } else {
             onEmptyRecognition()
@@ -319,11 +324,16 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         cancelRecognition().join()
         stopSpeaking().join()
 
+        if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) {
+            voiceTrigger.start()
+        }
+
         config.skills.forEach { it.onRequest(request) }
 
         val response = dialogApi.send(request)
 
         if (response != null) {
+            state = State.PROCESSING
             cancelCurrentTask()
             process(response)
         } else {
@@ -333,6 +343,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
     private fun process(response: Response) = responseHandler.handle(response)
+
+    fun stopReponseProcessing() = launch { responseHandler.cancel() }
 
     private fun onEmptyResponse(request: Request) {
         if (state == State.PROCESSING) {
