@@ -20,7 +20,7 @@ Dialog API module to connect Aimybox powered assistant to the [Google Dialogflow
 ```
 5. Provide Dialogflow component into Aimybox configuration object:
 ```kotlin    
-    fun createAimybox(context: Context, unitId: String): Aimybox {
+    fun createAimybox(context: Context): Aimybox {
         val locale = Locale.getDefault()
     
         val textToSpeech = GooglePlatformTextToSpeech(context, locale) // Or any other TTS
