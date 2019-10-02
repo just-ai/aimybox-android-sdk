@@ -4,7 +4,8 @@ val Submodules = listOf(
     Library("yandex-speechkit", Versions.aimybox, true),
     Library("snowboy-speechkit", Versions.aimybox, true),
     Library("google-cloud-speechkit", Versions.aimybox, false),
-    Library("houndify-speechkit", Versions.aimybox, false)
+    Library("houndify-speechkit", Versions.aimybox, false),
+    Library("dialogflow-api", Versions.aimybox,true)
 )
 
 object Versions {
