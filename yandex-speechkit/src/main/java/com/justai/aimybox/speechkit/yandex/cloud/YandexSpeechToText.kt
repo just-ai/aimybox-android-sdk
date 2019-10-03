@@ -48,6 +48,7 @@ class YandexSpeechToText(
             audioData.consumeEach { data ->
                 requestStream.onNext(YandexRecognitionApi.createRequest(data))
             }
+            requestStream.onCompleted()
         }
 
         invokeOnClose {
@@ -85,8 +86,7 @@ class YandexSpeechToText(
         val voiceModel: VoiceModel = VoiceModel.GENERAL,
         val enableProfanityFilter: Boolean = true,
         val enablePartialResults: Boolean = true,
-        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
-        val encoding: AudioEncoding = AudioEncoding.PCM //TODO change to opus when implemented
+        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ
     )
 }
 

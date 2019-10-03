@@ -74,7 +74,7 @@ internal class YandexRecognitionApi(
                 config.enableProfanityFilter,
                 config.enablePartialResults,
                 config.sampleRate.longValue,
-                config.encoding
+                AudioEncoding.PCM
             ),
             folderId
         )
