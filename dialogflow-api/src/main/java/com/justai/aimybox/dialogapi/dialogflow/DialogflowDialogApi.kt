@@ -57,7 +57,7 @@ class DialogflowDialogApi(
 
     private fun parseResponse(res: DetectIntentResponse): Response {
         val qr = res.queryResult
-        val replies= qr.fulfillmentMessagesList.mapNotNull { msg ->
+        val replies = qr.fulfillmentMessagesList.mapNotNull { msg ->
             when {
                 msg.hasBasicCard() -> convert(msg.basicCard)
                 msg.hasSimpleResponses() -> convert(msg.simpleResponses.simpleResponsesList)
