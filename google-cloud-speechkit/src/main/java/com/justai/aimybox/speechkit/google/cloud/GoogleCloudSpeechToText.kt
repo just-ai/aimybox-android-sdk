@@ -1,144 +1,125 @@
 package com.justai.aimybox.speechkit.google.cloud
 
-import androidx.annotation.RequiresPermission
-import com.google.api.gax.rpc.ApiStreamObserver
-import com.google.auth.oauth2.GoogleCredentials
-import com.google.cloud.speech.v1.RecognitionConfig
-import com.google.cloud.speech.v1.SpeechClient
-import com.google.cloud.speech.v1.SpeechSettings
-import com.google.cloud.speech.v1.StreamingRecognitionConfig
-import com.google.cloud.speech.v1.StreamingRecognizeRequest
-import com.google.cloud.speech.v1.StreamingRecognizeResponse
+import com.google.api.gax.rpc.ClientStream
+import com.google.api.gax.rpc.ResponseObserver
+import com.google.api.gax.rpc.StreamController
+import com.google.cloud.speech.v1.*
 import com.google.protobuf.ByteString
-import com.justai.aimybox.core.SpeechToTextException
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
+import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEachIndexed
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.IOException
-import java.io.InputStream
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.CoroutineContext
+import java.util.*
 
 class GoogleCloudSpeechToText(
-    private val languageCode: String,
-    credential: InputStream
+    var locale: Locale,
+    var sampleRate: SampleRate,
+    var channelCount: Int = 1,
+    var enablePunctuation: Boolean = false,
+    var profanityFilter: Boolean = false,
+    var recognitionModel: RecognitionModel = RecognitionModel.DEFAULT
 ) : SpeechToText(), CoroutineScope {
+    override val coroutineContext = Dispatchers.IO
 
-    companion object {
-        private const val SPEECH_EVENT_UNSPECIFIED = "SPEECH_EVENT_UNSPECIFIED"
-    }
+    private val speechClient = SpeechClient.create()
 
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
-
-    init {
-        L.i("Initializing Google Cloud STT")
-    }
-
-    private var speechClient = SpeechClient.create(
-        SpeechSettings.newBuilder()
-            .setCredentialsProvider { GoogleCredentials.fromStream(credential) }
-            .build()
+    private val audioRecorder = AudioRecorder(
+        name = "Google Cloud Recognition",
+        sampleRate = sampleRate.intValue,
+        channelCount = channelCount
     )
 
-    private val mAudioRecorder = AudioRecorder()
 
-    init {
-        L.i("Google Cloud STT initialized")
-    }
-
-    @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     override fun startRecognition() = produce<Result> {
-        val requestStream = speechClient.streamingRecognizeCallable()
-            .bidiStreamingCall(createStreamObserver(channel))
+        val stream = speechClient.streamingRecognizeCallable()
+            .splitCall(CloudResponseObserver(channel))
+
+        stream.sendConfig()
+
+        val audioData = audioRecorder.startRecordingBytes()
 
         launch {
-            mAudioRecorder.startAudioRecording().consumeEachIndexed { (index, value) ->
-                val builder = StreamingRecognizeRequest.newBuilder()
-                    .setAudioContent(ByteString.copyFrom(value))
-                    .apply { if (index == 0) addStreamingConfig() }
-
-                requestStream.onNext(builder.build())
+            audioData.consumeEach { data ->
+                StreamingRecognizeRequest.newBuilder()
+                    .setAudioContent(ByteString.copyFrom(data))
+                    .build()
+                    .let(stream::send)
             }
-        }.invokeOnCompletion { requestStream.onCompleted() }
-    }
+            stream.closeSend()
+        }
 
-    override fun stopRecognition() {
-        stopAudioRecording()
-    }
-
-    override fun cancelRecognition() {
-        stopAudioRecording()
-        coroutineContext.cancelChildren()
-    }
-
-    override fun destroy() {
-        speechClient.shutdownNow()
-        speechClient.awaitTermination(3, TimeUnit.SECONDS)
-    }
-
-    private fun createStreamObserver(channel: SendChannel<Result>): ApiStreamObserver<StreamingRecognizeResponse> {
-        return object : ApiStreamObserver<StreamingRecognizeResponse> {
-            override fun onNext(response: StreamingRecognizeResponse) {
-                if (response.speechEventType.name == SPEECH_EVENT_UNSPECIFIED) {
-                    val result = response.getResults(0)
-                    val text = result.getAlternatives(0).transcript
-
-                    if (result.isFinal) {
-                        stopAudioRecording()
-                        channel.sendResult(Result.Final(text))
-                        channel.close()
-                    } else {
-                        channel.sendResult(Result.Partial(text))
-                    }
-                }
-            }
-
-            override fun onError(e: Throwable) {
-                stopAudioRecording()
-                channel.sendResult(Result.Exception(GoogleCloudSpeechToTextException(cause = e)))
-                channel.close()
-            }
-
-            override fun onCompleted() {
-                channel.close()
-            }
+        invokeOnClose {
+            audioData.cancel()
+            stream.closeSend()
         }
     }
 
-    private fun stopAudioRecording() {
-        mAudioRecorder.stopAudioRecording()
+    override suspend fun stopRecognition() {
+        audioRecorder.stopAudioRecording()
     }
 
-    private fun StreamingRecognizeRequest.Builder.addStreamingConfig() {
-        val recognitionConfig = RecognitionConfig.newBuilder()
-            .setLanguageCode(languageCode)
-            .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-            .setSampleRateHertz(16000)
-            .build()
-
-        streamingConfig = StreamingRecognitionConfig.newBuilder()
-            .setConfig(recognitionConfig)
-            .setInterimResults(true)
-            .setSingleUtterance(true)
-            .build()
+    override suspend fun cancelRecognition() {
+        coroutineContext.cancelChildrenAndJoin()
     }
 
-    private fun SendChannel<Result>.sendResult(result: Result) {
-        if (isClosedForSend) {
-            L.w("Channel $this is closed. Omitting $result.")
-        } else {
-            offer(result).let { success ->
-                if (!success) L.w("Failed to send $result to $this")
+    private fun ClientStream<StreamingRecognizeRequest>.sendConfig() =
+        StreamingRecognizeRequest.newBuilder()
+            .setStreamingConfig(createConfig())
+            .build()
+            .let(::send)
+
+    private fun createConfig() = StreamingRecognitionConfig.newBuilder()
+        .setConfig(
+            RecognitionConfig.newBuilder()
+                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+                .setAudioChannelCount(channelCount)
+                .setSampleRateHertz(sampleRate.intValue)
+                .setMaxAlternatives(0)
+                .setEnableAutomaticPunctuation(enablePunctuation)
+                .setLanguageCode(locale.language)
+                .setProfanityFilter(profanityFilter)
+                .setModel(recognitionModel.stringValue)
+                .build()
+        )
+        .setInterimResults(true)
+        .build()
+
+    private class CloudResponseObserver(
+        private val channel: SendChannel<Result>
+    ) : ResponseObserver<StreamingRecognizeResponse> {
+        override fun onComplete() {
+            channel.close()
+        }
+
+        override fun onResponse(response: StreamingRecognizeResponse) {
+            val apiResult = response.resultsList.first()
+
+            val text = apiResult.alternativesList.first()
+                .wordsList
+                .joinToString(" ")
+                .takeIf { it.isNotBlank() }
+
+            sendResult(if (apiResult.isFinal) Result.Final(text) else Result.Partial(text))
+        }
+
+        override fun onError(t: Throwable) =
+            sendResult(Result.Exception(GoogleCloudSpeechToTextException(cause = t)))
+
+        override fun onStart(controller: StreamController?) {}
+
+        private fun sendResult(result: Result) {
+            if (channel.isClosedForSend) {
+                L.w("Channel $this is closed. Omitting $result.")
+            } else {
+                val isSuccess = channel.offer(result)
+                if (!isSuccess) L.w("Failed to send $result to $this")
             }
         }
     }
-
 }

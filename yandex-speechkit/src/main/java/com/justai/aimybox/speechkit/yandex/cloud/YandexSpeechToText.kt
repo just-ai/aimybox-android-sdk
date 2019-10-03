@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
+import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
