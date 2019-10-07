@@ -3,6 +3,7 @@ package com.justai.aimybox.media
 import android.content.Context
 import android.media.MediaPlayer
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
+import com.justai.aimybox.extensions.className
 import com.justai.aimybox.extensions.contextJob
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.AudioSpeech
@@ -18,7 +19,7 @@ import kotlin.coroutines.resume
  * */
 class AudioSynthesizer(private val context: Context) : CoroutineScope {
 
-    private val L = Logger("Aimybox(AudioSynthesizer)")
+    private val L = Logger(className)
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 

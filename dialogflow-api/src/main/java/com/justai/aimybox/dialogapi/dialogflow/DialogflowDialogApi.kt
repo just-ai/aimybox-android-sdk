@@ -6,12 +6,11 @@ import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.ServiceAccountCredentials
 import com.google.cloud.dialogflow.v2.*
 import com.justai.aimybox.api.DialogApi
-import com.justai.aimybox.model.Request
-import com.justai.aimybox.model.Response
-import com.justai.aimybox.dialogapi.dialogflow.converter.SimpleResponseConverter.convert
-import com.justai.aimybox.dialogapi.dialogflow.converter.ImageResponseConverter.convert
-import com.justai.aimybox.dialogapi.dialogflow.converter.SuggestionsResponseConverter.convert
+import com.justai.aimybox.core.CustomSkill
 import com.justai.aimybox.dialogapi.dialogflow.converter.BasicCardResponseConverter.convert
+import com.justai.aimybox.dialogapi.dialogflow.converter.ImageResponseConverter.convert
+import com.justai.aimybox.dialogapi.dialogflow.converter.SimpleResponseConverter.convert
+import com.justai.aimybox.dialogapi.dialogflow.converter.SuggestionsResponseConverter.convert
 import com.justai.aimybox.model.reply.TextReply
 import java.util.*
 
@@ -25,8 +24,9 @@ import java.util.*
 class DialogflowDialogApi(
     context: Context,
     @RawRes serviceAccountRes: Int,
-    private val language: String
-): DialogApi {
+    private val language: String,
+    override val customSkills: LinkedHashSet<CustomSkill<DialogflowRequest, DialogflowResponse>> = linkedSetOf()
+) : DialogApi<DialogflowRequest, DialogflowResponse>() {
 
     private val sessionSettings: SessionsSettings
     private val sessionId = UUID.randomUUID().toString()
@@ -42,12 +42,25 @@ class DialogflowDialogApi(
             .build()
     }
 
-    override suspend fun send(request: Request): Response {
+    override fun createRequest(query: String) =
+        DialogflowRequest(query, QueryParameters.getDefaultInstance())
+
+    override suspend fun send(request: DialogflowRequest): DialogflowResponse {
         val client = SessionsClient.create(sessionSettings)
         val res = try {
-            val textInput = TextInput.newBuilder().setText(request.query).setLanguageCode(language)
-            val queryInput = QueryInput.newBuilder().setText(textInput).build()
-            client.detectIntent(session, queryInput)
+            val textInput = TextInput.newBuilder()
+                .setText(request.query)
+                .setLanguageCode(language)
+            val queryInput = QueryInput.newBuilder()
+                .setText(textInput)
+                .build()
+            client.detectIntent(
+                DetectIntentRequest.newBuilder()
+                    .setQueryInput(queryInput)
+                    .setSession(session.toString())
+                    .setQueryParams(request.parameters)
+                    .build()
+            )
         } finally {
             client.close()
         }
@@ -55,7 +68,7 @@ class DialogflowDialogApi(
         return parseResponse(res)
     }
 
-    private fun parseResponse(res: DetectIntentResponse): Response {
+    private fun parseResponse(res: DetectIntentResponse): DialogflowResponse {
         val qr = res.queryResult
         val replies = qr.fulfillmentMessagesList.mapNotNull { msg ->
             when {
@@ -70,12 +83,13 @@ class DialogflowDialogApi(
             .takeIf { it.isNotEmpty() }
             ?: listOf(TextReply(qr.fulfillmentText, null, null))
 
-        return Response(
+        return DialogflowResponse(
             query = qr.queryText,
             action = qr.action,
             intent = qr.intent.displayName,
             question = !qr.diagnosticInfo.fieldsMap.containsKey("end_conversation"),
             replies = replies,
-            data = qr.parameters)
+            parameters = qr.parameters
+        )
     }
 }

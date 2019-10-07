@@ -29,7 +29,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
-    private val L = Logger("Aimybox-TTS")
+    private val L = Logger("TTS")
 
     protected val audioSynthesizer = AudioSynthesizer(context)
 

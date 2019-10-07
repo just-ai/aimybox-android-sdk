@@ -17,19 +17,17 @@ internal class SpeechToTextComponent(
     private var delegate: SpeechToText,
     private val eventChannel: SendChannel<SpeechToText.Event>,
     private val exceptionChannel: SendChannel<AimyboxException>
-) : AimyboxComponent("SpeechToText") {
+) : AimyboxComponent("STT") {
 
     init {
         provideChannelsForDelegate()
     }
 
-    private val L = Logger(className)
-
     @SuppressLint("MissingPermission")
     @RequiresPermission("android.permission.RECORD_AUDIO")
     internal suspend fun recognizeSpeech(): String? {
         L.assert(!hasRunningJobs) { "Recognition is already running" }
-        cancel()
+        cancelRunningJob()
         return withContext(coroutineContext) {
 
             L.i("Begin recognition")
@@ -46,13 +44,13 @@ internal class SpeechToTextComponent(
                         is SpeechToText.Result.Partial -> {
                             if (finalResult != result.text) {
                                 finalResult = result.text
-                                L.i("Partial recognition result: ${result.text}")
+                                L.d("Partial recognition result: ${result.text}")
                                 eventChannel.send(SpeechToText.Event.RecognitionPartialResult(result.text))
                             }
                         }
                         is SpeechToText.Result.Final -> {
                             recognitionChannel.cancel()
-                            L.i("Recognition result: ${result.text}")
+                            L.d("Recognition result: ${result.text}")
                             finalResult = result.text
                         }
                         is SpeechToText.Result.Exception -> {
@@ -83,18 +81,18 @@ internal class SpeechToTextComponent(
         delegate.stopRecognition()
     }
 
-    override suspend fun cancel() {
+    override suspend fun cancelRunningJob() {
         if (hasRunningJobs) {
             delegate.cancelRecognition()
             eventChannel.send(SpeechToText.Event.RecognitionCancelled)
         }
-        super.cancel()
+        super.cancelRunningJob()
     }
 
     private fun startTimeout(timeout: Long) = launch {
         delay(timeout)
         exceptionChannel.send(RecognitionTimeoutException())
-        cancel()
+        cancelRunningJob()
     }
 
     private fun provideChannelsForDelegate() {
@@ -104,7 +102,7 @@ internal class SpeechToTextComponent(
 
     internal suspend fun setDelegate(speechToText: SpeechToText) {
         if (delegate != speechToText) {
-            cancel()
+            cancelRunningJob()
             delegate.destroy()
             delegate = speechToText
             provideChannelsForDelegate()

@@ -3,6 +3,7 @@ package com.justai.aimybox.speechkit.yandex.cloud
 import android.content.Context
 import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.model.TextSpeech
+import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.texttospeech.BaseTextToSpeech
 import kotlinx.coroutines.cancel
 

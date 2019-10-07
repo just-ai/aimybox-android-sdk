@@ -1,5 +1,6 @@
 dependencies {
-    implementation("com.justai.aimybox:core:${Versions.aimybox}")
+    debugImplementation(project(":core"))
+    releaseImplementation("com.justai.aimybox:core:${Versions.aimybox}")
 
     implementation(Libraries.Kotlin.stdLib)
     implementation(Libraries.Kotlin.coroutines)

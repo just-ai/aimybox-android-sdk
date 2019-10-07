@@ -16,8 +16,7 @@ internal class AimyboxRetrofit(baseUrl: String, private val path: String) {
 
     private val api = retrofit.create(AimyboxApi::class.java)
 
-    suspend fun requestAsync(request: AimyboxRequest) =
-        api.performRequestAsync(path, request).await()
+    suspend fun request(request: AimyboxRequest) = api.request(path, request).await()
 
     private fun createHttpClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()

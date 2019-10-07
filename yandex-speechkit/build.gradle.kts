@@ -16,7 +16,8 @@ android {
 }
 
 dependencies {
-    implementation("com.justai.aimybox:core:${Versions.aimybox}")
+    debugImplementation(project(":core"))
+    releaseImplementation("com.justai.aimybox:core:${Versions.aimybox}")
 
     implementation(Libraries.Android.appCompat)
     implementation(Libraries.Kotlin.stdLib)

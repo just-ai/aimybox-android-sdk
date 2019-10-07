@@ -6,24 +6,21 @@ import com.justai.aimybox.extensions.className
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class TextToSpeechComponent(
     private var delegate: TextToSpeech,
     private val eventChannel: SendChannel<TextToSpeech.Event>,
     private val exceptionChannel: SendChannel<AimyboxException>
-) : AimyboxComponent("TextToSpeech") {
+) : AimyboxComponent("TTS") {
 
     init {
         provideChannelsForDelegate()
     }
 
-    private val L = Logger(className)
-
     suspend fun speak(speechList: List<Speech>) {
         L.assert(!hasRunningJobs) { "Synthesis is already running" }
-        cancel()
+        cancelRunningJob()
         eventChannel.send(TextToSpeech.Event.SpeechSequenceStarted(speechList))
         withContext(coroutineContext) {
             delegate.synthesize(speechList)
@@ -31,12 +28,12 @@ internal class TextToSpeechComponent(
         eventChannel.send(TextToSpeech.Event.SpeechSequenceCompleted(speechList))
     }
 
-    override suspend fun cancel() {
+    override suspend fun cancelRunningJob() {
         if (hasRunningJobs) {
             delegate.stop()
             L.w("Speech cancelled")
         }
-        super.cancel()
+        super.cancelRunningJob()
     }
 
     private fun provideChannelsForDelegate() {
@@ -46,7 +43,7 @@ internal class TextToSpeechComponent(
 
     suspend fun setDelegate(textToSpeech: TextToSpeech) {
         if (delegate != textToSpeech) {
-            cancel()
+            cancelRunningJob()
             delegate.destroy()
             delegate = textToSpeech
             provideChannelsForDelegate()

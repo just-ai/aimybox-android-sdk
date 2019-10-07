@@ -4,7 +4,7 @@ val Submodules = listOf(
     Library("yandex-speechkit", Versions.aimybox, true),
     Library("snowboy-speechkit", Versions.aimybox, true),
     Library("google-cloud-speechkit", Versions.aimybox, false),
-    Library("houndify-speechkit", Versions.aimybox, false),
+    Library("houndify-speechkit", Versions.aimybox, true),
     Library("dialogflow-api", Versions.aimybox,true)
 )
 
@@ -23,7 +23,7 @@ object Versions {
         const val protobuf = "0.8.8"
     }
 
-    const val aimybox = "0.4.0"
+    const val aimybox = "0.5.0"
 
     const val kotlin = "1.3.50"
     const val coroutines = "1.3.1"

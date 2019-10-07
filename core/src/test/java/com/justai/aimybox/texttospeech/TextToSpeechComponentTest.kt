@@ -77,7 +77,7 @@ class TextToSpeechComponentTest : BaseCoroutineTest() {
             assert(eventChannel.receive() is TextToSpeech.Event.SpeechEnded)
             assert(eventChannel.receive() is TextToSpeech.Event.SpeechStarted)
 
-            component.cancel()
+            component.cancelRunningJob()
 
             coVerify { mockDelegate.stop() }
 
