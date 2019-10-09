@@ -28,14 +28,8 @@ class YandexTextToSpeech(
     }
 
     private fun resolveLanguage(language: String?): Language {
-        if (language == null) return defaultLanguage
-        val resolvedLanguage = Language.values().find { it.stringValue.contains(language) }
-        return if (resolvedLanguage != null) {
-            resolvedLanguage
-        } else {
-            L.w("Failed to resolve language \"$language\". Using default \"$defaultLanguage\" language instead.")
-            defaultLanguage
-        }
+        return if (language == null) return defaultLanguage
+        else Language(language)
     }
 
     override fun destroy() {
