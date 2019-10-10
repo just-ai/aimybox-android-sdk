@@ -5,8 +5,6 @@ import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.RecognitionTimeoutException
-import com.justai.aimybox.extensions.className
-import com.justai.aimybox.logging.Logger
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay

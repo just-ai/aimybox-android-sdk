@@ -2,8 +2,6 @@ package com.justai.aimybox.texttospeech
 
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
-import com.justai.aimybox.extensions.className
-import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.withContext

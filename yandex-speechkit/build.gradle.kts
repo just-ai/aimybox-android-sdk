@@ -1,53 +1,58 @@
-import com.google.protobuf.gradle.generateProtoTasks
-import com.google.protobuf.gradle.id
-import com.google.protobuf.gradle.plugins
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
+import com.google.protobuf.gradle.*
+import com.justai.gradle.project.configureAndroid
+import com.justai.gradle.project.configureProject
+import com.justai.gradle.project.rootProjectConfig
 
 plugins {
+    id("com.android.library")
     id("com.google.protobuf")
-    kotlin("kapt")
 }
 
-android {
+configureProject {
+    isMavenPublication = true
+    isLibrary = true
+}
+
+configureAndroid {
     defaultConfig {
-        buildConfigField("String", "TOKEN_API_URL", "\"https://iam.api.cloud.yandex.net/iam/v1/tokens\"")
+        buildConfigField(
+            "String",
+            "TOKEN_API_URL",
+            "\"https://iam.api.cloud.yandex.net/iam/v1/tokens\""
+        )
     }
 }
 
 dependencies {
+
     debugImplementation(project(":core"))
-    releaseImplementation("com.justai.aimybox:core:${Versions.aimybox}")
+    releaseImplementation("com.justai.aimybox:core:${rootProjectConfig.version}")
 
-    implementation(Libraries.Android.appCompat)
-    implementation(Libraries.Kotlin.stdLib)
-    implementation(Libraries.Kotlin.coroutines)
+    implementation(Library.Android.appCompat)
+    implementation(Library.Kotlin.stdLib)
+    implementation(Library.Kotlin.coroutines)
 
-    implementation("com.squareup.okhttp3:okhttp:${Versions.okHttp}")
-    implementation("com.squareup.okhttp3:logging-interceptor:${Versions.okHttp}")
+    implementation("com.squareup.okhttp3:logging-interceptor:${Version.grpc}")
+    implementation("io.grpc:grpc-okhttp:${Version.grpc}")
+    implementation("io.grpc:grpc-protobuf-lite:${Version.grpc}")
+    implementation("io.grpc:grpc-stub:${Version.grpc}")
 
-    implementation("io.grpc:grpc-okhttp:1.19.0")
-    implementation("io.grpc:grpc-protobuf-lite:1.19.0")
-    implementation("io.grpc:grpc-stub:1.19.0")
-    compileOnly("javax.annotation:javax.annotation-api:1.2")
+    compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.0.0"
+        artifact = "com.google.protobuf:protoc:3.9.1"
     }
     plugins {
-        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.19.0" }
         id("javalite") { artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0" }
+        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.24.0" }
     }
     generateProtoTasks {
         all().forEach { task ->
             task.plugins {
-                id("javalite")
                 id("grpc") { option("lite") }
-            }
-            task.builtins {
-//                remove(id("java"))
+                id("javalite")
             }
         }
     }

@@ -1,3 +1,10 @@
+import com.justai.gradle.Libraries
+
+projectConfig {
+    isPublication = true
+    isLibrary = true
+}
+
 dependencies {
     debugImplementation(project(":core"))
     releaseImplementation("com.justai.aimybox:core:${Versions.aimybox}")

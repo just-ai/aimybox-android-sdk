@@ -8,7 +8,6 @@ import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.Config
 import com.justai.aimybox.core.CustomSkill
-import com.justai.aimybox.extensions.className
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
 import com.justai.aimybox.speechtotext.SpeechToText

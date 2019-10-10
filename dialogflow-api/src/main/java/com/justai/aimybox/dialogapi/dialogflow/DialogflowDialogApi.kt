@@ -12,7 +12,9 @@ import com.justai.aimybox.dialogapi.dialogflow.converter.ImageResponseConverter.
 import com.justai.aimybox.dialogapi.dialogflow.converter.SimpleResponseConverter.convert
 import com.justai.aimybox.dialogapi.dialogflow.converter.SuggestionsResponseConverter.convert
 import com.justai.aimybox.model.reply.TextReply
+import kotlinx.coroutines.*
 import java.util.*
+import kotlin.system.measureTimeMillis
 
 /**
  * Dialogflow dialog api implementation
