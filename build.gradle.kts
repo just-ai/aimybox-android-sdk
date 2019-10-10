@@ -3,6 +3,11 @@ import com.justai.gradle.project.configureRootProject
 import com.justai.gradle.project.projectConfig
 import com.justai.gradle.project.rootProjectConfig
 
+val coreProject: Project
+    get() = rootProject.project("core")
+
+val publishCoreTask = registerPublishCoreTask()
+
 buildscript {
     repositories {
         google()
@@ -44,9 +49,41 @@ subprojects {
         if (projectConfig.isMavenPublication) {
             registerPublicationTasks()
             configureMavenPublication()
-            if (projectConfig.publishToBintray) configureBintrayPublication()
+
+            if (project != coreProject) {
+                tasks.named(projectConfig.mavenLocalPublicationTask).configure {
+                    dependsOn(publishCoreTask)
+                    mustRunAfter(publishCoreTask)
+                }
+            }
+
+            if (projectConfig.publishToBintray) {
+                configureBintrayPublication()
+
+                tasks.named("bintrayUpload").configure {
+                    dependsOn(publishCoreTask)
+                    mustRunAfter(publishCoreTask)
+                }
+            }
         }
     }
+}
+
+fun registerPublishCoreTask() = tasks.register("publishCoreToMavenLocal") {
+    group = "aimybox"
+    dependsOn(":core:publishCorePublicationToMavenLocal")
+}
+
+tasks.register("publishAllToMavenLocal") {
+    group = "aimybox"
+
+    dependsOn("clean")
+
+    val publicationTasks = subprojects.map {
+        "${it.name}:${it.projectConfig.mavenLocalPublicationTask}"
+    }.toTypedArray()
+
+    dependsOn(*publicationTasks)
 }
 
 fun Project.configureBintrayPublication() {
@@ -75,4 +112,9 @@ fun Project.configureBintrayPublication() {
     tasks.named("bintrayUpload").configure {
         dependsOn("prepareArtifacts")
     }
+}
+
+tasks.register<Delete>("clean") {
+    group = "aimybox"
+    delete(*(allprojects.map { it.buildDir }.toTypedArray()))
 }

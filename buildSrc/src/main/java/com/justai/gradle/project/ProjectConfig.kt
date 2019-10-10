@@ -6,6 +6,8 @@ data class ProjectConfig(
     var isMavenPublication: Boolean = false,
     var publishToBintray: Boolean = false
 ) {
-    val publicationName = name.replace("-", " ").capitalize()
-    val publicationTaskName = name.split("-").joinToString("", transform = String::capitalize)
+    val publicationName = name.split("-").joinToString(" ", transform = String::capitalize)
+    val gradlePublicationName = name.split("-").joinToString("", transform = String::capitalize)
+
+    val mavenLocalPublicationTask = "publish${gradlePublicationName}PublicationToMavenLocal"
 }

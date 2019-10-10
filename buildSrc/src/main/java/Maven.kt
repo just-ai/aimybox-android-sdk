@@ -9,13 +9,13 @@ import org.gradle.kotlin.dsl.*
 
 fun Project.registerPublicationTasks() {
     tasks.register<Jar>("sourcesJar") {
-        group = "aimybox:publishing"
+        group = "aimybox:util"
         archiveClassifier.set("sources")
         from(project.the<BaseExtension>().sourceSets["main"].java.srcDirs)
     }
 
     tasks.register("prepareArtifacts") {
-        group = "aimybox:publishing"
+        group = "aimybox:util"
         dependsOn("assembleRelease", "sourcesJar")
     }
 
@@ -25,7 +25,7 @@ fun Project.configureMavenPublication() {
     apply(plugin = "maven-publish")
     configure<PublishingExtension> {
         publications {
-            create<MavenPublication>(projectConfig.publicationTaskName) {
+            create<MavenPublication>(projectConfig.gradlePublicationName) {
                 groupId = "com.justai.aimybox"
                 artifactId = projectConfig.name
                 version = rootProjectConfig.version
@@ -37,7 +37,7 @@ fun Project.configureMavenPublication() {
         }
     }
 
-    tasks.named("publish${projectConfig.publicationTaskName}PublicationToMavenLocal").configure {
+    tasks.named("publish${projectConfig.gradlePublicationName}PublicationToMavenLocal").configure {
         dependsOn("prepareArtifacts")
     }
 }

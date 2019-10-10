@@ -1,5 +1,4 @@
 import com.google.protobuf.gradle.*
-import com.justai.gradle.project.configureAndroid
 import com.justai.gradle.project.configureProject
 import com.justai.gradle.project.rootProjectConfig
 
@@ -13,7 +12,7 @@ configureProject {
     isLibrary = true
 }
 
-configureAndroid {
+android {
     defaultConfig {
         buildConfigField(
             "String",
@@ -24,7 +23,6 @@ configureAndroid {
 }
 
 dependencies {
-
     debugImplementation(project(":core"))
     releaseImplementation("com.justai.aimybox:core:${rootProjectConfig.version}")
 
@@ -32,10 +30,12 @@ dependencies {
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Kotlin.coroutines)
 
-    implementation("com.squareup.okhttp3:logging-interceptor:${Version.grpc}")
-    implementation("io.grpc:grpc-okhttp:${Version.grpc}")
-    implementation("io.grpc:grpc-protobuf-lite:${Version.grpc}")
-    implementation("io.grpc:grpc-stub:${Version.grpc}")
+    implementation("com.squareup.okhttp3:okhttp" version { okHttp })
+
+    implementation("com.squareup.okhttp3:logging-interceptor" version { okHttp })
+    implementation("io.grpc:grpc-okhttp" version { grpc })
+    implementation("io.grpc:grpc-protobuf-lite" version { grpc })
+    implementation("io.grpc:grpc-stub" version { grpc })
 
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 }

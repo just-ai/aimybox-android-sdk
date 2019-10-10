@@ -17,7 +17,7 @@ object Version {
     const val appCompat = "1.1.0"
 
     const val retrofit = "2.5.0"
-    const val okHttp = "3.14.1"
+    const val okHttp = "4.2.1"
     const val grpc = "1.24.0"
     const val kotson = "2.5.0"
 
