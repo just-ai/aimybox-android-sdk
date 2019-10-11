@@ -7,7 +7,7 @@ val coreProject: Project
     get() = rootProject.project("core")
 
 val publishCoreToMavenLocalTask: TaskProvider<Task>
-    get() = rootProject.tasks.named("publishCoreToMavenLocal")
+    get() = rootProject.tasks.named("localPublishCore")
 
 buildscript {
     repositories {
@@ -106,13 +106,13 @@ fun Project.configureBintrayPublication() {
     }
 }
 
-tasks.register("publishCoreToMavenLocal") {
+tasks.register("localPublishCore") {
     group = "aimybox:submodules"
     dependsOn("clean", ":core:publishCorePublicationToMavenLocal")
     mustRunAfter("clean")
 }
 
-tasks.register("publishAllToMavenLocal") {
+tasks.register("localPublishAll") {
     group = "aimybox"
     dependsOn("clean")
     mustRunAfter("clean")
@@ -125,7 +125,7 @@ tasks.register("publishAllToMavenLocal") {
     dependsOn(*publicationTasks)
 }
 
-tasks.register("publishAllToBintray") {
+tasks.register("bintrayPublishAll") {
     group = "aimybox"
     dependsOn("clean")
     mustRunAfter("clean")

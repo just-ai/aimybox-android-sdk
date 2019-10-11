@@ -11,6 +11,6 @@ data class ProjectConfig(
 
     val mavenLocalPublicationTask = "publish${gradlePublicationName}PublicationToMavenLocal"
 
-    val customMavenLocalPublicationTask = "publish${gradlePublicationName}ToMavenLocal"
-    val customBintrayPublicationTask = "publish${gradlePublicationName}ToBintray"
+    val customMavenLocalPublicationTask = "localPublish${gradlePublicationName}"
+    val customBintrayPublicationTask = "bintrayPublish${gradlePublicationName}"
 }
