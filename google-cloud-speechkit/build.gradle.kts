@@ -1,17 +1,20 @@
-import com.justai.gradle.Libraries
-import com.justai.gradle.project.projectConfig
+import com.justai.gradle.project.configureProject
 
-projectConfig {
-    isPublication = true
+plugins {
+    id("com.android.library")
+}
+
+configureProject {
     isLibrary = true
+    createMavenPublication = true
+    publishToBintray = false
 }
 
 dependencies {
-    debugImplementation(project(":core"))
-    releaseImplementation("com.justai.aimybox:core:${Versions.aimybox}")
+    implementation(project(":core"))
 
-    implementation(Libraries.Kotlin.stdLib)
-    implementation(Libraries.Kotlin.coroutines)
+    implementation(Library.Kotlin.stdLib)
+    implementation(Library.Kotlin.coroutines)
 
     implementation("com.google.cloud:google-cloud-speech:1.13.0")
 }

@@ -1,19 +1,23 @@
-import com.justai.gradle.Libraries
-import com.justai.gradle.project.projectConfig
+import com.justai.gradle.project.configureProject
 
-projectConfig {
-    isPublication = true
+
+plugins {
+    id("com.android.library")
+}
+
+configureProject {
     isLibrary = true
+    createMavenPublication = true
+    publishToBintray = true
 }
 
 dependencies {
-    debugImplementation(project(":core"))
-    releaseImplementation("com.justai.aimybox:core:${Versions.aimybox}")
+    implementation(project(":core"))
 
-    implementation(Libraries.Kotlin.stdLib)
-    implementation(Libraries.Android.appCompat)
-    implementation(Libraries.Kotlin.coroutines)
+    implementation(Library.Kotlin.stdLib)
+    implementation(Library.Android.appCompat)
+    implementation(Library.Kotlin.coroutines)
 
     implementation("com.google.cloud:google-cloud-dialogflow:0.109.0-alpha")
-    implementation("io.grpc:grpc-okhttp:1.22.1")
+    implementation("io.grpc:grpc-okhttp:1.24.0")
 }

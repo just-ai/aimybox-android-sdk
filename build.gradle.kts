@@ -48,7 +48,7 @@ allprojects {
 
 subprojects {
     afterEvaluate {
-        if (projectConfig.isMavenPublication) {
+        if (projectConfig.createMavenPublication) {
             registerPublicationTasks()
             configureMavenPublication()
 
@@ -118,7 +118,7 @@ tasks.register("localPublishAll") {
     mustRunAfter("clean")
 
     val publicationTasks = subprojects.mapNotNull { project ->
-        if (project.projectConfig.isMavenPublication) "${project.name}:${project.projectConfig.mavenLocalPublicationTask}"
+        if (project.projectConfig.createMavenPublication) "${project.name}:${project.projectConfig.mavenLocalPublicationTask}"
         else null
     }.toTypedArray()
 

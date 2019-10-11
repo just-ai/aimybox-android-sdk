@@ -5,7 +5,7 @@ plugins {
 }
 
 configureProject {
-    isMavenPublication = true
+    createMavenPublication = true
     isLibrary = true
     publishToBintray = true
 }
