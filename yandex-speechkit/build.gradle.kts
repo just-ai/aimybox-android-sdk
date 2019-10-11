@@ -1,6 +1,5 @@
 import com.google.protobuf.gradle.*
 import com.justai.gradle.project.configureProject
-import com.justai.gradle.project.rootProjectConfig
 
 plugins {
     id("com.android.library")
@@ -8,8 +7,9 @@ plugins {
 }
 
 configureProject {
-    isMavenPublication = true
     isLibrary = true
+    isMavenPublication = true
+    publishToBintray = true
 }
 
 android {
@@ -23,8 +23,7 @@ android {
 }
 
 dependencies {
-    debugImplementation(project(":core"))
-    releaseImplementation("com.justai.aimybox:core:${rootProjectConfig.version}")
+    implementation(project(":core"))
 
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.stdLib)

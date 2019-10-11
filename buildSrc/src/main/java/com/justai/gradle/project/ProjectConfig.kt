@@ -10,4 +10,7 @@ data class ProjectConfig(
     val gradlePublicationName = name.split("-").joinToString("", transform = String::capitalize)
 
     val mavenLocalPublicationTask = "publish${gradlePublicationName}PublicationToMavenLocal"
+
+    val customMavenLocalPublicationTask = "publish${gradlePublicationName}ToMavenLocal"
+    val customBintrayPublicationTask = "publish${gradlePublicationName}ToBintray"
 }

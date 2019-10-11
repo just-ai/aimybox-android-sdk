@@ -26,7 +26,7 @@ fun Project.configureMavenPublication() {
     configure<PublishingExtension> {
         publications {
             create<MavenPublication>(projectConfig.gradlePublicationName) {
-                groupId = "com.justai.aimybox"
+                groupId = rootProjectConfig.groupId
                 artifactId = projectConfig.name
                 version = rootProjectConfig.version
 

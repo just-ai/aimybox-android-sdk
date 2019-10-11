@@ -8,4 +8,5 @@ class RootProjectConfig {
     var versionCode: Int by Delegates.notNull()
     var minSdk: Int by Delegates.notNull()
     var compileSdk: Int by Delegates.notNull()
+    var groupId: String by Delegates.notNull()
 }

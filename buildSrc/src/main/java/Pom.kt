@@ -1,6 +1,9 @@
 import com.justai.gradle.project.projectConfig
+import com.justai.gradle.project.rootProjectConfig
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
+import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.get
 
@@ -52,7 +55,16 @@ fun MavenPublication.configurePomFile(project: Project) = pom {
                 appendNode("scope", scope)
             }
             project.configurations["implementation"].dependencies.forEach { dependency ->
-                dependency.write("runtime")
+                if (dependency is DefaultProjectDependency) {
+                    DefaultExternalModuleDependency(
+                        project.rootProjectConfig.groupId,
+                        dependency.name.replace(":", ""),
+                        project.rootProjectConfig.version,
+                        "default"
+                    ).write("runtime")
+                } else {
+                    dependency.write("runtime")
+                }
             }
             project.configurations["api"].dependencies.forEach { dependency ->
                 dependency.write("compile")
