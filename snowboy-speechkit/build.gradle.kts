@@ -1,4 +1,3 @@
-import com.android.tools.build.bundletool.model.utils.Versions
 import com.justai.gradle.project.configureProject
 
 plugins {
@@ -17,6 +16,4 @@ dependencies {
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
-
-    implementation("com.getkeepsafe.relinker:relinker:1.3.1")
 }

@@ -140,4 +140,5 @@ tasks.register("bintrayPublishAll") {
 tasks.register<Delete>("clean") {
     group = "aimybox:util"
     delete(*(allprojects.map { it.buildDir }.toTypedArray()))
+    delete(".gradle")
 }

@@ -1,5 +1,7 @@
 package com.justai.aimybox.speechkit.google.cloud
 
+import android.Manifest
+import androidx.annotation.RequiresPermission
 import com.google.api.gax.rpc.ClientStream
 import com.google.api.gax.rpc.ResponseObserver
 import com.google.api.gax.rpc.StreamController
@@ -19,28 +21,25 @@ import java.util.*
 
 class GoogleCloudSpeechToText(
     var locale: Locale,
-    var sampleRate: SampleRate,
-    var channelCount: Int = 1,
-    var enablePunctuation: Boolean = false,
-    var profanityFilter: Boolean = false,
-    var recognitionModel: RecognitionModel = RecognitionModel.DEFAULT
+    var config: Config = Config()
 ) : SpeechToText(), CoroutineScope {
+
     override val coroutineContext = Dispatchers.IO
 
     private val speechClient = SpeechClient.create()
 
     private val audioRecorder = AudioRecorder(
         name = "Google Cloud Recognition",
-        sampleRate = sampleRate.intValue,
-        channelCount = channelCount
+        sampleRate = config.sampleRate.intValue,
+        channelCount = config.channelCount
     )
 
-
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition() = produce<Result> {
         val stream = speechClient.streamingRecognizeCallable()
             .splitCall(CloudResponseObserver(channel))
 
-        stream.sendConfig()
+        stream.sendRecognitionConfig()
 
         val audioData = audioRecorder.startRecordingBytes()
 
@@ -68,26 +67,27 @@ class GoogleCloudSpeechToText(
         coroutineContext.cancelChildrenAndJoin()
     }
 
-    private fun ClientStream<StreamingRecognizeRequest>.sendConfig() =
+    private fun ClientStream<StreamingRecognizeRequest>.sendRecognitionConfig() =
         StreamingRecognizeRequest.newBuilder()
-            .setStreamingConfig(createConfig())
+            .setStreamingConfig(createRecongitionConfig())
             .build()
             .let(::send)
 
-    private fun createConfig() = StreamingRecognitionConfig.newBuilder()
+    private fun createRecongitionConfig() = StreamingRecognitionConfig.newBuilder()
         .setConfig(
             RecognitionConfig.newBuilder()
                 .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                .setAudioChannelCount(channelCount)
-                .setSampleRateHertz(sampleRate.intValue)
+                .setAudioChannelCount(config.channelCount)
+                .setSampleRateHertz(config.sampleRate.intValue)
                 .setMaxAlternatives(0)
-                .setEnableAutomaticPunctuation(enablePunctuation)
+                .setEnableAutomaticPunctuation(config.enablePunctuation)
                 .setLanguageCode(locale.language)
-                .setProfanityFilter(profanityFilter)
-                .setModel(recognitionModel.stringValue)
+                .setProfanityFilter(config.profanityFilter)
+                .setModel(config.recognitionModel.stringValue)
                 .build()
         )
-        .setInterimResults(true)
+        .setInterimResults(config.sendPartialResults)
+        .setSingleUtterance(config.isSingleUtterance)
         .build()
 
     private class CloudResponseObserver(
@@ -98,14 +98,17 @@ class GoogleCloudSpeechToText(
         }
 
         override fun onResponse(response: StreamingRecognizeResponse) {
-            val apiResult = response.resultsList.first()
+            val apiResult = response.resultsList.firstOrNull()
 
-            val text = apiResult.alternativesList.first()
-                .wordsList
-                .joinToString(" ")
-                .takeIf { it.isNotBlank() }
+            val text = apiResult?.alternativesList?.firstOrNull()
+                ?.transcript
+                ?.takeIf { it.isNotBlank() }
 
-            sendResult(if (apiResult.isFinal) Result.Final(text) else Result.Partial(text))
+            if (response.speechEventType == StreamingRecognizeResponse.SpeechEventType.END_OF_SINGLE_UTTERANCE) {
+                L.w("END OF UTTERANCE")
+            }
+
+            sendResult(if (apiResult?.isFinal == true) Result.Final(text) else Result.Partial(text))
         }
 
         override fun onError(t: Throwable) =
@@ -122,4 +125,14 @@ class GoogleCloudSpeechToText(
             }
         }
     }
+
+    data class Config(
+        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
+        val channelCount: Int = 1,
+        val enablePunctuation: Boolean = false,
+        val profanityFilter: Boolean = false,
+        val recognitionModel: RecognitionModel = RecognitionModel.COMMAND_AND_SEARCH,
+        val sendPartialResults: Boolean = true,
+        val isSingleUtterance: Boolean = true
+    )
 }

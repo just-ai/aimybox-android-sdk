@@ -1,5 +1,6 @@
 package com.justai.aimybox.speechtotext
 
+import android.Manifest
 import android.annotation.SuppressLint
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.AimyboxComponent
@@ -21,8 +22,7 @@ internal class SpeechToTextComponent(
         provideChannelsForDelegate()
     }
 
-    @SuppressLint("MissingPermission")
-    @RequiresPermission("android.permission.RECORD_AUDIO")
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun recognizeSpeech(): String? {
         L.assert(!hasRunningJobs) { "Recognition is already running" }
         cancelRunningJob()

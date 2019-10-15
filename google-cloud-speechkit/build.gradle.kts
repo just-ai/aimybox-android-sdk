@@ -16,5 +16,9 @@ dependencies {
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Kotlin.coroutines)
 
+    implementation(Library.Android.appCompat)
+
     implementation("com.google.cloud:google-cloud-speech:1.13.0")
+
+    implementation("io.grpc:grpc-okhttp" version { grpc })
 }
