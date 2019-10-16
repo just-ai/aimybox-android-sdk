@@ -114,7 +114,11 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
             } else {
                 Aimybox.NextAction.STANDBY
             }
-            aimybox.speak(reply.asTextSpeech(), nextAction)?.join()
+            try {
+                aimybox.speak(reply.asTextSpeech(), nextAction)?.join()
+            } catch (e: CancellationException) {
+                L.w("Speech cancelled", e)
+            }
         }
     } catch (e: Throwable) {
         L.e("Failed to parse replies from $response", e)

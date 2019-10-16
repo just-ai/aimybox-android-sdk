@@ -1,7 +1,4 @@
-
-
-
-# Google Cloud Speechkit for Aimybox Android SDK
+# [WIP] Google Cloud Speechkit for Aimybox Android SDK
 
 Speech recognition and synthesis by [Google Cloud](https://cloud.google.com/products/)
 
