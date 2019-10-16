@@ -7,11 +7,12 @@ import com.justai.aimybox.model.reply.Reply
  * Response model, which is used across the library.
  * You can parse additional data from [json] in your [CustomSkill].
  * */
-open class Response(
-    val query: String? = null,
-    val action: String? = null,
-    val intent: String? = null,
-    val question: Boolean? = null,
-    val replies: List<Reply> = emptyList(),
-    val data: Any? = null
-)
+
+//TODO docs
+interface Response {
+    val query: String?
+    val action: String?
+    val intent: String?
+    val question: Boolean?
+    val replies: List<Reply>
+}

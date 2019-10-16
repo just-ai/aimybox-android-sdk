@@ -4,20 +4,14 @@ import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
 import androidx.annotation.RawRes
-import com.justai.aimybox.extensions.playSuspendable
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
+import com.justai.aimybox.logging.Logger
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 
 private const val PLAYER_STATE_POLLING_DELAY_MS = 250L
 
@@ -29,6 +23,8 @@ class AudioPlayer(context: Context) : CoroutineScope {
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
     private val sources = Channel<Source>()
+
+    private val L = Logger("AudioPlayer")
 
     /**
      * Send [Source] to the channel to start play it.
@@ -101,6 +97,20 @@ class AudioPlayer(context: Context) : CoroutineScope {
 
     fun finalize() {
         coroutineContext.cancelChildren()
+    }
+
+    suspend fun MediaPlayer.playSuspendable() {
+        suspendCancellableCoroutine<Unit> { continuation ->
+            setOnCompletionListener {
+                continuation.resume(Unit)
+            }
+            setOnErrorListener { _, what, _ ->
+                L.e("MediaPlayer error code $what. Stopping player.")
+                continuation.resume(Unit)
+                true
+            }
+            start()
+        }
     }
 
     sealed class Source {

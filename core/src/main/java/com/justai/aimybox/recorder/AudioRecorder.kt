@@ -58,7 +58,7 @@ class AudioRecorder(
         private const val MILLISECONDS_IN_SECOND = 1000
     }
 
-    private val L = Logger("$className($name)")
+    private val L = Logger("$className $name")
 
     override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 

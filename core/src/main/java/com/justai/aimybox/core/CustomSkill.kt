@@ -8,18 +8,18 @@ import com.justai.aimybox.model.Response
  * Interface for custom client-side skill.
  * To enable it in Aimybox, add an instance of the skill to [Config.skills].
  * */
-interface CustomSkill {
+interface CustomSkill<TRequest : Request, in TResponse : Response> {
+    /**
+     * This method will be called just before any request to dialog api.
+     * You can modify the request or return it without changes.
+     * */
+    suspend fun onRequest(request: TRequest): TRequest = request
+
     /**
      * Determines whether the current skill can handle the [response].
      * If no skill matches, the default handler will be called.
      * */
-    fun canHandle(response: Response): Boolean = false
-
-    /**
-     * This method will be called just before any request to dialog api.
-     * You can change [Request.data] to add any additional data to the request.
-     * */
-    suspend fun onRequest(request: Request) {}
+    fun canHandle(response: TResponse): Boolean = false
 
     /**
      * Called if [canHandle] returned true for the [response].
@@ -33,8 +33,8 @@ interface CustomSkill {
      * @see Aimybox.speak
      * */
     suspend fun onResponse(
-        response: Response,
+        response: TResponse,
         aimybox: Aimybox,
-        callDefaultHandler: suspend (Response) -> Unit
-    ) {}
+        defaultHandler: suspend (Response) -> Unit
+    ) = defaultHandler(response)
 }
