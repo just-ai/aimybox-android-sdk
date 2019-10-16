@@ -79,8 +79,6 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
 
             if (response != null) handle(response, aimybox)
             else L.d("Response is empty for $request")
-
-            response
         }
     }
 
