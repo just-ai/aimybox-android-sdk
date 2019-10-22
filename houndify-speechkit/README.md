@@ -14,8 +14,9 @@ Speech recognition by [Houndify](https://www.houndify.com/)
     }
     
     dependencies {
-        implementation("com.justai.aimyboxon}")
-        implementation("com.juscom.justai.aimybox   }
+            implementation("com.justai.aimybox:core:${version}")
+            implementation("com.justai.aimybox:dialogflow-api:${version}")
+    }
 ```
 5. Provide Houndify STT component into Aimybox configuration object:
 ```kotlin

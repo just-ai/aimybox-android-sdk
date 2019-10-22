@@ -14,8 +14,9 @@ Dialog API module to connect Aimybox powered assistant to the [Google Dialogflow
     }
     
     dependencies {
-        implementation("com.justai.aimyboxon}")
-        implementation("com.juscom.justai.aimybox   }
+        implementation("com.justai.aimybox:core:${version}")
+        implementation("com.justai.aimybox:dialogflow-api:${version}")
+    }
 ```
 5. Provide Dialogflow component into Aimybox configuration object:
 ```kotlin    
