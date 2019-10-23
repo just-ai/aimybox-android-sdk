@@ -1,4 +1,5 @@
 import com.google.protobuf.gradle.*
+import com.justai.gradle.project.configureAndroid
 import com.justai.gradle.project.configureProject
 
 plugins {
@@ -12,7 +13,7 @@ configureProject {
     publishToBintray = true
 }
 
-android {
+configureAndroid {
     defaultConfig {
         buildConfigField(
             "String",

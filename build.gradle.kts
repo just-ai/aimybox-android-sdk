@@ -6,9 +6,6 @@ import com.justai.gradle.project.rootProjectConfig
 val coreProject: Project
     get() = rootProject.project("core")
 
-val publishCoreToMavenLocalTask: TaskProvider<Task>
-    get() = rootProject.tasks.named("localPublishCore")
-
 buildscript {
     repositories {
         google()
@@ -52,26 +49,20 @@ subprojects {
             registerPublicationTasks()
             configureMavenPublication()
 
-            if (project != coreProject) {
-                tasks.named(projectConfig.mavenLocalPublicationTask).configure {
-                    dependsOn(publishCoreToMavenLocalTask)
-                    mustRunAfter(publishCoreToMavenLocalTask)
-                }
-
-                rootProject.tasks.register(projectConfig.customMavenLocalPublicationTask) {
-                    group = "aimybox:submodules"
-                    dependsOn(tasks.named("clean"), tasks.named(projectConfig.mavenLocalPublicationTask))
-                    mustRunAfter("clean")
-                }
+            rootProject.tasks.register(projectConfig.customMavenLocalPublicationTask) {
+                group = "aimybox:submodules"
+                dependsOn(tasks.named(projectConfig.mavenLocalPublicationTask))
             }
 
             if (projectConfig.publishToBintray) {
                 configureBintrayPublication()
 
-                rootProject.tasks.register(projectConfig.customBintrayPublicationTask) {
+                rootProject.tasks.register(projectConfig.bintrayPublicationTask) {
                     group = "aimybox:submodules"
-                    dependsOn(tasks.named("clean"), tasks.named("bintrayUpload"))
-                    mustRunAfter("clean")
+                    dependsOn(
+                        tasks.named("bintrayUpload"),
+                        tasks.named(projectConfig.generatePomFileTask)
+                    )
                 }
             }
         }
@@ -106,16 +97,8 @@ fun Project.configureBintrayPublication() {
     }
 }
 
-tasks.register("localPublishCore") {
-    group = "aimybox:submodules"
-    dependsOn("clean", ":core:publishCorePublicationToMavenLocal")
-    mustRunAfter("clean")
-}
-
 tasks.register("localPublishAll") {
     group = "aimybox"
-    dependsOn("clean")
-    mustRunAfter("clean")
 
     val publicationTasks = subprojects.mapNotNull { project ->
         if (project.projectConfig.createMavenPublication) "${project.name}:${project.projectConfig.mavenLocalPublicationTask}"
@@ -127,13 +110,12 @@ tasks.register("localPublishAll") {
 
 tasks.register("bintrayPublishAll") {
     group = "aimybox"
-    dependsOn("clean")
-    mustRunAfter("clean")
 
     val publicationTasks = subprojects.mapNotNull { project ->
-        if (project.projectConfig.publishToBintray) "${project.name}:bintrayUpload"
+        if (project.projectConfig.publishToBintray) project.projectConfig.bintrayPublicationTask
         else null
     }.toTypedArray()
+
     dependsOn(*publicationTasks)
 }
 

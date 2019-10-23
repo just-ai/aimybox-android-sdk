@@ -1,3 +1,4 @@
+import com.justai.gradle.project.configureAndroid
 import com.justai.gradle.project.configureProject
 
 plugins {
@@ -9,6 +10,8 @@ configureProject {
     createMavenPublication = true
     publishToBintray = false
 }
+
+configureAndroid {}
 
 dependencies {
     implementation(project(":core"))
