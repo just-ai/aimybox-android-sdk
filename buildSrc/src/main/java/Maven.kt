@@ -25,7 +25,7 @@ fun Project.configureMavenPublication() {
     apply(plugin = "maven-publish")
     configure<PublishingExtension> {
         publications {
-            create<MavenPublication>(projectConfig.gradlePublicationName) {
+            create<MavenPublication>(projectConfig.publicationName) {
                 groupId = rootProjectConfig.groupId
                 artifactId = projectConfig.name
                 version = rootProjectConfig.version
@@ -37,7 +37,7 @@ fun Project.configureMavenPublication() {
         }
     }
 
-    tasks.named("publish${projectConfig.gradlePublicationName}PublicationToMavenLocal").configure {
+    tasks.named("publish${projectConfig.publicationName}PublicationToMavenLocal").configure {
         dependsOn("prepareArtifacts")
     }
 }

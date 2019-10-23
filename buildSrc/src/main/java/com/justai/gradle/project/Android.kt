@@ -6,7 +6,7 @@ import org.gradle.kotlin.dsl.KotlinBuildScript
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 
-fun KotlinBuildScript.configureAndroid() {
+fun KotlinBuildScript.configureAndroid(closure: BaseExtension.() -> Unit) {
     apply(plugin = "kotlin-android")
     apply(plugin = "kotlin-android-extensions")
     apply(plugin = "kotlin-kapt")
@@ -47,5 +47,6 @@ fun KotlinBuildScript.configureAndroid() {
                 }
             }
         }
+        closure(this)
     }
 }

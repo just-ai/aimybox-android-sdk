@@ -5,6 +5,7 @@ import androidx.annotation.RequiresPermission
 import com.google.api.gax.rpc.ClientStream
 import com.google.api.gax.rpc.ResponseObserver
 import com.google.api.gax.rpc.StreamController
+import com.google.auth.Credentials
 import com.google.cloud.speech.v1.*
 import com.google.protobuf.ByteString
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
@@ -13,20 +14,24 @@ import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
 import java.util.*
 
+@Suppress("unused")
+@ExperimentalCoroutinesApi
 class GoogleCloudSpeechToText(
+    credentials: GoogleCloudCredentials,
     var locale: Locale,
     var config: Config = Config()
 ) : SpeechToText(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO
 
-    private val speechClient = SpeechClient.create()
+    private val speechClient = createAuthorizedClient(credentials.credentials)
 
     private val audioRecorder = AudioRecorder(
         name = "Google Cloud Recognition",
@@ -69,11 +74,11 @@ class GoogleCloudSpeechToText(
 
     private fun ClientStream<StreamingRecognizeRequest>.sendRecognitionConfig() =
         StreamingRecognizeRequest.newBuilder()
-            .setStreamingConfig(createRecongitionConfig())
+            .setStreamingConfig(createRecognitionConfig())
             .build()
             .let(::send)
 
-    private fun createRecongitionConfig() = StreamingRecognitionConfig.newBuilder()
+    private fun createRecognitionConfig() = StreamingRecognitionConfig.newBuilder()
         .setConfig(
             RecognitionConfig.newBuilder()
                 .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
@@ -124,6 +129,17 @@ class GoogleCloudSpeechToText(
                 if (!isSuccess) L.w("Failed to send $result to $this")
             }
         }
+    }
+
+    private fun createAuthorizedClient(credentials: Credentials): SpeechClient {
+        val channelProvider = SpeechSettings.defaultTransportChannelProvider()
+            .withCredentials(credentials)
+
+        val speechSettings = SpeechSettings.newBuilder()
+            .setTransportChannelProvider(channelProvider)
+            .build()
+
+        return SpeechClient.create(speechSettings)
     }
 
     data class Config(
