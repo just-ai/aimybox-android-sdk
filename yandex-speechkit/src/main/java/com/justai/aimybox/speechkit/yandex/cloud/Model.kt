@@ -27,6 +27,8 @@ class Voice(internal val stringValue: String) {
         val OMAZH = Voice("omazh")
         val ZAHAR = Voice("zahar")
         val ERMIL = Voice("ermil")
+        val FILIPP = Voice("filipp")
+        val ALENA = Voice("alena")
     }
 }
 
