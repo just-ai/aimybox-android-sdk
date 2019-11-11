@@ -8,7 +8,9 @@ import com.justai.aimybox.core.*
 import com.justai.aimybox.extensions.className
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
+import com.justai.aimybox.model.reply.AudioReply
 import com.justai.aimybox.model.reply.TextReply
+import com.justai.aimybox.model.reply.asAudioSpeech
 import com.justai.aimybox.model.reply.asTextSpeech
 import kotlinx.coroutines.*
 
@@ -104,16 +106,22 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     protected open suspend fun handleDefault(response: Response, aimybox: Aimybox): Unit = try {
-        val lastTextReply = response.replies.lastOrNull { it is TextReply }
+        val lastReply = response.replies.lastOrNull { it is TextReply || it is AudioReply }
 
-        response.replies.filterIsInstance<TextReply>().forEach { reply ->
-            val nextAction = if (reply == lastTextReply) {
+        response.replies.filter { it is TextReply || it is AudioReply }.forEach { reply ->
+            val speech = when (reply) {
+                is TextReply -> reply.asTextSpeech()
+                is AudioReply -> reply.asAudioSpeech()
+                else -> throw IllegalArgumentException("Reply type is not supported by default handler")
+            }
+
+            val nextAction = if (reply == lastReply) {
                 Aimybox.NextAction.byQuestion(response.question)
             } else {
                 Aimybox.NextAction.STANDBY
             }
             try {
-                aimybox.speak(reply.asTextSpeech(), nextAction)?.join()
+                aimybox.speak(speech, nextAction)?.join()
             } catch (e: CancellationException) {
                 L.w("Speech cancelled", e)
             }
