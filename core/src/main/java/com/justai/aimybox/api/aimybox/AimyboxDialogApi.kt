@@ -27,6 +27,7 @@ class AimyboxDialogApi(
         private const val DEFAULT_API_URL = "https://api.aimybox.com/"
         val DEFAULT_REPLY_TYPES = mapOf(
             "text" to AimyboxTextReply::class.java,
+            "audio" to AimyboxAudioReply::class.java,
             "image" to AimyboxImageReply::class.java,
             "buttons" to AimyboxButtonsReply::class.java
         )
