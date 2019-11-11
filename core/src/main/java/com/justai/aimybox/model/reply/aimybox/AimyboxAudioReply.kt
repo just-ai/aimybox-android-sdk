@@ -9,4 +9,4 @@ import com.justai.aimybox.model.reply.AudioReply
  */
 data class AimyboxAudioReply(
     override val json: JsonObject
-): AudioReply(json["audioUrl"].string), AimyboxReply
+): AudioReply(json["url"].string), AimyboxReply
