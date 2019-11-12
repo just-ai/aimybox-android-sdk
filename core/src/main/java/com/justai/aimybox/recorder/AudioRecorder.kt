@@ -62,8 +62,7 @@ class AudioRecorder(
 
     override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
-    private val minBufferSize = calculateMinBufferSize()
-    private val bufferSize = calculateBufferSize(minBufferSize)
+    private val bufferSize = calculateBufferSize()
 
     /**
      * Launch new coroutine and start audio recording.
@@ -147,14 +146,7 @@ class AudioRecorder(
         bufferSize
     )
 
-    private fun calculateMinBufferSize() =
-        AudioRecord.getMinBufferSize(sampleRate, channelCount, audioFormat).also {
-            require(it != AudioRecord.ERROR && it != AudioRecord.ERROR_BAD_VALUE) {
-                "Sample rate $sampleRate is not supported."
-            }
-        }
-
-    private fun calculateBufferSize(minBufferSize: Int): Int {
+    private fun calculateBufferSize(): Int {
         val sampleSize = when (audioFormat) {
             AudioFormat.ENCODING_PCM_FLOAT -> 2
             AudioFormat.ENCODING_PCM_16BIT -> 2
@@ -165,13 +157,7 @@ class AudioRecorder(
         val frameSize = sampleSize * channelCount
         val dataRate = frameSize * sampleRate
 
-        val bufferSize = dataRate * periodMs / MILLISECONDS_IN_SECOND
-
-        require(bufferSize > minBufferSize) {
-            "Buffer is too small. Current size: $bufferSize, min size: $minBufferSize"
-        }
-
-        return bufferSize
+        return dataRate * periodMs / MILLISECONDS_IN_SECOND
     }
 
     private fun ReceiveChannel<ByteArray>.convertBytesToShorts() = map { audioBytes ->
