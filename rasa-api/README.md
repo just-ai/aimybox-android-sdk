@@ -33,6 +33,9 @@ Dialog API module to connect Aimybox powered assistant to the [Rasa](https://ras
     }
 ```
 
+## Tutorial
+Here is a great [tutorial](https://blog.rasa.com/how-to-build-a-mobile-voice-assistant-with-open-source-rasa-and-aimybox/) on how to use Aimybox with Rasa.
+
 ## Documentation
 
 There is a full Aimybox documentation available [here](https://help.aimybox.com)
