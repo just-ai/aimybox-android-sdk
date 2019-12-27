@@ -17,6 +17,8 @@
 
 The only solution if you need to embed your own intelligent voice assistant into your existing application or device.
 
+### iOS version is available [here](https://github.com/just-ai/aimybox-ios-sdk)
+
 # Key Features
 
 * Provides ready to use [UI components](https://github.com/just-ai/aimybox-android-assistant) for fast building of your voice assistant app
