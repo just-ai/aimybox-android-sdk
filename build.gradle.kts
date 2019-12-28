@@ -72,6 +72,13 @@ subprojects {
 fun Project.configureBintrayPublication() {
     apply(plugin = "com.jfrog.bintray")
     configure<BintrayExtension> {
+        val properties = java.util.Properties()
+        val propsFile = project.rootProject.file("local.properties")
+
+        if (propsFile.canRead()) {
+            properties.load(propsFile.inputStream())
+        }
+
         val bintrayUsername = properties["bintrayUser"] as? String
             ?: System.getProperty("BINTRAY_USER") ?: System.getenv("BINTRAY_USER")
         val bintrayKey = properties["bintrayKey"] as? String
