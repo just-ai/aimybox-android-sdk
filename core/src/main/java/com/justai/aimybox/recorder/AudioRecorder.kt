@@ -17,6 +17,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.pow
 
 /**
  * Coroutine scope audio recorder intended to use in [SpeechToText]
@@ -137,6 +138,21 @@ class AudioRecorder(
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
     suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
+
+    /**
+     * Calculates a RMS level from recorded chunk
+     *
+     * @return an RMS level in Db
+     */
+    fun calculateRmsDb(data: ByteArray): Int {
+        val avg = (data.sum() / data.size).toDouble()
+        val sumMeanSquare: Double = data.fold(0.0) { acc, curr ->
+            acc + (curr - avg).pow(2.0)
+        }.toDouble()
+
+        val averageMeanSquare = sumMeanSquare / data.size
+        return (averageMeanSquare.pow(0.5) + 0.5).toInt()
+    }
 
     private fun createRecorder() = AudioRecord(
         MediaRecorder.AudioSource.MIC,
