@@ -1,5 +1,6 @@
 package com.justai.aimybox.dialogapi.rasa
 
+import com.github.salomonbrys.kotson.nullString
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonParser
@@ -67,7 +68,7 @@ class RasaDialogApi(
             if (json.has("buttons"))
                 replies.add(ButtonsReply(
                     json["buttons"].asJsonArray.map { it.asJsonObject }.map { btn ->
-                        ReplyButton(btn["title"].asString, null)
+                        ReplyButton(btn["title"].asString, null, btn["payload"].nullString)
                     }
                 ))
         }
