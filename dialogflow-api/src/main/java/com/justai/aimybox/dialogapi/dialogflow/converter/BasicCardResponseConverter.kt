@@ -19,7 +19,7 @@ object BasicCardResponseConverter {
 
         if (msg.buttonsList.isNotEmpty()) {
             replies.add(ButtonsReply(msg.buttonsList.map {
-                ReplyButton(it.title, it.openUriAction.uri, null)
+                ReplyButton(it.title, it.openUriAction.uri)
             }))
         }
 

@@ -5,4 +5,4 @@ package com.justai.aimybox.model.reply
  * */
 open class ButtonsReply(val buttons: List<ReplyButton>) : Reply
 
-open class ReplyButton(val text: String, val url: String?, val payload: String?)
+open class ReplyButton(val text: String, val url: String? = null, val payload: String? = null)
