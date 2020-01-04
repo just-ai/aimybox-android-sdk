@@ -6,7 +6,9 @@ import android.speech.tts.Voice
 import com.justai.aimybox.model.TextSpeech
 import com.justai.aimybox.texttospeech.BaseTextToSpeech
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -35,7 +37,7 @@ class GooglePlatformTextToSpeech(
     private var voicePitch = DEFAULT_VOICE_PITCH
 
     @Suppress("DEPRECATION")
-    override suspend fun speak(speech: TextSpeech) {
+    override suspend fun speak(speech: TextSpeech) = withContext(Dispatchers.Main) {
         initialization.await()
 
         synthesizer.setLanguageFrom(speech, defaultLocale)
@@ -50,13 +52,21 @@ class GooglePlatformTextToSpeech(
                 override fun onStop(utteranceId: String?, interrupted: Boolean) =
                     continuation.resume(Unit)
 
-                override fun onError(utteranceId: String?, errorCode: Int) = onError(utteranceId)
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) = continuation.resume(Unit)
+
+                override fun onError(utteranceId: String?, errorCode: Int) = continuation.resumeWithException(
+                    GooglePlatformTextToSpeechException(
+                        errorCode,
+                        "GooglePlatformSpeechToTextException while synthesizing $speech"
+                    )
+                )
+
                 override fun onError(utteranceId: String?) =
                     continuation.resumeWithException(
                         GooglePlatformTextToSpeechException(
-                            "GooglePlatformSpeechToTextException while synthesizing $speech"
+                            null,
+                            "Unknown GooglePlatformSpeechToTextException while synthesizing $speech"
                         )
                     )
             })
@@ -98,6 +108,18 @@ class GooglePlatformTextToSpeech(
             ?.takeIf(String::isNotBlank)
             ?.let(::Locale)
             ?: default
+
+        val availabilityCode = synthesizer.isLanguageAvailable(locale)
+
+        val errorMessage = when (availabilityCode) {
+            GoogleTTS.LANG_MISSING_DATA -> "Language data is missing"
+            GoogleTTS.LANG_NOT_SUPPORTED -> "Language is not supported"
+            else -> null
+        }
+
+        if (errorMessage != null) {
+            throw GooglePlatformTextToSpeechException(availabilityCode, errorMessage)
+        }
 
         if (synthesizer.setLanguage(locale) < 0) {
             L.e("Failed to set locale $locale")

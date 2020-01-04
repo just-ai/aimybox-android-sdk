@@ -4,7 +4,7 @@ import android.util.Log
 import com.justai.aimybox.BuildConfig
 
 class Logger(
-    private val tag: String,
+    tag: String = "",
     private val debug: Boolean = BuildConfig.DEBUG,
     private val messageFormatter: (any: Any?) -> String = DEFAULT_FORMAT
 ) {
@@ -13,6 +13,7 @@ class Logger(
         internal val DEFAULT_FORMAT = { any: Any? -> "[${Thread.currentThread().name}] $any" }
     }
 
+    private val tag = "Aimybox" + if (tag.isNotBlank()) "($tag)" else ""
     // Verbose
     fun v(throwable: Throwable) = v("", throwable)
 
@@ -25,14 +26,16 @@ class Logger(
     }
 
     // Debug
-    fun d(throwable: Throwable) = d("", throwable)
+    fun d(throwable: Throwable) {
+        if (debug) d("", throwable)
+    }
 
     fun d(any: Any?) {
-        Log.d(tag, messageFormatter(any))
+        if (debug) Log.d(tag, messageFormatter(any))
     }
 
     fun d(any: Any?, throwable: Throwable) {
-        Log.d(tag, messageFormatter(any), throwable)
+        if (debug) Log.d(tag, messageFormatter(any), throwable)
     }
 
     // Info
@@ -70,7 +73,7 @@ class Logger(
 
     // Assert
     fun assert(condition: Boolean, e: Throwable? = null, lazyMessage: () -> Any? = { "" }) {
-        if(condition) return
+        if (condition) return
         if (debug) {
             throw AssertionError(messageFormatter(lazyMessage()), e)
         } else {

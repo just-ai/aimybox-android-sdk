@@ -11,13 +11,7 @@ import com.justai.aimybox.model.TextSpeech
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flattenConcat
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -29,7 +23,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
-    private val L = Logger("Aimybox-TTS")
+    private val L = Logger("TTS")
 
     protected val audioSynthesizer = AudioSynthesizer(context)
 

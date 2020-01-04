@@ -2,31 +2,27 @@ package com.justai.aimybox.speechkit.snowboy
 
 import ai.kitt.snowboy.SnowboyInternalApiProxy
 import android.content.Context
-import com.getkeepsafe.relinker.ReLinker
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.channels.map
 import kotlinx.coroutines.launch
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
 class SnowboyVoiceTrigger(
-    context: Context,
     assets: SnowboyAssets,
     sensitivity: Float = 0.6F,
     audioGain: Float = 1.0F
 ) : VoiceTrigger, CoroutineScope {
 
-    init {
-        ReLinker.loadLibrary(context, "snowboy-detect-android")
+    companion object {
+        init {
+            System.loadLibrary("snowboy-detect-android")
+        }
     }
 
     private val job = Job()
@@ -66,9 +62,7 @@ class SnowboyVoiceTrigger(
     override suspend fun startDetection(
         onTriggered: (phrase: String?) -> Unit,
         onException: (e: Throwable) -> Unit
-    ) {
-        startRecording(onTriggered)
-    }
+    ) = startRecording(onTriggered)
 
     override suspend fun stopDetection() {
         recorder.stopAudioRecording()

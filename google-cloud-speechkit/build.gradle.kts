@@ -1,12 +1,27 @@
+import com.justai.gradle.project.configureAndroid
+import com.justai.gradle.project.configureProject
+
+plugins {
+    id("com.android.library")
+}
+
+configureProject {
+    isLibrary = true
+    createMavenPublication = true
+    publishToBintray = true
+}
+
+configureAndroid {}
+
 dependencies {
-    implementation("com.justai.aimybox:core:${Versions.aimybox}")
+    implementation(project(":core"))
 
-    implementation(Libraries.Android.appCompat)
-    implementation(Libraries.Kotlin.stdLib)
-    implementation(Libraries.Kotlin.coroutines)
+    implementation(Library.Kotlin.stdLib)
+    implementation(Library.Kotlin.coroutines)
 
-    implementation("io.grpc:grpc-okhttp:1.10.0")
-    implementation("com.google.cloud:google-cloud-speech:1.0.0")
-    implementation("com.google.cloud:google-cloud-texttospeech:0.97.0-beta")
-    implementation("net.sourceforge.argparse4j:argparse4j:0.8.1")
+    implementation(Library.Android.appCompat)
+
+    implementation("com.google.cloud:google-cloud-speech:1.13.0")
+
+    implementation("io.grpc:grpc-okhttp" version { grpc })
 }

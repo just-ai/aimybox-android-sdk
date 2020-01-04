@@ -1,15 +1,11 @@
 package com.justai.aimybox.api.aimybox
 
 import android.net.Uri
-import com.github.salomonbrys.kotson.nullBool
 import com.github.salomonbrys.kotson.nullString
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.justai.aimybox.api.DialogApi
-import com.justai.aimybox.core.L
-import com.justai.aimybox.model.JsonResponse
-import com.justai.aimybox.model.Request
-import com.justai.aimybox.model.Response
+import com.justai.aimybox.core.CustomSkill
 import com.justai.aimybox.model.reply.aimybox.*
 
 /**
@@ -23,39 +19,38 @@ class AimyboxDialogApi(
     private val apiKey: String,
     private val unitId: String,
     url: String = DEFAULT_API_URL,
+    override val customSkills: LinkedHashSet<CustomSkill<AimyboxRequest, AimyboxResponse>> = linkedSetOf(),
     private val replyTypes: Map<String, Class<out AimyboxReply>> = DEFAULT_REPLY_TYPES
-) : DialogApi {
+) : DialogApi<AimyboxRequest, AimyboxResponse>() {
 
     companion object {
         private const val DEFAULT_API_URL = "https://api.aimybox.com/"
         val DEFAULT_REPLY_TYPES = mapOf(
             "text" to AimyboxTextReply::class.java,
+            "audio" to AimyboxAudioReply::class.java,
             "image" to AimyboxImageReply::class.java,
             "buttons" to AimyboxButtonsReply::class.java
         )
     }
 
-    private val baseUrl: String
-    private val path: String
+    private val retrofit: AimyboxRetrofit
 
     init {
         val uri = Uri.parse(url)
-        baseUrl = uri.scheme?.let { "$it://" }.orEmpty() + uri.authority
-        path = uri.path ?: "/"
+        val baseUrl = uri.scheme?.let { "$it://" }.orEmpty() + uri.authority
+        val path = uri.path ?: "/"
+        retrofit = AimyboxRetrofit(baseUrl, path)
     }
 
-    private val retrofit = AimyboxRetrofit(baseUrl, path)
+    override fun createRequest(query: String) = AimyboxRequest(query, apiKey, unitId)
 
-    override suspend fun send(request: Request): Response {
-        val apiRequest = AimyboxRequest(request.query, apiKey, unitId, request.data)
-        return retrofit.requestAsync(apiRequest).parseResponse(replyTypes)
+    override suspend fun send(request: AimyboxRequest): AimyboxResponse {
+        val json = retrofit.request(request)
+        return AimyboxResponse(json, parseReplies(json, replyTypes))
     }
 
-    private fun JsonObject.parseResponse(replyTypes: Map<String, Class<out AimyboxReply>>) =
-        JsonResponse(this, replies = getReplies(replyTypes))
-
-    private fun JsonObject.getReplies(replyTypes: Map<String, Class<out AimyboxReply>>) =
-        get("replies")?.takeIf(JsonElement::isJsonArray)
+    private fun parseReplies(json: JsonObject, replyTypes: Map<String, Class<out AimyboxReply>>) =
+        json.get("replies")?.takeIf(JsonElement::isJsonArray)
             ?.asJsonArray
             ?.filterIsInstance(JsonObject::class.java)
             ?.map { resolveReplyType(it, replyTypes) }

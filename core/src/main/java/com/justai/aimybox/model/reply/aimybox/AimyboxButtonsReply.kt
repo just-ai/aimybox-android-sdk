@@ -19,5 +19,6 @@ data class AimyboxButtonsReply(
 
 data class AimyboxReplyButton(val json: JsonObject) : ReplyButton(
     json["text"].string,
-    json["url"].nullString
+    json["url"].nullString,
+    json["payload"].nullString
 )

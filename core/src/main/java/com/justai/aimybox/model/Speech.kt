@@ -3,7 +3,7 @@ package com.justai.aimybox.model
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.annotation.RawRes
-import com.justai.aimybox.core.L
+import com.justai.aimybox.logging.Logger
 import java.io.File
 import java.util.*
 
@@ -21,6 +21,8 @@ data class TextSpeech(val text: String, val language: String? = null) : Speech()
  * Contains pre-recorded speech, which synthesizer simply should play.
  * */
 sealed class AudioSpeech : Speech() {
+    protected val L = Logger("AudioSpeech")
+
     /**
      * Set data source to provided [mediaPlayer].
      * */
@@ -30,7 +32,8 @@ sealed class AudioSpeech : Speech() {
      * Audio speech located by [uri].
      * */
     data class Uri(val uri: String) : AudioSpeech() {
-        override fun load(context: Context, mediaPlayer: MediaPlayer) = mediaPlayer.setDataSource(uri)
+        override fun load(context: Context, mediaPlayer: MediaPlayer) =
+            mediaPlayer.setDataSource(uri)
     }
 
     /**

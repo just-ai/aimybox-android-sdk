@@ -1,7 +1,23 @@
-dependencies {
-    implementation("com.justai.aimybox:core:${Versions.aimybox}")
+import com.justai.gradle.project.configureAndroid
+import com.justai.gradle.project.configureProject
 
-    implementation(Libraries.Android.appCompat)
-    implementation(Libraries.Kotlin.stdLib)
-    implementation(Libraries.Kotlin.coroutines)
+
+plugins {
+    id("com.android.library")
+}
+
+configureProject {
+    isLibrary = true
+    createMavenPublication = true
+    publishToBintray = true
+}
+
+configureAndroid {}
+
+dependencies {
+    implementation(project(":core"))
+
+    implementation(Library.Android.appCompat)
+    implementation(Library.Kotlin.stdLib)
+    implementation(Library.Kotlin.coroutines)
 }

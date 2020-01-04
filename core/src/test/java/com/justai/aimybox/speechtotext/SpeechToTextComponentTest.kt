@@ -91,7 +91,7 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
 
             verify { mockDelegate.startRecognition() }
 
-            component.cancel()
+            component.cancelRunningJob()
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionCancelled)
 
             coVerify { mockDelegate.cancelRecognition() }

@@ -17,6 +17,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.pow
 
 /**
  * Coroutine scope audio recorder intended to use in [SpeechToText]
@@ -58,12 +59,11 @@ class AudioRecorder(
         private const val MILLISECONDS_IN_SECOND = 1000
     }
 
-    private val L = Logger("$className($name)")
+    private val L = Logger("$className $name")
 
     override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
-    private val minBufferSize = calculateMinBufferSize()
-    private val bufferSize = calculateBufferSize(minBufferSize)
+    private val bufferSize = calculateBufferSize()
 
     /**
      * Launch new coroutine and start audio recording.
@@ -139,6 +139,21 @@ class AudioRecorder(
      * */
     suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
 
+    /**
+     * Calculates a RMS level from recorded chunk
+     *
+     * @return an RMS level in Db
+     */
+    fun calculateRmsDb(data: ByteArray): Int {
+        val avg = (data.sum() / data.size).toDouble()
+        val sumMeanSquare: Double = data.fold(0.0) { acc, curr ->
+            acc + (curr - avg).pow(2.0)
+        }.toDouble()
+
+        val averageMeanSquare = sumMeanSquare / data.size
+        return (averageMeanSquare.pow(0.5) + 0.5).toInt()
+    }
+
     private fun createRecorder() = AudioRecord(
         MediaRecorder.AudioSource.MIC,
         sampleRate,
@@ -147,14 +162,7 @@ class AudioRecorder(
         bufferSize
     )
 
-    private fun calculateMinBufferSize() =
-        AudioRecord.getMinBufferSize(sampleRate, channelCount, audioFormat).also {
-            require(it != AudioRecord.ERROR && it != AudioRecord.ERROR_BAD_VALUE) {
-                "Sample rate $sampleRate is not supported."
-            }
-        }
-
-    private fun calculateBufferSize(minBufferSize: Int): Int {
+    private fun calculateBufferSize(): Int {
         val sampleSize = when (audioFormat) {
             AudioFormat.ENCODING_PCM_FLOAT -> 2
             AudioFormat.ENCODING_PCM_16BIT -> 2
@@ -165,13 +173,7 @@ class AudioRecorder(
         val frameSize = sampleSize * channelCount
         val dataRate = frameSize * sampleRate
 
-        val bufferSize = dataRate * periodMs / MILLISECONDS_IN_SECOND
-
-        require(bufferSize > minBufferSize) {
-            "Buffer is too small. Current size: $bufferSize, min size: $minBufferSize"
-        }
-
-        return bufferSize
+        return dataRate * periodMs / MILLISECONDS_IN_SECOND
     }
 
     private fun ReceiveChannel<ByteArray>.convertBytesToShorts() = map { audioBytes ->

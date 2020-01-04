@@ -10,6 +10,7 @@ class GooglePlatformSpeechToTextException(
 
 
 class GooglePlatformTextToSpeechException(
+    val code: Int? = null,
     message: String? = null,
     cause: Throwable? = null
 ) : SpeechToTextException(message, cause)

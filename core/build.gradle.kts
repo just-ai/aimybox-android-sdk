@@ -1,18 +1,26 @@
+import com.justai.gradle.project.configureAndroid
+import com.justai.gradle.project.configureProject
+
 plugins {
-    kotlin("kapt")
+    id("com.android.library")
 }
 
+configureProject {
+    createMavenPublication = true
+    isLibrary = true
+    publishToBintray = true
+}
+
+configureAndroid {}
+
 dependencies {
-    implementation(Libraries.Android.appCompat)
-    implementation(Libraries.Kotlin.stdLib)
-    implementation(Libraries.Kotlin.coroutines)
+    implementation(Library.Android.appCompat)
+    implementation(Library.Kotlin.stdLib)
+    implementation(Library.Kotlin.coroutines)
 
-    implementation("com.squareup.retrofit2:retrofit:${Versions.retrofit}")
-    implementation("com.squareup.okhttp3:logging-interceptor:${Versions.okHttp}")
+    implementation("com.squareup.retrofit2:retrofit:${Version.retrofit}")
+    implementation("com.squareup.okhttp3:logging-interceptor:${Version.okHttp}")
     implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
-    implementation("com.squareup.retrofit2:converter-gson:${Versions.kotson}")
-    api("com.github.salomonbrys.kotson:kotson:${Versions.kotson}")
-
-    batchTestImplementation(Libraries.Test.unitTest)
-    batchAndroidTestImplementation(Libraries.Test.instrumentedTest)
+    implementation("com.squareup.retrofit2:converter-gson:${Version.kotson}")
+    api("com.github.salomonbrys.kotson:kotson:${Version.kotson}")
 }

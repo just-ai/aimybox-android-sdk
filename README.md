@@ -17,6 +17,8 @@
 
 The only solution if you need to embed your own intelligent voice assistant into your existing application or device.
 
+### iOS version is available [here](https://github.com/just-ai/aimybox-ios-sdk)
+
 # Key Features
 
 * Provides ready to use [UI components](https://github.com/just-ai/aimybox-android-assistant) for fast building of your voice assistant app
@@ -46,14 +48,14 @@ The only solution if you need to embed your own intelligent voice assistant into
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:0.4.0")
+        implementation("com.justai.aimybox:core:0.7.0")
     }
 ```
 
 2. Add one or more dependencies of third party speech-to-text and text-to-speech libraries. For example
 
 ```kotlin
-implementation("com.justai.aimybox:google-platform-speechkit:0.4.0")
+implementation("com.justai.aimybox:google-platform-speechkit:0.7.0")
 ```
 
 3. Create a new project in [Aimybox console](https://app.aimybox.com), enable some voice skills and **copy your project's API key**.

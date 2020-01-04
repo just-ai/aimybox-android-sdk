@@ -25,10 +25,9 @@ import com.justai.aimybox.voicetrigger.VoiceTrigger
 data class Config internal constructor(
     val speechToText: SpeechToText,
     val textToSpeech: TextToSpeech,
-    val dialogApi: DialogApi,
+    val dialogApi: DialogApi<*, *>,
     val voiceTrigger: VoiceTrigger?,
     val earcon: MediaPlayer?,
-    val skills: LinkedHashSet<CustomSkill>,
     val recognitionBehavior: RecognitionBehavior
 ) {
 
@@ -47,7 +46,7 @@ data class Config internal constructor(
         fun create(
             speechToText: SpeechToText,
             textToSpeech: TextToSpeech,
-            dialogApi: DialogApi,
+            dialogApi: DialogApi<*, *>,
             block: Builder.() -> Unit = {}
         ) = Builder(speechToText, textToSpeech, dialogApi).apply(block).build()
     }
@@ -55,9 +54,8 @@ data class Config internal constructor(
     class Builder internal constructor(
         var speechToText: SpeechToText,
         var textToSpeech: TextToSpeech,
-        var dialogApi: DialogApi,
+        var dialogApi: DialogApi<*, *>,
         var voiceTrigger: VoiceTrigger? = null,
-        var skills: LinkedHashSet<CustomSkill> = linkedSetOf(),
         /**
          * @see RecognitionBehavior
          * */
@@ -71,7 +69,6 @@ data class Config internal constructor(
             prototype.textToSpeech,
             prototype.dialogApi,
             prototype.voiceTrigger,
-            LinkedHashSet(prototype.skills),
             prototype.recognitionBehavior
         ) {
             earcon = prototype.earcon
@@ -83,7 +80,6 @@ data class Config internal constructor(
             dialogApi,
             voiceTrigger,
             earcon,
-            skills,
             recognitionBehavior
         )
 

@@ -1,17 +1,14 @@
 package com.justai.aimybox.speechkit.yandex.cloud
 
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
 import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
 
 internal class YandexSynthesisApi(
     private val yandexPassportOAuthKey: String,
@@ -25,10 +22,14 @@ internal class YandexSynthesisApi(
         .addInterceptor(loggingInterceptor)
         .build()
 
-    suspend fun request(text: String, language: Language, config: YandexTextToSpeech.Config): ByteArray {
+    suspend fun request(
+        text: String,
+        language: Language,
+        config: YandexTextToSpeech.Config
+    ): ByteArray {
         val token = IAmTokenGenerator.getOAuthToken(yandexPassportOAuthKey)
 
-        val requestUrl = HttpUrl.parse(config.apiUrl)!!.newBuilder()
+        val requestUrl = config.apiUrl.toHttpUrl().newBuilder()
             .addQueryParameter("folderId", folderId)
             .addQueryParameter("text", text)
             .addQueryParameter("lang", language.stringValue)
@@ -54,7 +55,12 @@ internal class YandexSynthesisApi(
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    continuation.resume(response.body()!!.byteStream())
+                    val body = response.body
+                    if (body == null) {
+                        continuation.resumeWithException(NullPointerException("Body is null"))
+                    } else {
+                        continuation.resume(body.byteStream())
+                    }
                 }
             })
         }.use(InputStream::readBytes)

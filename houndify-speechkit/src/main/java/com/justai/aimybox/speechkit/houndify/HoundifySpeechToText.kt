@@ -16,7 +16,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import java.util.*
 
-private val L = Logger("Houndify")
+private val L = Logger("Houndify Speechkit")
 
 @Suppress("unused")
 class HoundifySpeechToText(
