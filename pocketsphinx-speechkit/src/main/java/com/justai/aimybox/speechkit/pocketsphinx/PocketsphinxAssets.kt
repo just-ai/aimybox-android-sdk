@@ -1,5 +1,6 @@
 package com.justai.aimybox.speechkit.pocketsphinx
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
 import androidx.annotation.RequiresPermission
@@ -12,7 +13,6 @@ class PocketsphinxAssets private constructor(
     val grammarFilePath: String
 ){
     companion object {
-        @RequiresPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
         fun fromExternalStoragePath(
             directory: String,
             acousticModelFileName: String,
@@ -26,17 +26,16 @@ class PocketsphinxAssets private constructor(
                 directory + grammarFileName)
         }
 
-        @RequiresPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        @SuppressLint("NewApi")
         fun fromApkAssets(
             context: Context,
             acousticModelFileName: String,
             dictionaryFileName: String,
             grammarFileName: String,
-            assetsDirectory: String = "",
-            externalStorageDirectory: String = "Android/data/pocketsphinx-assets/"
+            assetsDirectory: String = ""
         ): PocketsphinxAssets {
             val directory =
-                "${Environment.getExternalStorageDirectory().absolutePath}/$externalStorageDirectory"
+                "${context.getExternalFilesDir(null)?.absolutePath}/pocketsphinx/"
 
             File(directory).takeIf { it.exists() }?.deleteRecursively()
             copyAssetToExternalStorage(context, assetsDirectory, acousticModelFileName, directory)

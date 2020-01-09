@@ -20,5 +20,5 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation(fileTree("libs"))
+    implementation("edu.cmu.pocketsphinx:pocketsphinx-android:1.0.0")
 }

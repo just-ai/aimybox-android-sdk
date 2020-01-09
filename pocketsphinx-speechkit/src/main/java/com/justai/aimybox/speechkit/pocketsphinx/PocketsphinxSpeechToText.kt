@@ -14,6 +14,7 @@ import java.lang.Exception
 
 class PocketsphinxSpeechToText(
     assets: PocketsphinxAssets,
+    sampleRate: Int = 16000,
     private val timeout: Long = 5000
 ): SpeechToText(), CoroutineScope {
 
@@ -28,6 +29,7 @@ class PocketsphinxSpeechToText(
     private val recognizer = SpeechRecognizerSetup.defaultSetup()
         .setAcousticModel(File(assets.acousticModelFilePath))
         .setDictionary(File(assets.dictionaryFilePath))
+        .setSampleRate(sampleRate)
         .recognizer
 
     private val listener = object : RecognitionListener {
