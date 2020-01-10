@@ -20,5 +20,5 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation("edu.cmu.pocketsphinx:pocketsphinx-android:1.0.0")
+    implementation("com.justai.aimybox:pocketsphinx-android-lib:1.0.0")
 }
