@@ -1,20 +1,20 @@
 package com.justai.aimybox.speechkit.pocketsphinx
 
+import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.channels.ReceiveChannel
 
 import edu.cmu.pocketsphinx.Hypothesis
 import edu.cmu.pocketsphinx.RecognitionListener
-import edu.cmu.pocketsphinx.SpeechRecognizerSetup
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.io.File
 import java.lang.Exception
 
 class PocketsphinxSpeechToText(
-    assets: PocketsphinxAssets,
-    sampleRate: Int = 16000,
+    recognizerProvider: PocketsphinxRecognizerProvider,
+    grammarFilePath: String,
     private val timeout: Long = 5000
 ): SpeechToText(), CoroutineScope {
 
@@ -23,14 +23,11 @@ class PocketsphinxSpeechToText(
     }
 
     override val coroutineContext = Dispatchers.IO + Job()
+
+    private val recognizer = recognizerProvider.recognizer
+
     private lateinit var channel: Channel<Result>
     private lateinit var timeoutTask: Job
-
-    private val recognizer = SpeechRecognizerSetup.defaultSetup()
-        .setAcousticModel(File(assets.acousticModelFilePath))
-        .setDictionary(File(assets.dictionaryFilePath))
-        .setSampleRate(sampleRate)
-        .recognizer
 
     private val listener = object : RecognitionListener {
         override fun onResult(hyp: Hypothesis?) {
@@ -66,21 +63,24 @@ class PocketsphinxSpeechToText(
 
         fun finish() {
             channel.close()
+            recognizer.removeListener(this)
         }
     }
 
     init {
-        recognizer.addGrammarSearch(GRAMMAR_SEARCH, File(assets.grammarFilePath))
-        recognizer.addListener(listener)
+        recognizer.addGrammarSearch(GRAMMAR_SEARCH, File(grammarFilePath))
     }
 
     override suspend fun cancelRecognition() {
         timeoutTask.cancel()
         recognizer.cancel()
+        recognizer.removeListener(listener)
     }
 
+    @RequiresPermission("android.permission.RECORD_AUDIO")
     override fun startRecognition(): ReceiveChannel<Result> {
         channel = Channel()
+        recognizer.addListener(listener)
         recognizer.startListening(GRAMMAR_SEARCH)
         timeoutTask = launch {
             delay(timeout)
@@ -96,6 +96,7 @@ class PocketsphinxSpeechToText(
 
     override fun destroy() {
         timeoutTask.cancel()
+        recognizer.removeListener(listener)
         recognizer.shutdown()
     }
 }

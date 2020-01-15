@@ -2,28 +2,26 @@ package com.justai.aimybox.speechkit.pocketsphinx
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Environment
-import androidx.annotation.RequiresPermission
 import java.io.File
 import java.io.InputStream
 
 class PocketsphinxAssets private constructor(
     val acousticModelFilePath: String,
     val dictionaryFilePath: String,
-    val grammarFilePath: String
+    val grammarFilePath: String? = null
 ){
     companion object {
         fun fromExternalStoragePath(
             directory: String,
             acousticModelFileName: String,
             dictionaryFileName: String,
-            grammarFileName: String
+            grammarFileName: String? = null
         ): PocketsphinxAssets {
             L.i("Reading assets from external storage. Full path: $directory")
             return PocketsphinxAssets(
                 directory + acousticModelFileName,
                 directory + dictionaryFileName,
-                directory + grammarFileName)
+                grammarFileName?.let { directory + grammarFileName })
         }
 
         @SuppressLint("NewApi")
@@ -31,16 +29,19 @@ class PocketsphinxAssets private constructor(
             context: Context,
             acousticModelFileName: String,
             dictionaryFileName: String,
-            grammarFileName: String,
+            grammarFileName: String? = null,
             assetsDirectory: String = ""
         ): PocketsphinxAssets {
             val directory =
-                "${context.getExternalFilesDir(null)?.absolutePath}/pocketsphinx/"
+                "${context.getExternalFilesDir(null)?.absolutePath}/pocketsphinx-assets/"
 
-            File(directory).takeIf { it.exists() }?.deleteRecursively()
-            copyAssetToExternalStorage(context, assetsDirectory, acousticModelFileName, directory)
-            copyAssetToExternalStorage(context, assetsDirectory, dictionaryFileName, directory)
-            copyAssetToExternalStorage(context, assetsDirectory, grammarFileName, directory)
+            if (!File(directory).exists()) {
+                copyAssetToExternalStorage(context, assetsDirectory, acousticModelFileName, directory)
+                copyAssetToExternalStorage(context, assetsDirectory, dictionaryFileName, directory)
+                grammarFileName?.also {
+                    copyAssetToExternalStorage(context, assetsDirectory, grammarFileName, directory)
+                }
+            }
 
             return fromExternalStoragePath(directory, acousticModelFileName, dictionaryFileName, grammarFileName)
         }
