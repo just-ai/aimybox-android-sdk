@@ -1,5 +1,7 @@
 package com.justai.aimybox.speechkit.kaldi
 
+import android.Manifest
+import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +45,7 @@ class KaldiSpeechToText(
         recognizer?.cancel()
     }
 
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): ReceiveChannel<Result> {
         val channel = Channel<Result>()
         recognizer = SpeechRecognizer(model)

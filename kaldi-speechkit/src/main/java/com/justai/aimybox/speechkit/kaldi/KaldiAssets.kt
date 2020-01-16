@@ -18,8 +18,9 @@ class KaldiAssets private constructor(
             val directory =
                 "${context.getExternalFilesDir(null)?.absolutePath}/kaldi-assets/"
 
-            File(directory).takeIf { it.exists() }?.deleteRecursively()
-            copyAssetToExternalStorage(context, assetsDirectory, directory)
+            File(directory).takeIf { !it.exists() }?.also {
+                copyAssetToExternalStorage(context, assetsDirectory, directory)
+            }
 
             return KaldiAssets(directory)
         }
