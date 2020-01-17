@@ -21,7 +21,8 @@ dependencies {
 
     implementation(Library.Android.appCompat)
 
-    implementation("com.google.cloud:google-cloud-speech:1.13.0")
+    implementation("com.google.cloud:google-cloud-speech:1.22.0")
+    implementation("com.google.cloud:google-cloud-texttospeech:0.117.0-beta")
 
     implementation("io.grpc:grpc-okhttp" version { grpc })
 }

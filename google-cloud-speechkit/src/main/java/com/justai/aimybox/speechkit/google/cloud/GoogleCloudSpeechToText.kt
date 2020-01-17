@@ -2,6 +2,7 @@ package com.justai.aimybox.speechkit.google.cloud
 
 import android.Manifest
 import androidx.annotation.RequiresPermission
+import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.api.gax.rpc.ClientStream
 import com.google.api.gax.rpc.ResponseObserver
 import com.google.api.gax.rpc.StreamController
@@ -10,6 +11,7 @@ import com.google.cloud.speech.v1.*
 import com.google.protobuf.ByteString
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
+import com.justai.aimybox.speechkit.google.cloud.model.RecognitionModel
 import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.CoroutineScope
@@ -25,8 +27,8 @@ import java.util.*
 @ExperimentalCoroutinesApi
 class GoogleCloudSpeechToText(
     credentials: GoogleCloudCredentials,
-    var locale: Locale,
-    var config: Config = Config()
+    private val locale: Locale,
+    private val config: Config = Config()
 ) : SpeechToText(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO
@@ -132,18 +134,15 @@ class GoogleCloudSpeechToText(
     }
 
     private fun createAuthorizedClient(credentials: Credentials): SpeechClient {
-        val channelProvider = SpeechSettings.defaultTransportChannelProvider()
-            .withCredentials(credentials)
-
         val speechSettings = SpeechSettings.newBuilder()
-            .setTransportChannelProvider(channelProvider)
+            .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
             .build()
 
         return SpeechClient.create(speechSettings)
     }
 
     data class Config(
-        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
+        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_16KHZ,
         val channelCount: Int = 1,
         val enablePunctuation: Boolean = false,
         val profanityFilter: Boolean = false,
