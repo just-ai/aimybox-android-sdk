@@ -1,4 +1,4 @@
-package com.justai.aimybox.speechkit.google.cloud
+package com.justai.aimybox.speechkit.google.cloud.model
 
 enum class RecognitionModel(internal val stringValue: String) {
     COMMAND_AND_SEARCH("command_and_search"),
