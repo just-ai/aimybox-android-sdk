@@ -17,7 +17,8 @@ import android.speech.tts.TextToSpeech as GoogleTTS
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 class GooglePlatformTextToSpeech(
     context: Context,
-    var defaultLocale: Locale = Locale.getDefault()
+    var defaultLocale: Locale = Locale.getDefault(),
+    private val preferOffline: Boolean = false
 ) : BaseTextToSpeech(context) {
 
     companion object {
@@ -41,8 +42,14 @@ class GooglePlatformTextToSpeech(
         initialization.await()
 
         synthesizer.setLanguageFrom(speech, defaultLocale)
-
         synthesizer.setPitch(voicePitch)
+
+        synthesizer.voices
+            .filter {
+                it.locale.isO3Language == synthesizer.language.isO3Language
+                        && it.locale.isO3Country == synthesizer.language.isO3Country
+            }.find { it.isNetworkConnectionRequired != preferOffline }
+            ?.also { synthesizer.voice = it }
 
         suspendCancellableCoroutine<Unit> { continuation ->
             continuation.invokeOnCancellation { synthesizer.stop() }
