@@ -20,6 +20,18 @@ Speech recognition and synthesis by Google [Cloud Speech-to-Text](https://cloud.
       implementation("com.justai.aimybox:google-cloud-speechkit:${version}")
   }
 ```
+
+_You may need also to add the next block to your android config in the same file_
+
+```kotlin
+android {
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/INDEX.LIST")
+    }
+}
+```
+
 7. Put the credentials JSON file into assets folder with name like `credentials.json`
 8. Provide Google Cloud Speechkit components into Aimybox configuration object:
 ```kotlin
