@@ -15,7 +15,7 @@
     <a href="https://bintray.com/aimybox/aimybox-android-sdk/"><img alt="Bintray artifact" src="https://api.bintray.com/packages/aimybox/aimybox-android-sdk/core/images/download.svg"></a>
 </p>
 
-The only solution if you need to embed your own intelligent voice assistant into your existing application or device.
+Embed your own intelligent voice assistant into your existing application or device.
 
 ### iOS version is available [here](https://github.com/just-ai/aimybox-ios-sdk)
 
