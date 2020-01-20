@@ -17,12 +17,8 @@ dependencies {
     implementation(project(":core"))
 
     implementation(Library.Kotlin.stdLib)
+    implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation(Library.Android.appCompat)
-
-    implementation("com.google.cloud:google-cloud-speech:1.22.0")
-    implementation("com.google.cloud:google-cloud-texttospeech:0.117.0-beta")
-
-    implementation("io.grpc:grpc-okhttp" version { grpc })
+    implementation("com.justai.aimybox:pocketsphinx-android-lib:1.0.0")
 }
