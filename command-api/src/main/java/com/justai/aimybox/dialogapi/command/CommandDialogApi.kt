@@ -10,28 +10,26 @@ class CommandDialogApi(
     override val customSkills: LinkedHashSet<CustomSkill<CommandRequest, CommandResponse>>
 ): DialogApi<CommandRequest, CommandResponse>() {
 
-    private val commands: Map<String, Int>
+    private val commands = HashMap<Regex, Command>()
 
     init {
-        val map = HashMap<String, Int>()
-
         commandResources.forEach { xml ->
             CommandParser
                 .parseCommands(context.resources.getXml(xml))
-                .forEach { cmd -> cmd.patterns.forEach { pattern ->
-                    map[pattern] = cmd.id
+                .forEach { cmd -> cmd.patterns.keys.forEach { pattern ->
+                    commands[pattern.toRegex()] = cmd
                 } }
         }
-
-        commands = map.toSortedMap(reverseOrder())
     }
 
     override fun createRequest(query: String) = CommandRequest(query)
 
     override suspend fun send(request: CommandRequest): CommandResponse {
-        return commands
-            .filterKeys { pattern -> request.query.matches(pattern.toRegex()) }
-            .values.firstOrNull()
-            .let { CommandResponse(request.query, it ?: 0) }
+        val regex = commands
+            .filterKeys { request.query.matches(it) }
+            .keys.firstOrNull()
+
+        val cmd = commands[regex]
+        return CommandResponse(request.query, cmd?.action, cmd?.patterns?.get(regex?.pattern))
     }
 }

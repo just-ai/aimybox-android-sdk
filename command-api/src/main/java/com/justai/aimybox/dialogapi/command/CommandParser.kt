@@ -2,13 +2,13 @@ package com.justai.aimybox.dialogapi.command
 
 import android.content.res.XmlResourceParser
 
-object CommandParser {
+internal object CommandParser {
 
-    private const val TAG_COMMAND = "command"
-    private const val TAG_PATTERN = "pattern"
+    private const val TAG_ACTION = "action"
+    private const val TAG_INTENT = "intent"
 
-    private const val ATTR_ID = "id"
-    private const val ATTR_VALUE = "value"
+    private const val ATTR_NAME = "name"
+    private const val ATTR_REGEX = "regex"
 
     fun parseCommands(xml: XmlResourceParser): List<Command> {
         var event: Int
@@ -19,13 +19,14 @@ object CommandParser {
             when (event) {
                 XmlResourceParser.START_TAG -> {
                     when (xml.name) {
-                        TAG_COMMAND -> {
-                            command = Command(xml.getAttributeResourceValue(null, ATTR_ID, 0), ArrayList())
+                        TAG_ACTION -> {
+                            command = Command(xml.getAttributeValue(null, ATTR_NAME), HashMap())
                             commands.add(command)
                         }
-                        TAG_PATTERN -> {
-                            (command?.patterns as ArrayList<String>).add(
-                                xml.getAttributeValue(null, ATTR_VALUE)
+                        TAG_INTENT -> {
+                            (command?.patterns as HashMap<String, String>).put(
+                                xml.getAttributeValue(null, ATTR_REGEX),
+                                xml.getAttributeValue(null, ATTR_NAME)
                             )
                         }
                     }
