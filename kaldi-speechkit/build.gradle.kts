@@ -22,4 +22,5 @@ dependencies {
     implementation(Library.Kotlin.coroutines)
 
     implementation("org.kaldi:kaldi-android:5.2")
+    implementation("com.neovisionaries:nv-websocket-client:2.9")
 }
