@@ -1,14 +1,18 @@
 # Kaldi Speechkit for Aimybox Android SDK
 
-Offline speech-to-text developed by [Kaldi](https://github.com/kaldi-asr/kaldi) and [Vosk](https://github.com/alphacep/vosk) projects.
-
-_This engine recognises speech without an internet connection._
+Speech-to-text engine developed by [Kaldi](https://github.com/kaldi-asr/kaldi) and [Vosk](https://github.com/alphacep/vosk) projects.
 
 ## Example
 
 Here is a [working example](https://github.com/just-ai/aimybox-android-assistant/tree/kaldi/app) of Android voice assistant powered by this module.
 
 ## How to start using
+
+Kaldi engine can work in both _offline_ and _online_ modes.
+
+### Offline mode
+
+In offline mode Kaldi utilizes a local model that is restricted due its tiny size and can produce less accurate results.
 
 1. Download model for your language [from here](https://github.com/alphacep/kaldi-android-demo/releases)
 2. Unzip a downloaded package to assets folder of your Android project
@@ -24,11 +28,32 @@ Here is a [working example](https://github.com/just-ai/aimybox-android-assistant
         implementation("com.justai.aimybox:kaldi-speechkit:${version}")
     }
 ```
-4. Provide Kaldi Speechkit components into Aimybox configuration object:
+4. Provide Kaldi Speechkit component into Aimybox configuration object:
 ```kotlin
     fun createAimybox(context: Context): Aimybox {
         val textToSpeech = GooglePlatformTextToSpeech(context, Locale.getDefault()) // or any other TTS
         val speechToText = KaldiSpeechToText(KaldiAssets.fromApkAssets(this, "model"))
+
+        val dialogApi = DummyDialogApi() // or any other Dialog API
+
+        return Aimybox(Config.create(speechToText, textToSpeech, dialogApi))
+    }
+```
+
+### Online mode
+
+In online mode Kaldi connects to the remote hosting with running Kaldi websocket server.
+In this case the size of the model hasn't to be tiny, that is why it can produce more accurate results.
+
+_You don't have to download and serve any model data in this case._
+
+1. Run Kaldi server as described [here](https://github.com/alphacep/kaldi-websocket-python)
+2. Add dependencies to your module's build.gradle as described above
+3. Provide Kaldi Speechkit component into Aimybox configuration object:
+```kotlin
+    fun createAimybox(context: Context): Aimybox {
+        val textToSpeech = GooglePlatformTextToSpeech(context, Locale.getDefault()) // or any other TTS
+        val speechToText = KaldiWebsocketSpeechToText("your Kaldi server URL here") // or use wss://api.alphacephei.com/asr/en/ for testing purposes
 
         val dialogApi = DummyDialogApi() // or any other Dialog API
 

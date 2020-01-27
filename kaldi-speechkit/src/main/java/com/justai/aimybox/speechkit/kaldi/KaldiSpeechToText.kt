@@ -10,7 +10,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import org.kaldi.Model
 import org.kaldi.RecognitionListener
 import org.kaldi.SpeechRecognizer
@@ -86,12 +85,4 @@ class KaldiSpeechToText(
             channel.cancel()
         }
     }
-}
-
-private fun String.parseResult(): String {
-    return JSONObject(this).optString("text")
-}
-
-private fun String.parsePartial(): String {
-    return JSONObject(this).optString("partial")
 }
