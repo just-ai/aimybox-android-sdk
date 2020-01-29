@@ -17,7 +17,8 @@ internal class YandexRecognitionApi(
     private val yandexPassportOAuthKey: String,
     private val folderId: String,
     private var language: Language,
-    private val config: YandexSpeechToText.Config
+    private val config: YandexSpeechToText.Config,
+    private val iAmTokenProvider: IAmTokenProvider = IAmTokenGenerator(yandexPassportOAuthKey)
 ) : CoroutineScope {
 
     companion object {
@@ -48,7 +49,7 @@ internal class YandexRecognitionApi(
         onCompleted: () -> Unit
     ): StreamObserver<SttServiceOuterClass.StreamingRecognitionRequest> {
 
-        val token = IAmTokenGenerator.getOAuthToken(yandexPassportOAuthKey)
+        val token = iAmTokenProvider.getOAuthToken()
 
         val requestStream = attachOAuthHeader(stub, token).streamingRecognize(
             object : StreamObserver<SttServiceOuterClass.StreamingRecognitionResponse> {

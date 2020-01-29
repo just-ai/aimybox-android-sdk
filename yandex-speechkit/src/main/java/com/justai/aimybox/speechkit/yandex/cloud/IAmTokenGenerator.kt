@@ -11,10 +11,10 @@ import kotlinx.coroutines.CompletableDeferred
 import java.io.IOException
 import java.util.*
 
-object IAmTokenGenerator {
+class IAmTokenGenerator(private val yandexPassportOAuthToken: String) : IAmTokenProvider {
     private val client = OkHttpClient()
 
-    suspend fun getOAuthToken(yandexPassportOAuthToken: String): String {
+    override suspend fun getOAuthToken(): String {
         val request = Request.Builder().apply {
             url(BuildConfig.TOKEN_API_URL)
             addHeader("Content-Type", "application/json")
