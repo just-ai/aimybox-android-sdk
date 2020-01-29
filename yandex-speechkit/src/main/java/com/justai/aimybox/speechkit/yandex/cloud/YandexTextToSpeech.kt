@@ -9,13 +9,13 @@ import kotlinx.coroutines.cancel
 
 class YandexTextToSpeech(
     context: Context,
-    yandexPassportOAuthKey: String,
+    iAmTokenProvider: IAmTokenProvider,
     folderId: String,
     var defaultLanguage: Language,
     var config: Config = Config()
 ) : BaseTextToSpeech(context) {
 
-    private val api = YandexSynthesisApi(yandexPassportOAuthKey, folderId)
+    private val api = YandexSynthesisApi(iAmTokenProvider, folderId)
 
     override suspend fun speak(speech: TextSpeech) {
         try {

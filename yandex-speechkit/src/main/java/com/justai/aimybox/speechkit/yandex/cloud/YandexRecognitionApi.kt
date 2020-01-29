@@ -14,11 +14,10 @@ import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
 
 internal class YandexRecognitionApi(
-    private val yandexPassportOAuthKey: String,
+    private val iAmTokenProvider: IAmTokenProvider,
     private val folderId: String,
     private var language: Language,
-    private val config: YandexSpeechToText.Config,
-    private val iAmTokenProvider: IAmTokenProvider = IAmTokenGenerator(yandexPassportOAuthKey)
+    private val config: YandexSpeechToText.Config
 ) : CoroutineScope {
 
     companion object {

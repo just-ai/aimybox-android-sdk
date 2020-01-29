@@ -11,9 +11,8 @@ import kotlin.coroutines.resumeWithException
 
 
 internal class YandexSynthesisApi(
-    private val yandexPassportOAuthKey: String,
-    private val folderId: String,
-    private val iAmTokenProvider: IAmTokenProvider = IAmTokenGenerator(yandexPassportOAuthKey)
+    private val iAmTokenProvider: IAmTokenProvider,
+    private val folderId: String
 ) {
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

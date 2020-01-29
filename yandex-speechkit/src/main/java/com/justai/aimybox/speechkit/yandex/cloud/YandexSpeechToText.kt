@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
 class YandexSpeechToText(
-    yandexPassportOAuthKey: String,
+    iAmTokenProvider: IAmTokenProvider,
     folderId: String,
     language: Language,
     config: Config = Config()
@@ -26,7 +26,7 @@ class YandexSpeechToText(
 
     private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 
-    private val api = YandexRecognitionApi(yandexPassportOAuthKey, folderId, language, config)
+    private val api = YandexRecognitionApi(iAmTokenProvider, folderId, language, config)
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 
