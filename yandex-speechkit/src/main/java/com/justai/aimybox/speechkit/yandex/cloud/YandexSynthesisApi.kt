@@ -11,7 +11,7 @@ import kotlin.coroutines.resumeWithException
 
 
 internal class YandexSynthesisApi(
-    private val yandexPassportOAuthKey: String,
+    private val iAmTokenProvider: IAmTokenProvider,
     private val folderId: String
 ) {
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -27,7 +27,7 @@ internal class YandexSynthesisApi(
         language: Language,
         config: YandexTextToSpeech.Config
     ): ByteArray {
-        val token = IAmTokenGenerator.getOAuthToken(yandexPassportOAuthKey)
+        val token = iAmTokenProvider.getOAuthToken()
 
         val requestUrl = config.apiUrl.toHttpUrl().newBuilder()
             .addQueryParameter("folderId", folderId)
