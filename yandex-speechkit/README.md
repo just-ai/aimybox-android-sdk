@@ -27,9 +27,10 @@ Speech recognition and synthesis by [Yandex Cloud Speechkit](https://cloud.yande
     
     fun createAimybox(context: Context, unitId: String): Aimybox {
         val language = Language.EN
+        val tokenGenerator = IAmTokenGenerator(TOKEN)
     
-        val speechToText = YandexSpeechToText(TOKEN, FOLDER_ID, language)
-        val textToSpeech = YandexTextToSpeech(context, API_KEY, FOLDER_ID, language)
+        val speechToText = YandexSpeechToText(tokenGenerator, FOLDER_ID, language)
+        val textToSpeech = YandexTextToSpeech(context, tokenGenerator, FOLDER_ID, language)
         val dialogApi = AimyboxDialogApi(AIMYBOX_API_KEY, unitId)
         
         val config = Config.create(speechToText, textToSpeech, dialogApi)
