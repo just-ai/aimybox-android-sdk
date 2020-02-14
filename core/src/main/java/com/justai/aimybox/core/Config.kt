@@ -104,16 +104,16 @@ data class Config internal constructor(
 
     /**
      * Determines the system behavior in the case when a user attempts to start speech recognition
-     * during the processing of current request.
+     * during the speaking or processing of current request.
      * */
     enum class RecognitionBehavior {
         /**
-         * Voice trigger stays inactive while Aimybox stays in state [Aimybox.State.PROCESSING]
+         * Voice trigger is active only if Aimybox is in state [Aimybox.State.STANDBY]
          * */
         SYNCHRONOUS,
         /**
-         * Voice trigger is active when processing request, If the new recognition is done before the old
-         * response from dialog api is received, the response will be discarded and a new request begin.
+         * Voice trigger is active if Aimybox is in any state excluding [Aimybox.State.SPEAKING].
+         * If the new recognition is done before the old response from dialog api is received, the response will be discarded and a new request begins.
          * */
         ALLOW_OVERRIDE
     }

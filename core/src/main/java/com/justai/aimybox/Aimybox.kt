@@ -211,7 +211,10 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
             state = State.SPEAKING
 
             stopSpeaking().join()
-            voiceTrigger.stop()
+
+            if (config.recognitionBehavior == Config.RecognitionBehavior.SYNCHRONOUS) {
+                voiceTrigger.stop()
+            }
 
             textToSpeech.speak(speeches)
         }.apply {

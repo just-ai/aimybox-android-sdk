@@ -69,6 +69,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 val timeoutException = ApiRequestTimeoutException(request, requestTimeoutMs)
                 L.e(timeoutException)
                 aimybox.exceptions.send(timeoutException)
+                aimybox.standby()
             } catch (e: CancellationException) {
                 L.w("Request was cancelled")
                 L.d(request)
@@ -77,6 +78,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 L.e("Error during request", e)
                 L.d(request)
                 aimybox.exceptions.send(ApiException(cause = e))
+                aimybox.standby()
             } as? TResponse
 
             if (response != null) handle(response, aimybox)
@@ -107,29 +109,26 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     protected open suspend fun handleDefault(response: Response, aimybox: Aimybox) {
         try {
-            val lastReply = response.replies.lastOrNull { it is TextReply || it is AudioReply }
+            val nextAction = Aimybox.NextAction.byQuestion(response.question)
 
-            response.replies
+            val speeches = response.replies
                 .filter { it is TextReply || it is AudioReply }
-                .takeIf { it.isNotEmpty() }
-                ?.forEach { reply ->
-                    val speech = when (reply) {
-                        is TextReply -> reply.asTextSpeech()
-                        is AudioReply -> reply.asAudioSpeech()
+                .map {
+                    when (it) {
+                        is TextReply -> it.asTextSpeech()
+                        is AudioReply -> it.asAudioSpeech()
                         else -> throw IllegalArgumentException("Reply type is not supported by default handler")
                     }
+                }
 
-                    val nextAction = if (reply == lastReply) {
-                        Aimybox.NextAction.byQuestion(response.question)
-                    } else {
-                        Aimybox.NextAction.STANDBY
-                    }
-                    try {
-                        aimybox.speak(speech, nextAction)?.join()
-                    } catch (e: CancellationException) {
-                        L.w("Speech cancelled", e)
-                    }
-                } ?: aimybox.standby()
+            speeches.takeIf { it.isNotEmpty() }?.let {
+                try {
+                    aimybox.speak(speeches, nextAction)?.join()
+                } catch (e: CancellationException) {
+                    L.w("Speech cancelled", e)
+                }
+            } ?: aimybox.standby()
+
         } catch (e: Throwable) {
             L.e("Failed to parse replies from $response", e)
         }
