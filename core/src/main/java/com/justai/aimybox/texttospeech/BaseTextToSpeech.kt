@@ -3,17 +3,14 @@ package com.justai.aimybox.texttospeech
 import android.content.Context
 import androidx.annotation.CallSuper
 import com.justai.aimybox.core.TextToSpeechException
+import com.justai.aimybox.extensions.contextJob
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.media.AudioSynthesizer
 import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.model.Speech
 import com.justai.aimybox.model.TextSpeech
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -29,6 +26,8 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
 
     private val parser = SSMLSpeechParser()
 
+    private var wasCancelled = false
+
     /**
      * Start synthesis of [speech] and suspend until it finished.
      * If coroutineScope of the function is cancelled, it should immediately stop speech synthesis.
@@ -36,6 +35,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
     abstract suspend fun speak(speech: TextSpeech)
 
     final override suspend fun synthesize(speechSequence: List<Speech>) = withContext(coroutineContext) {
+        wasCancelled = false
         speechSequence.asFlow()
             .extractSSML()
             .collect { speech ->
@@ -47,8 +47,14 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
                             is TextSpeech -> speak(speech)
                             is AudioSpeech -> audioSynthesizer.play(speech)
                         }
-                        L.i("Completed synthesis of $speech")
-                        onEvent(Event.SpeechEnded(speech))
+                        if (wasCancelled) {
+                            contextJob.cancel()
+                            return@collect
+                        } else {
+                            L.i("Completed synthesis of $speech")
+                            onEvent(Event.SpeechEnded(speech))
+                        }
+
                     } catch (e: Throwable) {
                         L.e("Failed to synthesize $speech", e)
                         onException(TextToSpeechException(cause = e))
@@ -63,6 +69,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
 
     @CallSuper
     override suspend fun stop() {
+        wasCancelled = true
         audioSynthesizer.cancel()
     }
 
