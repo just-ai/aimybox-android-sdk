@@ -12,7 +12,11 @@ fun Aimybox.exceptionsEventsObservable() = exceptions.toObservable()
 
 fun Aimybox.dialogApiEventsObservable() = dialogApiEvents.toObservable()
 
-fun Aimybox.speechToTextObservable() = speechToTextEvents.toObservable()
+fun Aimybox.speechToTextEventsObservable() = speechToTextEvents.toObservable()
+
+fun Aimybox.textToSpeechEventsObservable() = textToSpeechEvents.toObservable()
+
+fun Aimybox.voiceTriggerEventsObservable() = voiceTriggerEvents.toObservable()
 
 @FlowPreview
 @ExperimentalCoroutinesApi
