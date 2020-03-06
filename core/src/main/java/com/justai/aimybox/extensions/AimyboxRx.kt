@@ -1,14 +1,13 @@
 package com.justai.aimybox.extensions
 
 import com.justai.aimybox.Aimybox
-import io.reactivex.Observable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.rx2.asObservable
 
-fun Aimybox.exceptionsEventsObservable() = exceptions.toObservable()
+fun Aimybox.exceptionsObservable() = exceptions.toObservable()
 
 fun Aimybox.dialogApiEventsObservable() = dialogApiEvents.toObservable()
 
@@ -20,5 +19,4 @@ fun Aimybox.voiceTriggerEventsObservable() = voiceTriggerEvents.toObservable()
 
 @FlowPreview
 @ExperimentalCoroutinesApi
-private fun <T : Any> BroadcastChannel<T>.toObservable(): Observable<T> =
-    openSubscription().consumeAsFlow().asObservable()
+private fun <T : Any> BroadcastChannel<T>.toObservable() = asFlow().asObservable()
