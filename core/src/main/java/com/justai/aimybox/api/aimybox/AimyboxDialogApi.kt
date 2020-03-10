@@ -49,6 +49,8 @@ class AimyboxDialogApi(
         return AimyboxResponse(json, parseReplies(json, replyTypes))
     }
 
+    suspend fun resetSession() = send(createRequest("/reset"))
+
     private fun parseReplies(json: JsonObject, replyTypes: Map<String, Class<out AimyboxReply>>) =
         json.get("replies")?.takeIf(JsonElement::isJsonArray)
             ?.asJsonArray
