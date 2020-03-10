@@ -56,6 +56,8 @@ class GoogleCloudSpeechToText(
                     .setAudioContent(ByteString.copyFrom(data))
                     .build()
                     .let(stream::send)
+
+                onAudioBufferReceived(data)
             }
             stream.closeSend()
         }

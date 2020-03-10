@@ -48,6 +48,7 @@ class YandexSpeechToText(
         launch {
             audioData.consumeEach { data ->
                 requestStream.onNext(YandexRecognitionApi.createRequest(data))
+                onAudioBufferReceived(data)
             }
             requestStream.onCompleted()
         }

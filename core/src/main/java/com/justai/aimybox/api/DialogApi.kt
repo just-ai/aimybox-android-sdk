@@ -47,7 +47,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
      *
      * @return [Response]
      * */
-    protected abstract suspend fun send(request: TRequest): TResponse
+    abstract suspend fun send(request: TRequest): TResponse
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun send(query: String, aimybox: Aimybox) {
