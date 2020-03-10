@@ -7,6 +7,8 @@ import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.rx2.asObservable
 
+fun Aimybox.stateObservable() = stateChannel.toObservable()
+
 fun Aimybox.exceptionsObservable() = exceptions.toObservable()
 
 fun Aimybox.dialogApiEventsObservable() = dialogApiEvents.toObservable()
