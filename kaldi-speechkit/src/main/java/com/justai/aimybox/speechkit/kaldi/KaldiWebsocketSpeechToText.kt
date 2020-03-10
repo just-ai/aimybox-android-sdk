@@ -42,6 +42,7 @@ class KaldiWebsocketSpeechToText(
 
             audioData.consumeEach { data ->
                 ws.sendBinary(data)
+                onAudioBufferReceived(data)
             }
 
             ws.disconnect()

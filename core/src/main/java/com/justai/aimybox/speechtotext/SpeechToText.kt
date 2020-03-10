@@ -79,6 +79,14 @@ abstract class SpeechToText {
         onEvent(Event.SoundVolumeRmsChanged(rmsDb))
 
     /**
+     * Call this function if your recognizer can record the raw audio data.
+     *
+     * @see Event.AudioBufferReceived
+     */
+    protected fun onAudioBufferReceived(buffer: ByteArray) =
+        onEvent(Event.AudioBufferReceived(buffer))
+
+    /**
      * Events occurred during recognition process.
      * */
     sealed class Event {
@@ -110,6 +118,15 @@ abstract class SpeechToText {
          * *Note: not every recognizer supports this event*
          * */
         data class SoundVolumeRmsChanged(val rmsDb: Float) : Event()
+
+        /**
+         * Happens when another chunk of audio data was recorded.
+         *
+         * @param buffer array of bytes recorded from microphone
+         *
+         * *Note: not every recognizer supports this event*
+         */
+        data class AudioBufferReceived(val buffer: ByteArray): Event()
     }
 
     sealed class Result {

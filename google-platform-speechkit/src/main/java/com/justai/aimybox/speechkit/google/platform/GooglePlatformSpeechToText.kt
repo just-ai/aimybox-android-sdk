@@ -100,7 +100,9 @@ class GooglePlatformSpeechToText(
 
             override fun onReadyForSpeech(params: Bundle?) {}
 
-            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onBufferReceived(buffer: ByteArray?) {
+                buffer?.let { onAudioBufferReceived(buffer) }
+            }
 
             private fun finish() {
                 resultChannel.close()
