@@ -44,7 +44,10 @@ class IAmTokenGenerator(private val yandexPassportOAuthToken: String) : IAmToken
             }
         })
 
-        return deferred.await().token
+        val token = deferred.await()
+        deferred.getCompletionExceptionOrNull()?.let { throw it }
+
+        return token.token
     }
 
     private data class IAmToken(

@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
+import java.lang.Exception
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
@@ -32,30 +33,34 @@ class YandexSpeechToText(
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition() = produce<Result> {
-        val requestStream = api.openStream(
-            { response ->
-                val chunk = response.chunksList.first()
-                val text = chunk.alternativesList.first().text
-                val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
-                sendResult(result)
-            },
-            { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
-            onCompleted = { close() }
-        )
+        try {
+            val requestStream = api.openStream(
+                { response ->
+                    val chunk = response.chunksList.first()
+                    val text = chunk.alternativesList.first().text
+                    val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
+                    sendResult(result)
+                },
+                { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
+                onCompleted = { close() }
+            )
 
-        val audioData = audioRecorder.startRecordingBytes()
+            val audioData = audioRecorder.startRecordingBytes()
 
-        launch {
-            audioData.consumeEach { data ->
-                requestStream.onNext(YandexRecognitionApi.createRequest(data))
-                onAudioBufferReceived(data)
+            launch {
+                audioData.consumeEach { data ->
+                    requestStream.onNext(YandexRecognitionApi.createRequest(data))
+                    onAudioBufferReceived(data)
+                }
+                requestStream.onCompleted()
             }
-            requestStream.onCompleted()
-        }
 
-        invokeOnClose {
-            audioData.cancel()
-            requestStream.onCompleted()
+            invokeOnClose {
+                audioData.cancel()
+                requestStream.onCompleted()
+            }
+        } catch (e: Exception) {
+            sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = e)))
         }
     }
 
