@@ -36,7 +36,9 @@ class GoogleCloudTextToSpeech(
             .build()
 
         val response = client.synthesizeSpeech(input, voice, audioConfig)
-        audioSynthesizer.play(AudioSpeech.Bytes(response.audioContent.toByteArray()))
+        val audioData = response.audioContent.toByteArray()
+        onEvent(Event.SpeechDataReceived(audioData))
+        audioSynthesizer.play(AudioSpeech.Bytes(audioData))
     }
 
     private fun createAuthorizedClient(credentials: Credentials): TextToSpeechClient {

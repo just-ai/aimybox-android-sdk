@@ -21,6 +21,7 @@ class YandexTextToSpeech(
         try {
             val language = resolveLanguage(speech.language)
             val audioData = api.request(speech.text, language, config)
+            onEvent(Event.SpeechDataReceived(audioData))
             audioSynthesizer.play(AudioSpeech.Bytes(audioData))
         } catch (e: Throwable) {
             throw YandexCloudTextToSpeechException(cause = e)
