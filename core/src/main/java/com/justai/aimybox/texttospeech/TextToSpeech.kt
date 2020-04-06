@@ -51,9 +51,13 @@ abstract class TextToSpeech {
         exceptionChannel.send(exception)
     }
 
+    /**
+     * Events occured during the speech synthesising.
+     */
     sealed class Event {
         data class SpeechSequenceStarted(val speeches: List<Speech>) : Event()
         data class SpeechStarted(val speech: Speech) : Event()
+        data class SpeechDataReceived(val data: ByteArray): Event()
         data class SpeechEnded(val speech: Speech) : Event()
         data class SpeechSequenceCompleted(val speeches: List<Speech>) : Event()
         data class SpeechSkipped(val speech: Speech) : Event()
