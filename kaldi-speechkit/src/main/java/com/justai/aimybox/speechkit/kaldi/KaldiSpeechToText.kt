@@ -4,12 +4,9 @@ import android.Manifest
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.launch
 import org.kaldi.Model
 import org.kaldi.RecognitionListener
 import org.kaldi.SpeechRecognizer
@@ -22,7 +19,7 @@ class KaldiSpeechToText(
     override val coroutineContext = Dispatchers.IO + Job()
 
     private var recognizer: SpeechRecognizer? = null
-    private lateinit var model: Model
+    private val initialization = CompletableDeferred<Model>()
 
     companion object {
         init {
@@ -32,7 +29,7 @@ class KaldiSpeechToText(
 
     init {
         launch {
-            model = Model(assets.directory)
+            initialization.complete(Model(assets.directory))
         }
     }
 
@@ -47,9 +44,13 @@ class KaldiSpeechToText(
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): ReceiveChannel<Result> {
         val channel = Channel<Result>()
-        recognizer = SpeechRecognizer(model)
-        recognizer?.addListener(RecognizerListener(channel))
-        recognizer?.startListening()
+        launch {
+            val model = initialization.await()
+            recognizer = SpeechRecognizer(model).apply {
+                addListener(RecognizerListener(channel))
+                startListening()
+            }
+        }
         return channel
     }
 
