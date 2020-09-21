@@ -1,18 +1,13 @@
 package com.justai.aimybox.speechkit.yandex.cloud
 
 import com.google.gson.annotations.SerializedName
-import com.squareup.okhttp.Callback
-import com.squareup.okhttp.MediaType
-import com.squareup.okhttp.OkHttpClient
-import com.squareup.okhttp.Request
-import com.squareup.okhttp.RequestBody
-import com.squareup.okhttp.Response
+import com.squareup.okhttp.*
 import kotlinx.coroutines.CompletableDeferred
 import java.io.IOException
 import java.util.*
 
 class IAmTokenGenerator(private val yandexPassportOAuthToken: String) : IAmTokenProvider {
-    private val client = OkHttpClient()
+    private val client = OkHttpClient().setProtocols(listOf(Protocol.HTTP_1_1))
 
     override suspend fun getOAuthToken(): String {
         val request = Request.Builder().apply {
