@@ -25,7 +25,7 @@ buildscript {
 
 configureRootProject {
     kotlinVersion = Version.kotlin
-    version = "0.11.0"
+    version = "0.12.0"
     versionCode = 1
     compileSdk = 29
     minSdk = 21
