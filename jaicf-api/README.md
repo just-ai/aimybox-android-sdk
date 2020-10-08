@@ -101,7 +101,7 @@ private fun createAimybox(context: Context): Aimybox {
 }
 ```
 
-Such configuration enables your assistant to process every user's request through a CAILA NLU and then send a retreived intent to your dialogue scenario,
+Such configuration enables your assistant to process every user's request through a [CAILA NLU](https://app.jaicp.com/) and then send a retreived intent to your dialogue scenario,
 
 ### Generating content
 
