@@ -101,6 +101,31 @@ private fun createAimybox(context: Context): Aimybox {
 }
 ```
 
+Such configuration enables your assistant to process every user's request through a CAILA NLU and then send a retreived intent to your dialogue scenario,
+
+### Generating content
+
+JAICF dialog API transparently uses [Aimybox library](https://github.com/just-ai/jaicf-kotlin/tree/master/channels/aimybox) enabling to use _aimybox_ context to build Aimybox-specified responses. For example:
+
+```kotlin
+object MainScenario: Scenario() {
+  init {
+    state("bye") {
+        activators {
+            intent("bye")
+        }
+
+        action {
+            reactions.run {
+                say("Bye bye!")
+                aimybox?.endConversation()
+            }
+        }
+    }
+  }  
+}
+```
+
 ## Documentation
 
 There is a full Aimybox documentation available [here](https://help.aimybox.com)
