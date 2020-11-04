@@ -11,7 +11,7 @@ Speech recognition and synthesis by [Yandex Cloud Speechkit](https://cloud.yande
 5. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        jcenter()
     }
     
     dependencies {
