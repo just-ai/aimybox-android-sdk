@@ -5,7 +5,7 @@ Thus you don't need to host JAICF scenarios anywhere in the cloud.
 
 ## Example
 
-Here is a [working example](https://github.com/just-ai/aimybox-android-assistant/tree/jaicf/app) of Android voice assistant powered by this module.
+Here is a [working example](https://github.com/just-ai/jaicf-android-template) of Android voice assistant powered by this module.
 
 ## How to start using
 
