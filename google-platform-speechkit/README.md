@@ -8,7 +8,7 @@ Speech recognition and synthesis by Google Services available on the most Androi
 2. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        jcenter()
     }
     
     dependencies {

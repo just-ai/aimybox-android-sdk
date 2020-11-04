@@ -10,7 +10,7 @@ Dialog API module to connect Aimybox powered assistant to the [Rasa](https://ras
 4. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        jcenter()
     }
     
     dependencies {

@@ -13,7 +13,6 @@ Here is a [working example](https://github.com/just-ai/aimybox-android-assistant
 ```kotlin
 repositories {
     jcenter()
-    maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
 }
 
 dependencies {
@@ -68,14 +67,13 @@ For example:
 ```kotlin
 repositories {
     jcenter()
-    maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
 }
 
 dependencies {
     implementation("com.justai.aimybox:core:${version}")
     implementation("com.justai.aimybox:google-platform-speechkit:${version}")
     implementation("com.justai.aimybox:jaicf-api:${version}")
-    implementation("com.justai.jaicf:caila:0.7.0") // Adds CAILA NLU support
+    implementation("com.justai.jaicf:caila:0.8.2") // Adds CAILA NLU support
 }
 ```
 

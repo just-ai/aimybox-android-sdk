@@ -12,7 +12,7 @@ Speech recognition and synthesis by Google [Cloud Speech-to-Text](https://cloud.
 6. Add dependencies to your module's build.gradle:
 ```kotlin
   repositories {
-      maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+      jcenter()
   }
   
   dependencies {
