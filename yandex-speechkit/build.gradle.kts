@@ -42,17 +42,22 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.9.1"
+        artifact = "com.google.protobuf:protoc:3.15.2"
     }
     plugins {
-        id("javalite") { artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0" }
-        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.24.0" }
+        id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java" version { grpc } }
     }
     generateProtoTasks {
         all().forEach { task ->
+            task.builtins {
+                id("java") {
+                    option("lite")
+                }
+            }
             task.plugins {
-                id("grpc") { option("lite") }
-                id("javalite")
+                id("grpc") {
+                    option("lite")
+                }
             }
         }
     }
