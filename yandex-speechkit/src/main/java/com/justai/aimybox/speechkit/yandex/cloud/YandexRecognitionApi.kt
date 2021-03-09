@@ -50,7 +50,7 @@ internal class YandexRecognitionApi(
 
         val token = iAmTokenProvider.getOAuthToken()
 
-        val requestStream = attachOAuthHeader(stub, token).streamingRecognize(
+        val requestStream = attachHeaders(stub, token).streamingRecognize(
             object : StreamObserver<SttServiceOuterClass.StreamingRecognitionResponse> {
                 override fun onNext(value: SttServiceOuterClass.StreamingRecognitionResponse) = onResponse(value)
                 override fun onError(t: Throwable) = onError(t)
@@ -104,11 +104,14 @@ internal class YandexRecognitionApi(
         folderIdBytes = ByteString.copyFrom(folderId, Charset.forName("UTF-8"))
     }.build()
 
-    private fun attachOAuthHeader(stub: SttServiceGrpc.SttServiceStub, token: String): SttServiceGrpc.SttServiceStub {
+    private fun attachHeaders(stub: SttServiceGrpc.SttServiceStub, token: String): SttServiceGrpc.SttServiceStub {
         val metadata = Metadata().apply {
-            val key = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
-            val value = "Bearer $token"
-            put(key, value)
+            val authKey = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
+            val authValue = "Bearer $token"
+            put(authKey, authValue)
+            val loggingKey = Metadata.Key.of("x-data-logging-enabled", Metadata.ASCII_STRING_MARSHALLER)
+            val loggingValue = config.enableLoggingData.toString()
+            put(loggingKey, loggingValue)
         }
         return MetadataUtils.attachHeaders(stub, metadata)
     }

@@ -43,7 +43,8 @@ class YandexTextToSpeech(
         val voice: Voice = Voice.ALYSS,
         val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
         val emotion: Emotion = Emotion.NEUTRAL,
-        val speed: Speed = Speed.DEFAULT
+        val speed: Speed = Speed.DEFAULT,
+        val enableLoggingData: Boolean = false
     )
 }
 
