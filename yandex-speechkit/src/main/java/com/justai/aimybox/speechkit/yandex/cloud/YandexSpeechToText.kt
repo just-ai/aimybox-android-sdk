@@ -93,7 +93,8 @@ class YandexSpeechToText(
         val voiceModel: VoiceModel = VoiceModel.GENERAL,
         val enableProfanityFilter: Boolean = true,
         val enablePartialResults: Boolean = true,
-        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ
+        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
+        val enableLoggingData: Boolean = false
     )
 }
 
