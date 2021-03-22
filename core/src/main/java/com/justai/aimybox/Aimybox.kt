@@ -327,6 +327,26 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         if (response == null) onEmptyResponse()
     }
 
+    /**
+     * Send the silent [request] to a dialog API.
+     * Response to this request will not be processed by TTS.
+     *
+     * @return [Job] which completes when the response is received.
+     * */
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    fun sendSilentRequest(query: String) = launch {
+        state = State.PROCESSING
+
+        cancelRecognition().join()
+        stopSpeaking().join()
+
+        if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) {
+            voiceTrigger.start()
+        }
+
+        dialogApi.send(query, this@Aimybox, isSilentRequest = true)
+    }
+
     fun cancelPendingRequest() = launch { dialogApi.cancelRunningJob() }
 
     private fun onEmptyResponse() {
