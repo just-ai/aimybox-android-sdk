@@ -11,7 +11,6 @@ import com.neovisionaries.ws.client.WebSocketFrame
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.internal.ChannelFlow
 import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
@@ -33,7 +32,6 @@ class KaldiWebsocketSpeechToText(
         ws.disconnect()
     }
 
-    @InternalCoroutinesApi
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition() = produce<Result> {
         val audioData = audioRecorder.startRecordingBytes()

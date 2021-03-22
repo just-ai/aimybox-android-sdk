@@ -7,9 +7,10 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import org.kaldi.KaldiRecognizer
 import org.kaldi.Model
 import org.kaldi.RecognitionListener
-import org.kaldi.SpeechRecognizer
+import org.kaldi.SpeechService
 import java.lang.Exception
 
 class KaldiSpeechToText(
@@ -18,7 +19,7 @@ class KaldiSpeechToText(
 
     override val coroutineContext = Dispatchers.IO + Job()
 
-    private var recognizer: SpeechRecognizer? = null
+    private var recognizer: SpeechService? = null
     private val initialization = CompletableDeferred<Model>()
 
     companion object {
@@ -46,7 +47,8 @@ class KaldiSpeechToText(
         val channel = Channel<Result>()
         launch {
             val model = initialization.await()
-            recognizer = SpeechRecognizer(model).apply {
+            val kaldiRecognizer = KaldiRecognizer(model, 16000f)
+            recognizer = SpeechService(kaldiRecognizer, 16000f).apply {
                 addListener(RecognizerListener(channel))
                 startListening()
             }

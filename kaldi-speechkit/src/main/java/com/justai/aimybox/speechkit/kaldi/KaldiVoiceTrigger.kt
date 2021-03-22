@@ -5,27 +5,26 @@ import com.justai.aimybox.voicetrigger.VoiceTrigger
 import kotlinx.coroutines.*
 import org.kaldi.Model
 import org.kaldi.RecognitionListener
-import org.kaldi.SpeechRecognizer
+import org.kaldi.KaldiRecognizer
+import org.kaldi.SpeechService
 import java.lang.Exception
+import java.util.concurrent.atomic.AtomicBoolean
 
 class KaldiVoiceTrigger(
     assets: KaldiAssets,
-    private val phrases: Collection<String>
-): VoiceTrigger, CoroutineScope {
+    _phrases: Collection<String>
+) : VoiceTrigger, CoroutineScope {
+
+    var phrases = _phrases
+        private set
 
     private val job = Job()
     override val coroutineContext = Dispatchers.IO + job
 
     private val initialization = CompletableDeferred<Model>()
 
-    private var recognizer: SpeechRecognizer? = null
-    private var isListening = false
-
-    companion object {
-        init {
-            System.loadLibrary("kaldi_jni")
-        }
-    }
+    private var recognizer: SpeechService? = null
+    private var isListening = AtomicBoolean(false)
 
     init {
         launch {
@@ -37,11 +36,14 @@ class KaldiVoiceTrigger(
         onTriggered: (phrase: String?) -> Unit,
         onException: (e: Throwable) -> Unit
     ) {
-        if (!isListening) {
-            recognizer = SpeechRecognizer(initialization.await()).apply {
+        if (isListening.compareAndSet(false, true)) {
+            val phrasesString = phrases
+                .joinToString(separator = " ", prefix = "[\"", postfix = "\"]")
+            val kaldiRecognizer =
+                KaldiRecognizer(initialization.await(), 16000f, phrasesString)
+            recognizer = SpeechService(kaldiRecognizer, 16000f).apply {
                 addListener(RecognizerListener(phrases, onTriggered, onException))
                 startListening()
-                isListening = true
             }
 
             L.i("Kaldi voice trigger was started")
@@ -53,16 +55,30 @@ class KaldiVoiceTrigger(
             cancel()
             shutdown()
             job.cancelChildrenAndJoin()
-            isListening = false
+            isListening.set(false)
             L.i("Kaldi voice trigger was stopped")
         }
+    }
+
+    override fun destroy() {
+        recognizer?.run {
+            cancel()
+            shutdown()
+            isListening.set(false)
+            L.i("Kaldi voice trigger was stopped")
+        }
+        super.destroy()
+    }
+
+    fun updateTriggers(triggers: Collection<String>) {
+        phrases = triggers
     }
 
     internal class RecognizerListener(
         private val phrases: Collection<String>,
         private val onTriggered: (phrase: String?) -> Unit,
         private val onException: (e: Throwable) -> Unit
-    ): RecognitionListener {
+    ) : RecognitionListener {
         private var triggered = false
 
         override fun onResult(result: String?) {}

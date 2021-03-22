@@ -24,7 +24,7 @@ buildscript {
 
 configureRootProject {
     kotlinVersion = Version.kotlin
-    version = "0.15.2"
+    version = "0.15.3"
     versionCode = 1
     compileSdk = 29
     minSdk = 21
@@ -39,6 +39,7 @@ allprojects {
         mavenLocal()
         maven("https://kotlin.bintray.com/kotlinx")
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        maven("https://dl.bintray.com/alphacep/vosk")
     }
 }
 
