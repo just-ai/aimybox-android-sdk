@@ -12,6 +12,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.map
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -177,6 +179,16 @@ class AudioRecorder(
     }
 
     private fun ReceiveChannel<ByteArray>.convertBytesToShorts() = map { audioBytes ->
+        check(audioBytes.size % 2 == 0)
+        val audioData = ShortArray(audioBytes.size / 2)
+        ByteBuffer.wrap(audioBytes)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .asShortBuffer()
+            .get(audioData)
+        audioData
+    }
+
+    private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->
         check(audioBytes.size % 2 == 0)
         val audioData = ShortArray(audioBytes.size / 2)
         ByteBuffer.wrap(audioBytes)

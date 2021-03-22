@@ -8,9 +8,9 @@ import org.gradle.kotlin.dsl.configure
 
 fun KotlinBuildScript.configureAndroid(closure: BaseExtension.() -> Unit) {
     apply(plugin = "kotlin-android")
-    apply(plugin = "kotlin-android-extensions")
+//    apply(plugin = "kotlin-android-extensions")
     apply(plugin = "kotlin-kapt")
-    apply(plugin = "com.getkeepsafe.dexcount")
+//    apply(plugin = "com.getkeepsafe.dexcount")
 
     val config = rootProjectConfig
 
@@ -32,7 +32,7 @@ fun KotlinBuildScript.configureAndroid(closure: BaseExtension.() -> Unit) {
 
         lintOptions {
             isCheckAllWarnings = true
-            isAbortOnError = true
+            isAbortOnError = false
         }
 
         buildTypes {

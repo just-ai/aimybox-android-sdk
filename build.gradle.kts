@@ -16,7 +16,6 @@ buildscript {
         classpath(Plugin.androidGradle)
         classpath(Plugin.kotlinGradle)
         classpath(Plugin.dokka)
-        classpath(Plugin.dexcount)
         classpath(Plugin.bintray)
         classpath(Plugin.buildInfoExtractor)
         classpath(Plugin.protobuf)

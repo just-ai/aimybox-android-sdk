@@ -18,10 +18,14 @@ dependencies {
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Kotlin.coroutines)
 
-    implementation("com.squareup.retrofit2:retrofit:${Version.retrofit}")
-    implementation("com.squareup.okhttp3:logging-interceptor:${Version.okHttp}")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
     implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.3.3")
-    implementation("com.squareup.retrofit2:converter-gson:${Version.kotson}")
-    api("com.github.salomonbrys.kotson:kotson:${Version.kotson}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.4.3-native-mt")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    api("com.github.salomonbrys.kotson:kotson:2.5.0")
+
+    for (notation in (Library.Test.instrumentedTest + Library.Test.unitTest)) {
+        testImplementation(notation)
+    }
 }

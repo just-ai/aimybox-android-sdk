@@ -21,6 +21,6 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation("com.google.cloud:google-cloud-dialogflow:0.109.0-alpha")
-    implementation("io.grpc:grpc-okhttp:1.24.0")
+    implementation("com.google.cloud:google-cloud-dialogflow:2.6.2")
+    implementation("io.grpc:grpc-okhttp:1.36.0")
 }
