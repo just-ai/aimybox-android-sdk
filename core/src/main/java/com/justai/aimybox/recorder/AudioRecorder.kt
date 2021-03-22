@@ -10,10 +10,7 @@ import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.map
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -71,40 +68,36 @@ class AudioRecorder(
      * Launch new coroutine and start audio recording.
      * Will produce one frame of audio data each [periodMs] milliseconds.
      *
-     * @return a channel of ByteArrays which contains recorded audio data.
+     * @return a flow of ByteArrays which contains recorded audio data.
      * */
-    fun startRecordingBytes(): ReceiveChannel<ByteArray> {
-        val channel = Channel<ByteArray>(outputChannelBufferSizeChunks)
+    fun startRecordingBytes(): Flow<ByteArray> {
+//        return flow
+        return flow {
 
         lateinit var recorder: AudioRecord
 
-        launch {
             try {
                 L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
-
-                retry(5, delay = 300) { attempt ->
+                val countAttempts = 5
+                retry(countAttempts, delay = 300) { attempt ->
                     recorder = createRecorder()
                     if (recorder.state != AudioRecord.STATE_INITIALIZED) {
                         L.e("Failed to init AudioRecord, attempt $attempt")
                         recorder.release()
-                        throw IOException("Failed to init AudioRecord after 5 retries")
+                        throw IOException("Failed to init AudioRecord after $countAttempts retries")
                     }
 
                     recorder.startRecording()
 
                     val buffer = ByteArray(bufferSize)
-                    loop@ while (isActive) {
+                    loop@ while (currentCoroutineContext().isActive) {
                         val bytesRead = recorder.read(buffer, 0, buffer.size)
                         when {
                             bytesRead <= 0 -> {
                                 recorder.release()
                                 throw IOException("Read $bytesRead bytes from recorder")
                             }
-                            channel.isClosedForSend -> {
-                                L.w("Output channel is closed to send, $bytesRead bytes of recorded data omitted.")
-                                break@loop
-                            }
-                            else -> channel.send(buffer.copyOf())
+                            else -> emit(buffer.copyOf())
                         }
                     }
 
@@ -113,18 +106,16 @@ class AudioRecorder(
             } catch (e: CancellationException) {
                 // Ignore
             } catch (e: Throwable) {
-                channel.close(e)
+                currentCoroutineContext().cancel()
                 L.e("Uncaught AudioRecord exception", e)
             } finally {
-                withContext(NonCancellable) {
+                kotlinx.coroutines.withContext(NonCancellable) {
                     recorder.release()
                     L.i("Recording finished")
-                    channel.close()
+                    currentCoroutineContext().cancel()
                 }
             }
         }
-
-        return channel
     }
 
     /**
@@ -176,16 +167,6 @@ class AudioRecorder(
         val dataRate = frameSize * sampleRate
 
         return dataRate * periodMs / MILLISECONDS_IN_SECOND
-    }
-
-    private fun ReceiveChannel<ByteArray>.convertBytesToShorts() = map { audioBytes ->
-        check(audioBytes.size % 2 == 0)
-        val audioData = ShortArray(audioBytes.size / 2)
-        ByteBuffer.wrap(audioBytes)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .asShortBuffer()
-            .get(audioData)
-        audioData
     }
 
     private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->

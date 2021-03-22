@@ -8,9 +8,8 @@ import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import java.lang.Exception
+import kotlinx.coroutines.flow.collect
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
@@ -48,7 +47,7 @@ class YandexSpeechToText(
             val audioData = audioRecorder.startRecordingBytes()
 
             launch {
-                audioData.consumeEach { data ->
+                audioData.collect { data ->
                     requestStream.onNext(YandexRecognitionApi.createRequest(data))
                     onAudioBufferReceived(data)
                 }
@@ -56,7 +55,6 @@ class YandexSpeechToText(
             }
 
             invokeOnClose {
-                audioData.cancel()
                 requestStream.onCompleted()
             }
         } catch (e: Exception) {

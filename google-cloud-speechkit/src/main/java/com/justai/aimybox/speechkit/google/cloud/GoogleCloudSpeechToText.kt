@@ -14,13 +14,11 @@ import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechkit.google.cloud.model.RecognitionModel
 import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import java.util.*
 
 @Suppress("unused")
@@ -41,6 +39,7 @@ class GoogleCloudSpeechToText(
         channelCount = config.channelCount
     )
 
+    @InternalCoroutinesApi
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition() = produce<Result> {
         val stream = speechClient.streamingRecognizeCallable()
@@ -51,7 +50,7 @@ class GoogleCloudSpeechToText(
         val audioData = audioRecorder.startRecordingBytes()
 
         launch {
-            audioData.consumeEach { data ->
+            audioData.collect { data ->
                 StreamingRecognizeRequest.newBuilder()
                     .setAudioContent(ByteString.copyFrom(data))
                     .build()
@@ -63,7 +62,6 @@ class GoogleCloudSpeechToText(
         }
 
         invokeOnClose {
-            audioData.cancel()
             stream.closeSend()
         }
     }
