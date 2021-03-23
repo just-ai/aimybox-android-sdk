@@ -14,15 +14,18 @@ class Logger(
     }
 
     private val tag = "Aimybox" + if (tag.isNotBlank()) "($tag)" else ""
+
     // Verbose
     fun v(throwable: Throwable) = v("", throwable)
 
     fun v(any: Any?) {
-        Log.v(tag, messageFormatter(any))
+        if (Log.isLoggable(tag, Log.VERBOSE))
+            Log.v(tag, messageFormatter(any))
     }
 
     fun v(any: Any?, throwable: Throwable) {
-        Log.v(tag, messageFormatter(any), throwable)
+        if (Log.isLoggable(tag, Log.VERBOSE))
+            Log.v(tag, messageFormatter(any), throwable)
     }
 
     // Debug
@@ -42,33 +45,39 @@ class Logger(
     fun i(throwable: Throwable) = i("", throwable)
 
     fun i(any: Any?) {
-        Log.i(tag, messageFormatter(any))
+        if (Log.isLoggable(tag, Log.INFO))
+            Log.i(tag, messageFormatter(any))
     }
 
     fun i(any: Any?, throwable: Throwable) {
-        Log.i(tag, messageFormatter(any), throwable)
+        if (Log.isLoggable(tag, Log.INFO))
+            Log.i(tag, messageFormatter(any), throwable)
     }
 
     // Warning
     fun w(throwable: Throwable) = w("", throwable)
 
     fun w(any: Any?) {
-        Log.w(tag, messageFormatter(any))
+        if (Log.isLoggable(tag, Log.WARN))
+            Log.w(tag, messageFormatter(any))
     }
 
     fun w(any: Any?, throwable: Throwable) {
-        Log.w(tag, messageFormatter(any), throwable)
+        if (Log.isLoggable(tag, Log.WARN))
+            Log.w(tag, messageFormatter(any), throwable)
     }
 
     // Error
     fun e(throwable: Throwable) = e("", throwable)
 
     fun e(any: Any?) {
-        Log.e(tag, messageFormatter(any))
+        if (Log.isLoggable(tag, Log.ERROR))
+            Log.e(tag, messageFormatter(any))
     }
 
     fun e(any: Any?, throwable: Throwable) {
-        Log.e(tag, messageFormatter(any), throwable)
+        if (Log.isLoggable(tag, Log.ERROR))
+            Log.e(tag, messageFormatter(any), throwable)
     }
 
     // Assert

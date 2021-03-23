@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -41,7 +42,7 @@ class SnowboyVoiceTrigger(
         val audioDataChannel = recorder.startRecordingShorts()
 
         launch {
-            audioDataChannel.consumeEach { audioData ->
+            audioDataChannel.collect { audioData ->
                 detector.runDetection(audioData).let { resultCode ->
                     when (resultCode) {
                         -2 -> L.i("No speech detected")

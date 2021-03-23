@@ -10,12 +10,10 @@ import com.justai.aimybox.model.reply.ReplyButton
 
 data class AimyboxButtonsReply(
     override val json: JsonObject
-) : AimyboxReply, ButtonsReply(json.parseButtons()) {
-    companion object {
-        private fun JsonObject.parseButtons() =
-            get("buttons").array.map { AimyboxReplyButton(it.asJsonObject) }
-    }
-}
+) : AimyboxReply,
+    ButtonsReply(json.get("buttons").array
+        .map { AimyboxReplyButton(it.asJsonObject) }
+    )
 
 data class AimyboxReplyButton(val json: JsonObject) : ReplyButton(
     json["text"].string,

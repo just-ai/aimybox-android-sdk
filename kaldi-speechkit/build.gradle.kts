@@ -1,7 +1,6 @@
 import com.justai.gradle.project.configureAndroid
 import com.justai.gradle.project.configureProject
 
-
 plugins {
     id("com.android.library")
 }
@@ -16,11 +15,10 @@ configureAndroid {}
 
 dependencies {
     implementation(project(":core"))
-
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation("org.kaldi:kaldi-android:5.2")
+    implementation("com.alphacep:vosk-android:0.3.17")
     implementation("com.neovisionaries:nv-websocket-client:2.9")
 }

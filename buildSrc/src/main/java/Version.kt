@@ -1,8 +1,8 @@
 object Version {
     // Kotlin
-    const val kotlin = "1.3.50"
-    const val dokka = "0.10.0"
-    const val coroutines = "1.3.1"
+    const val kotlin = "1.4.21"
+    const val dokka = "1.4.20"
+    const val coroutines = "1.4.2"
 
     //Plugins
     const val androidPlugin = "3.5.1"
@@ -14,16 +14,18 @@ object Version {
     const val protobufPlugin = "0.8.15"
 
     // Libraries
-    const val appCompat = "1.1.0"
+    const val appCompat = "1.2.0"
 
-    const val retrofit = "2.5.0"
-    const val okHttp = "4.2.1"
+    const val jaicf = "0.13.1"
+
+    const val retrofit = "2.9.0"
+    const val okHttp = "4.9.0"
     const val grpc = "1.35.0"
     const val kotson = "2.5.0"
 
     // Test
-    const val mockk = "1.9"
-    const val androidxTest = "1.1.1"
+    const val mockk = "1.10.6"
+    const val androidxTest = "1.3.0"
 }
 
 infix fun String.version(versionProvider: Version.() -> String) =

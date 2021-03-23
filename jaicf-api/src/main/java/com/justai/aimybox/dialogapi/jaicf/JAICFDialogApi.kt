@@ -12,6 +12,7 @@ import com.justai.jaicf.BotEngine
 import com.justai.jaicf.activator.regex.RegexActivator
 import com.justai.jaicf.channel.aimybox.AimyboxChannel
 import com.justai.jaicf.channel.http.HttpBotRequest
+import com.justai.jaicf.model.scenario.Scenario
 import com.justai.jaicf.model.scenario.ScenarioModel
 
 class JAICFDialogApi(
@@ -28,7 +29,7 @@ class JAICFDialogApi(
 
     constructor(
         unitId: String,
-        model: ScenarioModel,
+        model: Scenario,
         customSkills: LinkedHashSet<CustomSkill<AimyboxRequest, AimyboxResponse>> = linkedSetOf(),
         replyTypes: Map<String, Class<out AimyboxReply>> = AimyboxUtils.DEFAULT_REPLY_TYPES
     ): this(

@@ -10,6 +10,7 @@ import com.neovisionaries.ws.client.WebSocketFactory
 import com.neovisionaries.ws.client.WebSocketFrame
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.collect
 import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
@@ -40,7 +41,7 @@ class KaldiWebsocketSpeechToText(
                 SocketListener(channel)
             ).connectAsynchronously()
 
-            audioData.consumeEach { data ->
+            audioData.collect { data ->
                 ws.sendBinary(data)
                 onAudioBufferReceived(data)
             }
@@ -49,7 +50,6 @@ class KaldiWebsocketSpeechToText(
         }
 
         invokeOnClose {
-            audioData.cancel()
             ws.disconnect()
         }
     }

@@ -50,7 +50,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     abstract suspend fun send(request: TRequest): TResponse
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    internal suspend fun send(query: String, aimybox: Aimybox) {
+    internal suspend fun send(query: String, aimybox: Aimybox, isSilentRequest: Boolean = false) {
         cancelRunningJob()
         withContext(coroutineContext) {
             val request = customSkills.fold(createRequest(query)) { request, skill ->
@@ -81,13 +81,13 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 aimybox.standby()
             } as? TResponse
 
-            if (response != null) handle(response, aimybox)
+            if (response != null) handle(response, aimybox, isSilentRequest)
             else L.d("Response is empty for $request")
         }
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun handle(response: TResponse, aimybox: Aimybox) {
+    private fun handle(response: TResponse, aimybox: Aimybox, isSilentRequest: Boolean = false) {
         launch {
             val skill = customSkills.find { it.canHandle(response) }
 
@@ -101,7 +101,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 if (!response.action.isNullOrBlank()) {
                     L.w("No suitable skill found for action \"${response.action}\". Handling by default...")
                 }
-                handleDefault(response, aimybox)
+                if (!isSilentRequest) handleDefault(response, aimybox)
             }
         }
     }
