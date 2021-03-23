@@ -47,7 +47,7 @@ Embed your own intelligent voice assistant into your existing application or dev
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:0.15.2")
+        implementation("com.justai.aimybox:core:0.15.3")
     }
 ```
 
