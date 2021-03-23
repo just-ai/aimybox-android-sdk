@@ -2,7 +2,7 @@ object Version {
     // Kotlin
     const val kotlin = "1.4.21"
     const val dokka = "1.4.20"
-    const val coroutines = "1.4.3"
+    const val coroutines = "1.4.2"
 
     //Plugins
     const val androidPlugin = "3.5.1"
@@ -15,6 +15,8 @@ object Version {
 
     // Libraries
     const val appCompat = "1.2.0"
+
+    const val jaicf = "0.13.1"
 
     const val retrofit = "2.9.0"
     const val okHttp = "4.9.0"
