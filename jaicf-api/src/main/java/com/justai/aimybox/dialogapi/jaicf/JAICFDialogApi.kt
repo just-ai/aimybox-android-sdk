@@ -12,7 +12,7 @@ import com.justai.jaicf.BotEngine
 import com.justai.jaicf.activator.regex.RegexActivator
 import com.justai.jaicf.channel.aimybox.AimyboxChannel
 import com.justai.jaicf.channel.http.HttpBotRequest
-import com.justai.jaicf.model.scenario.ScenarioModel
+import com.justai.jaicf.model.scenario.Scenario
 
 class JAICFDialogApi(
     private val unitId: String,
@@ -28,12 +28,12 @@ class JAICFDialogApi(
 
     constructor(
         unitId: String,
-        model: ScenarioModel,
+        scenario: Scenario,
         customSkills: LinkedHashSet<CustomSkill<AimyboxRequest, AimyboxResponse>> = linkedSetOf(),
         replyTypes: Map<String, Class<out AimyboxReply>> = AimyboxUtils.DEFAULT_REPLY_TYPES
     ): this(
         unitId,
-        BotEngine(model, activators = arrayOf(RegexActivator)),
+        BotEngine(scenario, activators = arrayOf(RegexActivator)),
         customSkills,
         replyTypes
     )

@@ -22,6 +22,6 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    api("com.justai.jaicf:core" version { jaicf })
-    api("com.justai.jaicf:aimybox" version { jaicf })
+    api("com.just-ai.jaicf:core" version { jaicf })
+    api("com.just-ai.jaicf:aimybox" version { jaicf })
 }
