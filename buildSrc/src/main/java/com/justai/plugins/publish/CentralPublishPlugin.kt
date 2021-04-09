@@ -1,27 +1,26 @@
 package com.justai.plugins.publish
 
+import com.android.build.gradle.BaseExtension
 import com.justai.gradle.project.projectConfig
 import com.justai.gradle.project.rootProjectConfig
+import com.justai.plugins.PluginAdapter
+import com.justai.plugins.apply
+import com.justai.plugins.utils.applySafely
+import com.justai.plugins.utils.loadLocalProperties
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
+import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import org.jetbrains.dokka.gradle.DokkaPlugin
 import org.jetbrains.dokka.gradle.DokkaTask
-import com.justai.plugins.PluginAdapter
-import com.justai.plugins.apply
-import com.justai.plugins.utils.applySafely
-import com.justai.plugins.utils.loadLocalProperties
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
-import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import java.io.File
 import java.net.URI
 
@@ -63,19 +62,27 @@ class CentralPublish(project: Project) : PluginAdapter(project) {
                 configuration.noJdkLink = true
             }
 
+            apply(plugin = "maven-publish")
+
+            val sourcesJar = tasks.register<Jar>("sourcesJar") {
+//                classifier = "sources"
+                archiveClassifier.set("sources")
+                from(project.the<BaseExtension>().sourceSets["main"].java.srcDirs)
+            }
+
             val javadocJar = tasks.register<Jar>("javadocJar") {
                 archiveClassifier.set("javadoc")
                 from(dokkaJavadoc)
                 dependsOn(dokkaJavadoc)
             }
 
-            configurePublication(javadocJar)
+            configurePublication(sourcesJar, javadocJar)
         }
     }
 
-    private fun Project.configurePublication(javadoc: Any) {
+    private fun Project.configurePublication(sourcesJar: Any, javadoc: Any) {
         configure<PublishingExtension> {
-            val isSnapshot = (project.version as String).endsWith("SNAPSHOT")
+            val isSnapshot = (rootProjectConfig.version).endsWith("SNAPSHOT")
 
             repositories {
                 maven {
@@ -92,10 +99,11 @@ class CentralPublish(project: Project) : PluginAdapter(project) {
             }
 
             publications {
-                create<MavenPublication>(name) {
+                create<MavenPublication>(project.name) {
                     configurePomFile(project)
 
-                    artifact("$buildDir/outputs/aar/${artifactId}-release.aar")
+                    artifact("$buildDir/outputs/aar/${project.name}-release.aar")
+                    artifact(sourcesJar)
                     artifact(javadoc)
                 }
             }

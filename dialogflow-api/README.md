@@ -10,12 +10,12 @@ Dialog API module to connect Aimybox powered assistant to the [Google Dialogflow
 4. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        jcenter()
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:${version}")
-        implementation("com.justai.aimybox:dialogflow-api:${version}")
+        implementation("com.just-ai.aimybox:core:${version}")
+        implementation("com.just-ai.aimybox:dialogflow-api:${version}")
     }
 ```
 5. Provide Dialogflow component into Aimybox configuration object:

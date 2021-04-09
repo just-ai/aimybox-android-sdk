@@ -11,11 +11,12 @@ Speech recognition by [Houndify](https://www.houndify.com/)
 ```kotlin
     repositories {
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        mavenCentral()
     }
     
     dependencies {
-            implementation("com.justai.aimybox:core:${version}")
-            implementation("com.justai.aimybox:dialogflow-api:${version}")
+            implementation("com.just-ai.aimybox:core:${version}")
+            implementation("com.just-ai.aimybox:dialogflow-api:${version}")
     }
 ```
 5. Provide Houndify STT component into Aimybox configuration object:

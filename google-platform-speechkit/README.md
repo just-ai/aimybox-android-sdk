@@ -8,12 +8,12 @@ Speech recognition and synthesis by Google Services available on the most Androi
 2. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        jcenter()
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:${version}")
-        implementation("com.justai.aimybox:google-platform-speechkit:${version}")
+        implementation("com.just-ai.aimybox:core:${version}")
+        implementation("com.just-ai.aimybox:google-platform-speechkit:${version}")
     }
 ```
 3. Provide Google Platform Speechkit components into Aimybox configuration object:

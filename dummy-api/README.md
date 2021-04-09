@@ -8,12 +8,12 @@ It just echoes everything that speech-to-text module has recognised.
 1. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        jcenter()
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:${version}")
-        implementation("com.justai.aimybox:dummy-api:${version}")
+        implementation("com.just-ai.aimybox:core:${version}")
+        implementation("com.just-ai.aimybox:dummy-api:${version}")
     }
 ```
 

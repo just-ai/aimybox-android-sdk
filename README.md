@@ -43,11 +43,11 @@ Embed your own intelligent voice assistant into your existing application or dev
     }
     
     repositories {
-        jcenter()
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:0.15.3")
+        implementation("com.just-ai.aimybox:core:0.16.0")
     }
 ```
 
@@ -56,7 +56,7 @@ _Use the latest version ![](https://img.shields.io/bintray/v/aimybox/aimybox-and
 2. Add one or more dependencies of third party speech-to-text and text-to-speech libraries. For example
 
 ```kotlin
-implementation("com.justai.aimybox:google-platform-speechkit:0.15.3")
+implementation("com.just-ai.aimybox:google-platform-speechkit:0.16.0")
 ```
 
 3. Create a new project in [Aimybox console](https://help.aimybox.com/en/article/introduction-to-aimybox-web-console-n49kfr/), enable some voice skills and **copy your project's API key**.

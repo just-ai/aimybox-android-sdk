@@ -22,16 +22,19 @@ buildscript {
     }
 }
 
+val versionProject = "0.16.0"
 configureRootProject {
     kotlinVersion = Version.kotlin
-    version = "0.16.0-SNAPSHOT"
+    version = versionProject
     versionCode = 1
     compileSdk = 29
     minSdk = 21
-    groupId = "com.justai.aimybox"
+    groupId = "com.just-ai.aimybox"
 }
 
 allprojects {
+    group = "com.just-ai.aimybox"
+    version = versionProject
     repositories {
         google()
         jcenter()
