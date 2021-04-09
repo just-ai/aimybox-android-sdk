@@ -24,7 +24,7 @@ buildscript {
 
 configureRootProject {
     kotlinVersion = Version.kotlin
-    version = "0.15.3"
+    version = "0.16.0-SNAPSHOT"
     versionCode = 1
     compileSdk = 29
     minSdk = 21
@@ -43,11 +43,11 @@ allprojects {
     }
 }
 
-subprojects {
+/*subprojects {
     afterEvaluate {
         if (projectConfig.createMavenPublication) {
-            registerPublicationTasks()
-            configureMavenPublication()
+//            registerPublicationTasks()
+//            configureMavenPublication()
 
             rootProject.tasks.register(projectConfig.customMavenLocalPublicationTask) {
                 group = "aimybox:submodules"
@@ -102,24 +102,13 @@ fun Project.configureBintrayPublication() {
     tasks.named("bintrayUpload").configure {
         dependsOn("prepareArtifacts")
     }
-}
+}*/
 
 tasks.register("localPublishAll") {
     group = "aimybox"
 
     val publicationTasks = subprojects.mapNotNull { project ->
         if (project.projectConfig.createMavenPublication) "${project.name}:${project.projectConfig.mavenLocalPublicationTask}"
-        else null
-    }.toTypedArray()
-
-    dependsOn(*publicationTasks)
-}
-
-tasks.register("bintrayPublishAll") {
-    group = "aimybox"
-
-    val publicationTasks = subprojects.mapNotNull { project ->
-        if (project.projectConfig.publishToBintray) project.projectConfig.bintrayPublicationTask
         else null
     }.toTypedArray()
 

@@ -3,15 +3,16 @@ import com.justai.gradle.project.configureProject
 
 plugins {
     id("com.android.library")
+    `aimybox-publish`
 }
 
-configureProject {
+project.configureProject {
     createMavenPublication = true
     isLibrary = true
     publishToBintray = true
 }
 
-configureAndroid {}
+project.configureAndroid {}
 
 dependencies {
     implementation(Library.Android.appCompat)

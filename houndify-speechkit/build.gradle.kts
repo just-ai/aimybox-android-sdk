@@ -3,15 +3,16 @@ import com.justai.gradle.project.configureProject
 
 plugins {
     id("com.android.library")
+    `aimybox-publish`
 }
 
-configureProject {
+project.configureProject {
     isLibrary = true
     createMavenPublication = true
     publishToBintray = true
 }
 
-configureAndroid {}
+project.configureAndroid {}
 
 repositories {
     maven("https://houndify.com/maven/") { name = "Houndify" }

@@ -2,13 +2,13 @@ package com.justai.gradle.project
 
 import com.android.build.gradle.BaseExtension
 import org.gradle.api.JavaVersion
+import org.gradle.api.Project
 import org.gradle.kotlin.dsl.KotlinBuildScript
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 
-fun KotlinBuildScript.configureAndroid(closure: BaseExtension.() -> Unit) {
+fun Project.configureAndroid(closure: BaseExtension.() -> Unit) {
     apply(plugin = "kotlin-android")
-//    apply(plugin = "kotlin-android-extensions")
     apply(plugin = "kotlin-kapt")
 //    apply(plugin = "com.getkeepsafe.dexcount")
 
