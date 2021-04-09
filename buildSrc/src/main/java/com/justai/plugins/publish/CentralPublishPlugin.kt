@@ -19,13 +19,8 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
-import org.jetbrains.dokka.gradle.DokkaPlugin
-import org.jetbrains.dokka.gradle.DokkaTask
 import java.io.File
 import java.net.URI
-
-const val POM_NAME = "pomName"
-const val POM_DESCRIPTION = "pomDescription"
 
 private const val SONATYPE_USER = "sonatype.user"
 private const val SONATYPE_PASSWORD = "sonatype.password"
@@ -51,36 +46,22 @@ class CentralPublish(project: Project) : PluginAdapter(project) {
 
     override fun Project.apply() {
         applySafely<MavenPublishPlugin>()
-        applySafely<DokkaPlugin>()
         applySafely<SigningPlugin>()
 
         afterEvaluate {
-            val dokkaJavadoc = tasks.register<DokkaTask>("dokkaJavadoc") {
-                outputFormat = "javadoc"
-                outputDirectory = "$buildDir/javadoc"
-                configuration.noStdlibLink = true
-                configuration.noJdkLink = true
-            }
 
             apply(plugin = "maven-publish")
 
             val sourcesJar = tasks.register<Jar>("sourcesJar") {
-//                classifier = "sources"
                 archiveClassifier.set("sources")
                 from(project.the<BaseExtension>().sourceSets["main"].java.srcDirs)
             }
 
-            val javadocJar = tasks.register<Jar>("javadocJar") {
-                archiveClassifier.set("javadoc")
-                from(dokkaJavadoc)
-                dependsOn(dokkaJavadoc)
-            }
-
-            configurePublication(sourcesJar, javadocJar)
+            configurePublication(sourcesJar)
         }
     }
 
-    private fun Project.configurePublication(sourcesJar: Any, javadoc: Any) {
+    private fun Project.configurePublication(sourcesJar: Any) {
         configure<PublishingExtension> {
             val isSnapshot = (rootProjectConfig.version).endsWith("SNAPSHOT")
 
@@ -104,7 +85,6 @@ class CentralPublish(project: Project) : PluginAdapter(project) {
 
                     artifact("$buildDir/outputs/aar/${project.name}-release.aar")
                     artifact(sourcesJar)
-                    artifact(javadoc)
                 }
             }
 
