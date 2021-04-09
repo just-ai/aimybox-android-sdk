@@ -51,7 +51,7 @@ Embed your own intelligent voice assistant into your existing application or dev
     }
 ```
 
-_Use the latest version ![](https://img.shields.io/bintray/v/aimybox/aimybox-android-sdk/core?color=%23000&label=%20&style=flat-square)_
+_Use the latest version ![Maven Central](https://img.shields.io/maven-central/v/com.just-ai.aimybox/core?color=000000&label=%20&style=flat-square)_
 
 2. Add one or more dependencies of third party speech-to-text and text-to-speech libraries. For example
 
