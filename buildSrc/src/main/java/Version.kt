@@ -15,6 +15,8 @@ object Version {
 
     // Libraries
     const val appCompat = "1.2.0"
+    const val recyclerView = "1.1.0"
+    const val constraintLayout = "2.0.4"
 
     const val jaicf = "1.0.0"
 

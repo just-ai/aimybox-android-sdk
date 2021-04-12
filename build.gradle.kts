@@ -25,7 +25,7 @@ configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
     versionCode = 1
-    compileSdk = 29
+    compileSdk = 30
     minSdk = 21
     groupId = "com.just-ai.aimybox"
 }
@@ -40,7 +40,6 @@ allprojects {
         mavenLocal()
         maven("https://kotlin.bintray.com/kotlinx")
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
-        maven("https://dl.bintray.com/alphacep/vosk")
     }
 }
 

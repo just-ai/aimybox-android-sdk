@@ -9,7 +9,6 @@ plugins {
 project.configureProject {
     isLibrary = true
     createMavenPublication = true
-    publishToBintray = true
 }
 
 project.configureAndroid {}
