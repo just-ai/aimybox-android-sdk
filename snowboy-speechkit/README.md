@@ -9,12 +9,12 @@ Hot word detection by [Snowboy](https://snowboy.kitt.ai/)
 3. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:${version}")
-        implementation("com.justai.aimybox:snowboy-speechkit:${version}")
+        implementation("com.just-ai.aimybox:core:${version}")
+        implementation("com.just-ai.aimybox:snowboy-speechkit:${version}")
     }
 ```
 4. Provide Google Platform Speechkit components into Aimybox configuration object:

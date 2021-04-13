@@ -16,7 +16,7 @@ object Version {
     // Libraries
     const val appCompat = "1.2.0"
 
-    const val jaicf = "0.8.2"
+    const val jaicf = "1.0.0"
 
     const val retrofit = "2.9.0"
     const val okHttp = "4.9.0"

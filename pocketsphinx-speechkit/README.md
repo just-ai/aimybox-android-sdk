@@ -16,13 +16,13 @@ Here is a [working example](https://github.com/just-ai/aimybox-android-assistant
 4. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:${version}")
-        implementation("com.justai.aimybox:dummy-api:${version}") // or any other Dialog API
-        implementation("com.justai.aimybox:pocketsphinx-speechkit:${version}")
+        implementation("com.just-ai.aimybox:core:${version}")
+        implementation("com.just-ai.aimybox:dummy-api:${version}") // or any other Dialog API
+        implementation("com.just-ai.aimybox:pocketsphinx-speechkit:${version}")
     }
 ```
 5. Provide Pocketpshinx Speechkit components into Aimybox configuration object:

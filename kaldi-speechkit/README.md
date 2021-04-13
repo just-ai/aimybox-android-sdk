@@ -20,13 +20,13 @@ In offline mode Kaldi utilizes a local model that is restricted due its tiny siz
 3. Add dependencies to your module's build.gradle:
 ```kotlin
 repositories {
-    maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+    mavenCentral()
 }
 
 dependencies {
-    implementation("com.justai.aimybox:core:${version}")
-    implementation("com.justai.aimybox:dummy-api:${version}") // or any other Dialog API
-    implementation("com.justai.aimybox:kaldi-speechkit:${version}")
+    implementation("com.just-ai.aimybox:core:${version}")
+    implementation("com.just-ai.aimybox:dummy-api:${version}") // or any other Dialog API
+    implementation("com.just-ai.aimybox:kaldi-speechkit:${version}")
 }
 ```
 4. Provide Kaldi Speechkit component into Aimybox configuration object:

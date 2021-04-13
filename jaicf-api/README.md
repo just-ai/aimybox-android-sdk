@@ -12,13 +12,13 @@ Here is a [working example](https://github.com/just-ai/jaicf-android-template) o
 1. Add dependencies to your module's build.gradle:
 ```kotlin
 repositories {
-    jcenter()
+        mavenCentral()
 }
 
 dependencies {
-    implementation("com.justai.aimybox:core:${version}")
-    implementation("com.justai.aimybox:google-platform-speechkit:${version}")
-    implementation("com.justai.aimybox:jaicf-api:${version}")
+    implementation("com.just-ai.aimybox:core:${version}")
+    implementation("com.just-ai.aimybox:google-platform-speechkit:${version}")
+    implementation("com.just-ai.aimybox:jaicf-api:${version}")
     // Add other required JAICF modules with the latest versions here
 }
 ```
@@ -66,14 +66,14 @@ For example:
 
 ```kotlin
 repositories {
-    jcenter()
+            mavenCentral()
 }
 
 dependencies {
-    implementation("com.justai.aimybox:core:${version}")
-    implementation("com.justai.aimybox:google-platform-speechkit:${version}")
-    implementation("com.justai.aimybox:jaicf-api:${version}")
-    implementation("com.justai.jaicf:caila:0.8.2") // Adds CAILA NLU support
+    implementation("com.just-ai.aimybox:core:${version}")
+    implementation("com.just-ai.aimybox:google-platform-speechkit:${version}")
+    implementation("com.just-ai.aimybox:jaicf-api:${version}")
+    implementation("com.just-ai.jaicf:caila:0.8.2") // Adds CAILA NLU support
 }
 ```
 

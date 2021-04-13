@@ -5,15 +5,16 @@ import com.justai.gradle.project.configureProject
 plugins {
     id("com.android.library")
     id("com.google.protobuf")
+    `aimybox-publish`
 }
 
-configureProject {
+project.configureProject {
     isLibrary = true
     createMavenPublication = true
     publishToBintray = true
 }
 
-configureAndroid {
+project.configureAndroid {
     defaultConfig {
         buildConfigField(
             "String",

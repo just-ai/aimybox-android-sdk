@@ -24,7 +24,7 @@ val Project.rootProjectConfig: RootProjectConfig
         return rootProject.extra[EXTRA_ROOT_PROJECT_CONFIG] as RootProjectConfig
     }
 
-fun KotlinBuildScript.configureProject(closure: ProjectConfig.() -> Unit) = project.run {
+fun Project.configureProject(closure: ProjectConfig.() -> Unit) = run {
     val config = ProjectConfig(name).apply(closure)
     extra[EXTRA_PROJECT_CONFIG] = config
 }

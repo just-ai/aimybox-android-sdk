@@ -13,5 +13,5 @@ data class ProjectConfig(
     val generatePomFileTask = "generatePomFileFor${publicationName}Publication"
 
     val customMavenLocalPublicationTask = "localPublish${publicationName}"
-    val bintrayPublicationTask = "bintrayPublish${publicationName}"
+//    val bintrayPublicationTask = "bintrayPublish${publicationName}"
 }

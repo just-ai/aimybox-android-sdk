@@ -11,12 +11,12 @@ Speech recognition and synthesis by [Yandex Cloud Speechkit](https://cloud.yande
 5. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        jcenter()
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:${version}")
-        implementation("com.justai.aimybox:yandex-speechkit:${version}")
+        implementation("com.just-ai.aimybox:core:${version}")
+        implementation("com.just-ai.aimybox:yandex-speechkit:${version}")
     }
 ```
 6. Provide Yandex Speechkit components into Aimybox configuration object:

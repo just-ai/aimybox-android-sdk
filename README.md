@@ -11,7 +11,7 @@
 <p align="center">
     <a href="https://twitter.com/intent/follow?screen_name=aimybox"><img alt="Twitter Follow" src="https://img.shields.io/twitter/follow/aimybox.svg?label=Follow%20on%20Twitter&style=popout"></a>
     <a href="https://travis-ci.org/just-ai/aimybox-android-sdk/"><img alt="Travis CI Build" src="https://travis-ci.org/just-ai/aimybox-android-sdk.svg?branch=master"></a>
-    <a href="https://bintray.com/aimybox/aimybox-android-sdk/"><img alt="Bintray artifact" src="https://api.bintray.com/packages/aimybox/aimybox-android-sdk/core/images/download.svg"></a>
+    <a href="https://search.maven.org/search?q=com.just-ai.aimybox"><img alt="Maven Central artifact" src="https://img.shields.io/maven-central/v/com.just-ai.aimybox/core?label=Download"></a>
 </p>
 
 Embed your own intelligent voice assistant into your existing application or device.
@@ -43,20 +43,20 @@ Embed your own intelligent voice assistant into your existing application or dev
     }
     
     repositories {
-        jcenter()
+        mavenCentral()
     }
     
     dependencies {
-        implementation("com.justai.aimybox:core:0.15.3")
+        implementation("com.just-ai.aimybox:core:0.16.0")
     }
 ```
 
-_Use the latest version ![](https://img.shields.io/bintray/v/aimybox/aimybox-android-sdk/core?color=%23000&label=%20&style=flat-square)_
+_Use the latest version ![Maven Central](https://img.shields.io/maven-central/v/com.just-ai.aimybox/core?color=000000&label=%20&style=flat-square)_
 
 2. Add one or more dependencies of third party speech-to-text and text-to-speech libraries. For example
 
 ```kotlin
-implementation("com.justai.aimybox:google-platform-speechkit:0.15.3")
+implementation("com.just-ai.aimybox:google-platform-speechkit:0.16.0")
 ```
 
 3. Create a new project in [Aimybox console](https://help.aimybox.com/en/article/introduction-to-aimybox-web-console-n49kfr/), enable some voice skills and **copy your project's API key**.
