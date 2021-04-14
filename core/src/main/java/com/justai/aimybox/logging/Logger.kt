@@ -1,9 +1,10 @@
 package com.justai.aimybox.logging
 
-import android.os.Build
+import android.annotation.SuppressLint
 import android.util.Log
 import com.justai.aimybox.BuildConfig
 
+@SuppressLint("LogTagMismatch")
 class Logger(
     tag: String = "",
     private val debug: Boolean = BuildConfig.DEBUG,
@@ -14,23 +15,17 @@ class Logger(
         internal val DEFAULT_FORMAT = { any: Any? -> "[${Thread.currentThread().name}] $any" }
     }
 
-    private val formattedTag = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N)
-        tag.take(14)
-    else tag
-
-    private val tag = "Aimybox" + if (formattedTag.isNotBlank()) "($formattedTag)" else ""
+    private val tag = "Aimybox" + if (tag.isNotBlank()) "(${tag})" else ""
 
     // Verbose
     fun v(throwable: Throwable) = v("", throwable)
 
     fun v(any: Any?) {
-        if (Log.isLoggable(tag, Log.VERBOSE))
-            Log.v(tag, messageFormatter(any))
+        Log.v(tag, messageFormatter(any))
     }
 
     fun v(any: Any?, throwable: Throwable) {
-        if (Log.isLoggable(tag, Log.VERBOSE))
-            Log.v(tag, messageFormatter(any), throwable)
+        Log.v(tag, messageFormatter(any), throwable)
     }
 
     // Debug
@@ -50,39 +45,33 @@ class Logger(
     fun i(throwable: Throwable) = i("", throwable)
 
     fun i(any: Any?) {
-        if (Log.isLoggable(tag, Log.INFO))
-            Log.i(tag, messageFormatter(any))
+        Log.i(tag, messageFormatter(any))
     }
 
     fun i(any: Any?, throwable: Throwable) {
-        if (Log.isLoggable(tag, Log.INFO))
-            Log.i(tag, messageFormatter(any), throwable)
+        Log.i(tag, messageFormatter(any), throwable)
     }
 
     // Warning
     fun w(throwable: Throwable) = w("", throwable)
 
     fun w(any: Any?) {
-        if (Log.isLoggable(tag, Log.WARN))
-            Log.w(tag, messageFormatter(any))
+        Log.w(tag, messageFormatter(any))
     }
 
     fun w(any: Any?, throwable: Throwable) {
-        if (Log.isLoggable(tag, Log.WARN))
-            Log.w(tag, messageFormatter(any), throwable)
+        Log.w(tag, messageFormatter(any), throwable)
     }
 
     // Error
     fun e(throwable: Throwable) = e("", throwable)
 
     fun e(any: Any?) {
-        if (Log.isLoggable(tag, Log.ERROR))
-            Log.e(tag, messageFormatter(any))
+        Log.e(tag, messageFormatter(any))
     }
 
     fun e(any: Any?, throwable: Throwable) {
-        if (Log.isLoggable(tag, Log.ERROR))
-            Log.e(tag, messageFormatter(any), throwable)
+        Log.e(tag, messageFormatter(any), throwable)
     }
 
     // Assert
