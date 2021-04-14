@@ -9,10 +9,13 @@ plugins {
 project.configureProject {
     isLibrary = true
     createMavenPublication = true
-    publishToBintray = true
 }
 
 project.configureAndroid {}
+
+repositories {
+    maven("https://dl.bintray.com/alphacep/vosk")
+}
 
 dependencies {
     implementation(project(":core"))

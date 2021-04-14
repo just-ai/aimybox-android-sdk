@@ -8,6 +8,8 @@ object Library {
 
     object Android {
         val appCompat = "androidx.appcompat:appcompat" version { appCompat }
+        val recyclerView = "androidx.recyclerview:recyclerview" version { recyclerView }
+        val constraintLayout = "androidx.constraintlayout:constraintlayout" version { constraintLayout }
     }
 
     object Test {
