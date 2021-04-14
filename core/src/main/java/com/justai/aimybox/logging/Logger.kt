@@ -1,5 +1,6 @@
 package com.justai.aimybox.logging
 
+import android.os.Build
 import android.util.Log
 import com.justai.aimybox.BuildConfig
 
@@ -13,7 +14,11 @@ class Logger(
         internal val DEFAULT_FORMAT = { any: Any? -> "[${Thread.currentThread().name}] $any" }
     }
 
-    private val tag = "Aimybox" + if (tag.isNotBlank()) "($tag)" else ""
+    private val formattedTag = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N)
+        tag.take(14)
+    else tag
+
+    private val tag = "Aimybox" + if (formattedTag.isNotBlank()) "($formattedTag)" else ""
 
     // Verbose
     fun v(throwable: Throwable) = v("", throwable)
