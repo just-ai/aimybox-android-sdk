@@ -28,7 +28,8 @@ data class Config internal constructor(
     val dialogApi: DialogApi<*, *>,
     val voiceTrigger: VoiceTrigger?,
     val earcon: MediaPlayer?,
-    val recognitionBehavior: RecognitionBehavior
+    val recognitionBehavior: RecognitionBehavior,
+    val stopRecognitionBehavior: StopRecognitionBehavior
 ) {
 
     companion object {
@@ -36,7 +37,7 @@ data class Config internal constructor(
          * Create new [Config] object.
          *
          * @param block intended to configure optional parameters,
-         * such as [VoiceTrigger], [CustomSkill]s, [RecognitionBehavior]
+         * such as [VoiceTrigger], [CustomSkill]s, [RecognitionBehavior], [StopRecognitionBehavior]
          *
          * @see Config.update
          * @see SpeechToText
@@ -59,7 +60,11 @@ data class Config internal constructor(
         /**
          * @see RecognitionBehavior
          * */
-        var recognitionBehavior: RecognitionBehavior = RecognitionBehavior.SYNCHRONOUS
+        var recognitionBehavior: RecognitionBehavior = RecognitionBehavior.SYNCHRONOUS,
+        /**
+         * @see StopRecognitionBehavior
+         */
+        var stopRecognitionBehavior: StopRecognitionBehavior = StopRecognitionBehavior.CANCEL_REQUEST
     ) {
 
         private var earcon: MediaPlayer? = null
@@ -80,7 +85,8 @@ data class Config internal constructor(
             dialogApi,
             voiceTrigger,
             earcon,
-            recognitionBehavior
+            recognitionBehavior,
+            stopRecognitionBehavior
         )
 
         fun setEarconRes(context: Context, @RawRes earconRes: Int? = null) {
@@ -116,5 +122,12 @@ data class Config internal constructor(
          * If the new recognition is done before the old response from dialog api is received, the response will be discarded and a new request begins.
          * */
         ALLOW_OVERRIDE
+    }
+
+
+    //TODO Documentation
+    enum class StopRecognitionBehavior {
+        CANCEL_REQUEST,
+        PROCESS_REQUEST
     }
 }
