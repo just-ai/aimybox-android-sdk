@@ -8,7 +8,7 @@ class YandexTextToSpeech(
     iAmTokenProvider: IAmTokenProvider,
     folderId: String,
     defaultLanguage: Language,
-    config: Config
+    config: Config = Config()
 ): AbstractYandexTextToSpeech<YandexTextToSpeech.Config>(
     context, iAmTokenProvider, folderId, defaultLanguage, config
 ) {
