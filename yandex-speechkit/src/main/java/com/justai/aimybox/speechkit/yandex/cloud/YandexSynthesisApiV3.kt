@@ -18,7 +18,7 @@ import kotlin.coroutines.resumeWithException
 internal class YandexSynthesisApiV3(
     iAmTokenProvider: IAmTokenProvider,
     folderId: String,
-    override val config: YandexTextToSpeechV3.Config,
+    config: YandexTextToSpeechV3.Config,
 ): AbstractYandexSynthesisApi<YandexTextToSpeechV3.Config>(iAmTokenProvider, folderId, config) {
     private val channel = ManagedChannelBuilder
         .forAddress(config.apiUrl, config.apiPort)
