@@ -4,19 +4,27 @@ import androidx.annotation.RequiresPermission
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.launch
 
 /**
  * Base class for speech recognizers.
  * */
 @Suppress("unused", "MemberVisibilityCanBePrivate")
-abstract class SpeechToText {
+abstract class SpeechToText(
+    val maxAudioChunks: Int? = null
+): CoroutineScope {
 
     /**
      * Recognition will be canceled if no results received within this interval.
      * */
     open val recognitionTimeoutMs = 10000L
+
+    //TODO documentation
+    var audioChunksBetweenResults = 0
+        protected set
 
     internal lateinit var eventChannel: SendChannel<Event>
     internal lateinit var exceptionChannel: SendChannel<AimyboxException>
@@ -47,6 +55,15 @@ abstract class SpeechToText {
 
     private fun onEvent(event: Event) {
         eventChannel.offer(event)
+        if (maxAudioChunks != null)
+            when (event) {
+                is Event.AudioBufferReceived -> {
+                    if (++audioChunksBetweenResults >= maxAudioChunks)
+                        launch { stopRecognition() }
+                }
+                is Event.SoundVolumeRmsChanged -> {}
+                else -> audioChunksBetweenResults = 0
+            }
     }
 
     /**
@@ -126,7 +143,7 @@ abstract class SpeechToText {
          *
          * *Note: not every recognizer supports this event*
          */
-        data class AudioBufferReceived(val buffer: ByteArray): Event()
+        data class AudioBufferReceived(val buffer: ByteArray) : Event()
     }
 
     sealed class Result {

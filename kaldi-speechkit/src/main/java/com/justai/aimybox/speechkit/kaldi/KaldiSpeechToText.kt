@@ -11,11 +11,11 @@ import org.kaldi.KaldiRecognizer
 import org.kaldi.Model
 import org.kaldi.RecognitionListener
 import org.kaldi.SpeechService
-import java.lang.Exception
 
 class KaldiSpeechToText(
-    assets: KaldiAssets
-): SpeechToText(), CoroutineScope {
+    assets: KaldiAssets,
+    maxAudioChunks: Int? = null
+): SpeechToText(maxAudioChunks) {
 
     override val coroutineContext = Dispatchers.IO + Job()
 

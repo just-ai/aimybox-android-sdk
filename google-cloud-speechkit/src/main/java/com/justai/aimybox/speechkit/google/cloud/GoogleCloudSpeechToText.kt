@@ -14,11 +14,13 @@ import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechkit.google.cloud.model.RecognitionModel
 import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.util.*
 
 @Suppress("unused")
@@ -26,8 +28,9 @@ import java.util.*
 class GoogleCloudSpeechToText(
     credentials: GoogleCloudCredentials,
     private val locale: Locale,
-    private val config: Config = Config()
-) : SpeechToText(), CoroutineScope {
+    private val config: Config = Config(),
+    maxAudioChunks: Int? = null
+) : SpeechToText(maxAudioChunks) {
 
     override val coroutineContext = Dispatchers.IO
 

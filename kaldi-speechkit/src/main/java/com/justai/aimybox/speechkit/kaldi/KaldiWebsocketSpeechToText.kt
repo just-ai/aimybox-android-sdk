@@ -9,15 +9,17 @@ import com.neovisionaries.ws.client.WebSocketAdapter
 import com.neovisionaries.ws.client.WebSocketFactory
 import com.neovisionaries.ws.client.WebSocketFrame
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
 import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
 class KaldiWebsocketSpeechToText(
     private val uri: String,
-    sampleRate: Int = 8000
-): SpeechToText(), CoroutineScope {
+    sampleRate: Int = 8000,
+    maxAudioChunks: Int? = null
+): SpeechToText(maxAudioChunks) {
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 

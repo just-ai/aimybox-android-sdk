@@ -3,20 +3,22 @@ package com.justai.aimybox.speechkit.pocketsphinx
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.channels.ReceiveChannel
-
 import edu.cmu.pocketsphinx.Hypothesis
 import edu.cmu.pocketsphinx.RecognitionListener
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
-import java.lang.Exception
 
 class PocketsphinxSpeechToText(
     recognizerProvider: PocketsphinxRecognizerProvider,
     grammarFilePath: String,
-    private val timeout: Long = 5000
-): SpeechToText(), CoroutineScope {
+    private val timeout: Long = 5000,
+    maxAudioChunks: Int? = null
+): SpeechToText(maxAudioChunks) {
 
     companion object {
         private const val GRAMMAR_SEARCH = "grammar"

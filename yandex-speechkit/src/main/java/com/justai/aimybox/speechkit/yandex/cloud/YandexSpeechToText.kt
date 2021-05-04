@@ -6,10 +6,13 @@ import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
@@ -17,8 +20,9 @@ class YandexSpeechToText(
     iAmTokenProvider: IAmTokenProvider,
     folderId: String,
     language: Language,
-    config: Config = Config()
-) : SpeechToText(), CoroutineScope {
+    config: Config = Config(),
+    maxAudioChunks: Int? = null
+) : SpeechToText(maxAudioChunks) {
 
     override val recognitionTimeoutMs = 10000L
 
