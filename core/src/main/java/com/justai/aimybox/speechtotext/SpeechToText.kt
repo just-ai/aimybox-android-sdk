@@ -7,7 +7,6 @@ import com.justai.aimybox.core.SpeechToTextException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.launch
 
 /**
  * Base class for speech recognizers.
@@ -15,16 +14,23 @@ import kotlinx.coroutines.launch
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class SpeechToText(
     val maxAudioChunks: Int? = null
-): CoroutineScope {
+) : CoroutineScope {
 
     /**
      * Recognition will be canceled if no results received within this interval.
      * */
     open val recognitionTimeoutMs = 10000L
 
-    //TODO documentation
-    var audioChunksBetweenResults = 0
-        protected set
+    /**
+     * Counts amount of received audio chunks between updates of recognized text.
+     */
+    @Volatile
+    private var audioChunksBetweenResults = -1
+
+    protected val mustInterruptRecognition
+        get() =
+            maxAudioChunks != null && audioChunksBetweenResults >= maxAudioChunks
+
 
     internal lateinit var eventChannel: SendChannel<Event>
     internal lateinit var exceptionChannel: SendChannel<AimyboxException>
@@ -38,6 +44,15 @@ abstract class SpeechToText(
      * Cancel recognition entirely and abandon all results.
      * */
     abstract suspend fun cancelRecognition()
+
+
+    fun clearCounter() {
+        audioChunksBetweenResults = 0
+    }
+
+    fun initCounter() {
+        audioChunksBetweenResults = -1
+    }
 
     /**
      * Start recognition.
@@ -55,15 +70,6 @@ abstract class SpeechToText(
 
     private fun onEvent(event: Event) {
         eventChannel.offer(event)
-        if (maxAudioChunks != null)
-            when (event) {
-                is Event.AudioBufferReceived -> {
-                    if (++audioChunksBetweenResults >= maxAudioChunks)
-                        launch { stopRecognition() }
-                }
-                is Event.SoundVolumeRmsChanged -> {}
-                else -> audioChunksBetweenResults = 0
-            }
     }
 
     /**
@@ -100,8 +106,13 @@ abstract class SpeechToText(
      *
      * @see Event.AudioBufferReceived
      */
-    protected fun onAudioBufferReceived(buffer: ByteArray) =
+    protected fun onAudioBufferReceived(buffer: ByteArray) {
+        if (audioChunksBetweenResults != -1) {
+            audioChunksBetweenResults++
+        }
         onEvent(Event.AudioBufferReceived(buffer))
+        if (mustInterruptRecognition) onEvent(Event.RecognitionInterrupted)
+    }
 
     /**
      * Events occurred during recognition process.
@@ -112,6 +123,7 @@ abstract class SpeechToText(
         data class RecognitionResult(val text: String?) : Event()
         object EmptyRecognitionResult : Event()
         object RecognitionCancelled : Event()
+        object RecognitionInterrupted : Event()
 
         /**
          * Happens when user starts to talk.
@@ -149,6 +161,7 @@ abstract class SpeechToText(
     sealed class Result {
         data class Partial(val text: String?) : Result()
         data class Final(val text: String?) : Result()
+        object Interrupted : Result()
         data class Exception(val exception: SpeechToTextException) : Result()
     }
 }

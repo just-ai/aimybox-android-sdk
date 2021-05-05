@@ -16,9 +16,8 @@ import java.io.File
 class PocketsphinxSpeechToText(
     recognizerProvider: PocketsphinxRecognizerProvider,
     grammarFilePath: String,
-    private val timeout: Long = 5000,
-    maxAudioChunks: Int? = null
-): SpeechToText(maxAudioChunks) {
+    private val timeout: Long = 5000
+): SpeechToText() {
 
     companion object {
         private const val GRAMMAR_SEARCH = "grammar"
@@ -41,7 +40,9 @@ class PocketsphinxSpeechToText(
 
         override fun onPartialResult(hyp: Hypothesis?) {
             launch {
-                channel.send(Result.Partial(hyp?.hypstr))
+                val text = hyp?.hypstr
+                val result = if (mustInterruptRecognition) Result.Final(text) else Result.Partial(text)
+                channel.send(result)
             }
         }
 

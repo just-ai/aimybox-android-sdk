@@ -9,6 +9,7 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
@@ -34,35 +35,43 @@ class YandexSpeechToText(
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 
+    private var recognitionChannel: ReceiveChannel<Result>? = null
+
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    override fun startRecognition() = produce<Result> {
-        try {
-            val requestStream = api.openStream(
-                { response ->
-                    val chunk = response.chunksList.first()
-                    val text = chunk.alternativesList.first().text
-                    val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
-                    sendResult(result)
-                },
-                { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
-                onCompleted = { close() }
-            )
+    override fun startRecognition(): ReceiveChannel<Result> {
+        initCounter()
+        return produce<Result> {
+            try {
+                val requestStream = api.openStream(
+                    { response ->
+                        val chunk = response.chunksList.first()
+                        val text = chunk.alternativesList.first().text
+                        val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
+                        sendResult(result)
+                    },
+                    { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
+                    onCompleted = { close() }
+                )
 
-            val audioData = audioRecorder.startRecordingBytes()
+                val audioData = audioRecorder.startRecordingBytes()
 
-            launch {
-                audioData.collect { data ->
-                    requestStream.onNext(YandexRecognitionApi.createRequest(data))
-                    onAudioBufferReceived(data)
+                launch {
+                    audioData.collect { data ->
+                        requestStream.onNext(YandexRecognitionApi.createRequest(data))
+                        onAudioBufferReceived(data)
+                        if (mustInterruptRecognition) {
+                            L.w( "Interrupting stream")
+                            this@produce.cancel()
+                        }
+                    }
                 }
-                requestStream.onCompleted()
-            }
 
-            invokeOnClose {
-                requestStream.onCompleted()
+                invokeOnClose {
+                    requestStream.onCompleted()
+                }
+            } catch (e: Exception) {
+                sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = e)))
             }
-        } catch (e: Exception) {
-            sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = e)))
         }
     }
 

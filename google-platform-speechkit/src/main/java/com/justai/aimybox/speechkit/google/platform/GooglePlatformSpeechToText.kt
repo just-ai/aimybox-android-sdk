@@ -18,9 +18,8 @@ import java.util.*
 class GooglePlatformSpeechToText(
     private val context: Context,
     var language: Locale = Locale.getDefault(),
-    var preferOffline: Boolean = false,
-    maxAudioChunks: Int? = null
-) : SpeechToText(maxAudioChunks) {
+    var preferOffline: Boolean = false
+) : SpeechToText() {
 
     override val coroutineContext = Dispatchers.Main + Job()
 

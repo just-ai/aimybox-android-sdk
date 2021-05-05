@@ -20,7 +20,7 @@ buildscript {
     }
 }
 
-val versionProject = "0.16.4-SNAPSHOT"
+val versionProject = "0.16.4.2-SNAPSHOT"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -41,17 +41,6 @@ allprojects {
         maven("https://kotlin.bintray.com/kotlinx")
         maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
     }
-}
-
-tasks.register("localPublishAll") {
-    group = "aimybox"
-
-    val publicationTasks = subprojects.mapNotNull { project ->
-        if (project.projectConfig.createMavenPublication) "${project.name}:${project.projectConfig.mavenLocalPublicationTask}"
-        else null
-    }.toTypedArray()
-
-    dependsOn(*publicationTasks)
 }
 
 tasks.register<Delete>("clean") {

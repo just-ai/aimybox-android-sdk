@@ -24,9 +24,8 @@ private val L = Logger("Houndify Speechkit")
 class HoundifySpeechToText(
     context: Context,
     clientId: String,
-    clientKey: String,
-    maxAudioChunks: Int? = null
-) : SpeechToText(maxAudioChunks) {
+    clientKey: String
+) : SpeechToText() {
 
     override val coroutineContext = Dispatchers.IO + Job()
 

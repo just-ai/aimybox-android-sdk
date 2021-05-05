@@ -117,6 +117,7 @@ data class Config internal constructor(
          * Voice trigger is active only if Aimybox is in state [Aimybox.State.STANDBY]
          * */
         SYNCHRONOUS,
+
         /**
          * Voice trigger is active if Aimybox is in any state excluding [Aimybox.State.SPEAKING].
          * If the new recognition is done before the old response from dialog api is received, the response will be discarded and a new request begins.
@@ -125,9 +126,18 @@ data class Config internal constructor(
     }
 
 
-    //TODO Documentation
+    /**
+     * Determines the system behavior in the case when a user attempts to stop speech recognition.
+     * */
     enum class StopRecognitionBehavior {
+        /**
+         * Cancel recognition entirely and abandon all results.
+         */
         CANCEL_REQUEST,
+
+        /**
+         * Stops recognition and send recognized text.
+         */
         PROCESS_REQUEST
     }
 }

@@ -42,6 +42,7 @@ internal class SpeechToTextComponent(
                         is SpeechToText.Result.Partial -> {
                             if (finalResult != result.text) {
                                 finalResult = result.text
+                                delegate.clearCounter()
                                 L.d("Partial recognition result: ${result.text}")
                                 eventChannel.send(SpeechToText.Event.RecognitionPartialResult(result.text))
                             }

@@ -13,9 +13,8 @@ import org.kaldi.RecognitionListener
 import org.kaldi.SpeechService
 
 class KaldiSpeechToText(
-    assets: KaldiAssets,
-    maxAudioChunks: Int? = null
-): SpeechToText(maxAudioChunks) {
+    assets: KaldiAssets
+): SpeechToText() {
 
     override val coroutineContext = Dispatchers.IO + Job()
 
