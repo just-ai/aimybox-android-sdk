@@ -47,7 +47,8 @@ abstract class SpeechToText(
 
 
     fun clearCounter() {
-        audioChunksBetweenResults = 0
+        if (maxAudioChunks != null)
+            audioChunksBetweenResults = 0
     }
 
     fun initCounter() {

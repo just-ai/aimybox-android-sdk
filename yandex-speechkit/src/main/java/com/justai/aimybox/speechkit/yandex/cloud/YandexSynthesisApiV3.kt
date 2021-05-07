@@ -16,10 +16,10 @@ import kotlin.coroutines.resumeWithException
 
 
 internal class YandexSynthesisApiV3(
-    iAmTokenProvider: IAmTokenProvider,
-    folderId: String,
-    config: YandexTextToSpeechV3.Config,
-): AbstractYandexSynthesisApi<YandexTextToSpeechV3.Config>(iAmTokenProvider, folderId, config) {
+    private val iAmTokenProvider: IAmTokenProvider,
+    private val folderId: String,
+    val config: YandexTextToSpeech.ConfigV3,
+): AbstractYandexSynthesisApi {
     private val channel = ManagedChannelBuilder
         .forAddress(config.apiUrl, config.apiPort)
         .build()
@@ -30,8 +30,7 @@ internal class YandexSynthesisApiV3(
 
     override suspend fun request(
         text: String,
-        language: Language,
-        config: YandexTextToSpeechV3.Config
+        language: Language
     ): ByteArray {
         val containerAudio = ContainerAudio.newBuilder()
             .setContainerAudioType(ContainerAudio.ContainerAudioType.WAV)

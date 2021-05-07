@@ -10,10 +10,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 internal class YandexSynthesisApi(
-    iAmTokenProvider: IAmTokenProvider,
-    folderId: String,
-    config: YandexTextToSpeech.Config,
-): AbstractYandexSynthesisApi<YandexTextToSpeech.Config>(iAmTokenProvider, folderId, config) {
+    private val iAmTokenProvider: IAmTokenProvider,
+    private val folderId: String,
+    var config: YandexTextToSpeech.Config,
+): AbstractYandexSynthesisApi {
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -25,8 +25,7 @@ internal class YandexSynthesisApi(
 
     override suspend fun request(
         text: String,
-        language: Language,
-        config: YandexTextToSpeech.Config
+        language: Language
     ): ByteArray {
         val token = iAmTokenProvider.getOAuthToken()
 

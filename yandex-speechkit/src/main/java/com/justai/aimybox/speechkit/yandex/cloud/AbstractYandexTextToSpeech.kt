@@ -11,15 +11,15 @@ abstract class AbstractYandexTextToSpeech<T: AbstractYandexTextToSpeech.BaseConf
     protected val iAmTokenProvider: IAmTokenProvider,
     protected val folderId: String,
     var defaultLanguage: Language,
-    var config: T
+    val config: T
 ) : BaseTextToSpeech(context) {
 
-    abstract val api: AbstractYandexSynthesisApi<T>
+    abstract val api: AbstractYandexSynthesisApi
 
     override suspend fun speak(speech: TextSpeech) {
         try {
             val language = resolveLanguage(speech.language)
-            val audioData = api.request(speech.text, language, config)
+            val audioData = api.request(speech.text, language)
             onEvent(Event.SpeechDataReceived(audioData))
             audioSynthesizer.play(AudioSpeech.Bytes(audioData))
         } catch (e: Throwable) {
