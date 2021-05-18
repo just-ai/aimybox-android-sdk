@@ -131,6 +131,8 @@ class AudioRecorder(
      * */
     suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
 
+    fun interruptAudioRecording() = coroutineContext.cancelChildren()
+
     /**
      * Calculates a RMS level from recorded chunk
      *

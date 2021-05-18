@@ -261,7 +261,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         }
     }.apply {
         invokeOnCompletion { cause ->
-            if (cause is CancellationException) onRecognitionCancelled()
+            if (cause is CancellationException)
+                onRecognitionCancelled()
         }
     } else null
 
@@ -300,12 +301,16 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
                 startRecognition()
             }
             config.stopRecognitionBehavior == StopRecognitionBehavior.PROCESS_REQUEST -> {
-                stopRecognition().join()
+                interruptRecognition()
             }
             else -> {
                 cancelRecognition().join()
             }
         }
+    }
+
+    fun interruptRecognition(): Job = launch {
+        speechToText.interruptRecognition()
     }
 
     /* API */

@@ -6,6 +6,7 @@ import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.RecognitionTimeoutException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
@@ -22,6 +23,8 @@ internal class SpeechToTextComponent(
         provideChannelsForDelegate()
     }
 
+    private var recognitionJob: Job? = null
+
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun recognizeSpeech(): String? {
         L.assert(!hasRunningJobs) { "Recognition is already running" }
@@ -35,7 +38,8 @@ internal class SpeechToTextComponent(
             val timeoutTask = startTimeout(delegate.recognitionTimeoutMs)
 
             var finalResult: String? = null
-            launch {
+            recognitionJob?.cancel()
+            recognitionJob = launch {
                 recognitionChannel.consumeEach { result ->
                     timeoutTask.cancel()
                     when (result) {
@@ -60,7 +64,8 @@ internal class SpeechToTextComponent(
                         }
                     }
                 }
-            }.join()
+            }
+            recognitionJob?.join()
 
             timeoutTask.cancel()
 
@@ -88,6 +93,7 @@ internal class SpeechToTextComponent(
         super.cancelRunningJob()
     }
 
+    fun interruptRecognition() = recognitionJob?.cancel()
 
     private fun startTimeout(timeout: Long) = launch {
         delay(timeout)
