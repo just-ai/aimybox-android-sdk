@@ -11,10 +11,16 @@ project.configureProject {
     createMavenPublication = true
 }
 
-project.configureAndroid {}
+project.configureAndroid {
+    defaultConfig {
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86_64", "x86"))
+        }
+    }
+}
 
 repositories {
-    maven("https://dl.bintray.com/alphacep/vosk")
+    maven("https://alphacephei.com/maven/")
 }
 
 dependencies {
@@ -22,7 +28,7 @@ dependencies {
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
-
-    implementation("com.alphacep:vosk-android:0.3.17")
+    implementation ("net.java.dev.jna:jna:5.8.0@aar")
+    implementation("com.alphacephei:vosk-android:0.3.23")
     implementation("com.neovisionaries:nv-websocket-client:2.9")
 }
