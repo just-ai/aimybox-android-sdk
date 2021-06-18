@@ -20,5 +20,5 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation(files("../pocketsphinx-android-lib/pocketsphinx-android-5prealpha-release.aar"))
+    compileOnly(files("pocketsphinx-android-lib/pocketsphinx-android-5prealpha-release.aar"))
 }
