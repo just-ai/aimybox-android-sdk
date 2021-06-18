@@ -15,8 +15,8 @@ import com.justai.aimybox.speechkit.google.cloud.model.RecognitionModel
 import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
 import java.util.*
@@ -26,8 +26,9 @@ import java.util.*
 class GoogleCloudSpeechToText(
     credentials: GoogleCloudCredentials,
     private val locale: Locale,
-    private val config: Config = Config()
-) : SpeechToText(), CoroutineScope {
+    private val config: Config = Config(),
+    maxAudioChunks: Int? = null
+) : SpeechToText(maxAudioChunks) {
 
     override val coroutineContext = Dispatchers.IO
 
@@ -41,28 +42,34 @@ class GoogleCloudSpeechToText(
 
     @InternalCoroutinesApi
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    override fun startRecognition() = produce<Result> {
-        val stream = speechClient.streamingRecognizeCallable()
-            .splitCall(CloudResponseObserver(channel))
+    override fun startRecognition(): ReceiveChannel<Result> {
+        initCounter()
+        return produce<Result> {
+            val stream = speechClient.streamingRecognizeCallable()
+                .splitCall(CloudResponseObserver(channel))
 
-        stream.sendRecognitionConfig()
+            stream.sendRecognitionConfig()
 
-        val audioData = audioRecorder.startRecordingBytes()
+            val audioData = audioRecorder.startRecordingBytes()
 
-        launch {
-            audioData.collect { data ->
-                StreamingRecognizeRequest.newBuilder()
-                    .setAudioContent(ByteString.copyFrom(data))
-                    .build()
-                    .let(stream::send)
+            launch {
+                audioData.collect { data ->
+                    StreamingRecognizeRequest.newBuilder()
+                        .setAudioContent(ByteString.copyFrom(data))
+                        .build()
+                        .let(stream::send)
 
-                onAudioBufferReceived(data)
+                    onAudioBufferReceived(data)
+                    if (mustInterruptRecognition) {
+                        L.d("Interrupting stream")
+                        this@produce.cancel()
+                    }
+                }
             }
-            stream.closeSend()
-        }
 
-        invokeOnClose {
-            stream.closeSend()
+            invokeOnClose {
+                stream.closeSend()
+            }
         }
     }
 

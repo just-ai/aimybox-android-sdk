@@ -3,6 +3,7 @@ syntax = "proto3";
 package yandex.cloud.ai.stt.v2;
 
 option go_package = "github.com/yandex-cloud/go-genproto/yandex/cloud/ai/stt/v2;stt";
+option java_package = "yandex.cloud.api.ai.stt.v2";
 
 service SttService {
   rpc StreamingRecognize (stream StreamingRecognitionRequest) returns (stream StreamingRecognitionResponse) {}
@@ -49,12 +50,20 @@ message RecognitionSpec {
 
 message StreamingRecognitionResponse {
   repeated SpeechRecognitionChunk chunks = 1;
-  bool end_of_single_utterance = 2;
+  reserved 2;
+  reserved "end_of_single_utterance";
 }
 
 message SpeechRecognitionChunk {
   repeated SpeechRecognitionAlternative alternatives = 1;
   bool final = 2;
+  // This flag shows that the received chunk is the end of an utterance.
+  bool end_of_utterance = 3;
+}
+
+message SpeechRecognitionResult {
+  repeated SpeechRecognitionAlternative alternatives = 1;
+  int64 channel_tag = 2;
 }
 
 message SpeechRecognitionAlternative {

@@ -11,6 +11,8 @@ import com.hound.core.model.sdk.HoundResponse
 import com.hound.core.model.sdk.PartialTranscript
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -24,6 +26,8 @@ class HoundifySpeechToText(
     clientId: String,
     clientKey: String
 ) : SpeechToText() {
+
+    override val coroutineContext = Dispatchers.IO + Job()
 
     private val factory = createVoiceFactory(context, clientId, clientKey)
     private var voiceSearch: VoiceSearch? = null

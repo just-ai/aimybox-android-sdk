@@ -30,6 +30,10 @@ class Voice(internal val stringValue: String) {
         val FILIPP = Voice("filipp")
         val ALENA = Voice("alena")
     }
+
+    object V3 {
+        val KUZNETSOV = Voice("kuznetsov_male")
+    }
 }
 
 class Emotion(internal val stringValue: String) {
