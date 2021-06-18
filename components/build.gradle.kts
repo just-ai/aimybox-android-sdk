@@ -21,7 +21,6 @@ project.configureAndroid {
 repositories {
     mavenLocal()
     google()
-    jcenter()
     mavenCentral()
     maven("https://kotlin.bintray.com/kotlinx")
 }
@@ -32,7 +31,7 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Android.recyclerView)
     implementation(Library.Android.constraintLayout)
-    implementation("androidx.core:core-ktx:1.3.2")
+    implementation("androidx.core:core-ktx:1.5.0")
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
     implementation("com.google.android.material:material:1.3.0")
     implementation("com.github.bumptech.glide:glide:4.9.0")

@@ -1,5 +1,4 @@
 import com.justai.gradle.project.configureRootProject
-import com.justai.gradle.project.projectConfig
 
 val coreProject: Project
     get() = rootProject.project("core")
@@ -7,6 +6,7 @@ val coreProject: Project
 buildscript {
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 
@@ -20,7 +20,7 @@ buildscript {
     }
 }
 
-val versionProject = "0.16.4.5-SNAPSHOT"
+val versionProject = "0.16.5.0-SNAPSHOT"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -35,12 +35,13 @@ allprojects {
     version = versionProject
     repositories {
         google()
-        jcenter()
         mavenCentral()
         mavenLocal()
         maven("https://kotlin.bintray.com/kotlinx")
         maven("https://alphacephei.com/maven")
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        flatDir {
+            setDirs(listOf("pocketsphinx-android-lib"))
+        }
     }
 }
 
