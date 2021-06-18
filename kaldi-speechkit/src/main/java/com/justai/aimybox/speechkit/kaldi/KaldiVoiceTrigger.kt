@@ -3,11 +3,10 @@ package com.justai.aimybox.speechkit.kaldi
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import kotlinx.coroutines.*
-import org.kaldi.Model
-import org.kaldi.RecognitionListener
-import org.kaldi.KaldiRecognizer
-import org.kaldi.SpeechService
-import java.lang.Exception
+import org.vosk.Model
+import org.vosk.Recognizer
+import org.vosk.android.RecognitionListener
+import org.vosk.android.SpeechService
 import java.util.concurrent.atomic.AtomicBoolean
 
 class KaldiVoiceTrigger(
@@ -39,11 +38,10 @@ class KaldiVoiceTrigger(
         if (isListening.compareAndSet(false, true)) {
             val phrasesString = phrases
                 .joinToString(separator = " ", prefix = "[\"", postfix = "\"]")
-            val kaldiRecognizer =
-                KaldiRecognizer(initialization.await(), 16000f, phrasesString)
-            recognizer = SpeechService(kaldiRecognizer, 16000f).apply {
-                addListener(RecognizerListener(phrases, onTriggered, onException))
-                startListening()
+            val recognizer =
+                Recognizer(initialization.await(), 16000f, phrasesString)
+            this.recognizer = SpeechService(recognizer, 16000f).apply {
+                startListening(RecognizerListener(phrases, onTriggered, onException))
             }
 
             L.i("Kaldi voice trigger was started")
@@ -82,6 +80,16 @@ class KaldiVoiceTrigger(
         private var triggered = false
 
         override fun onResult(result: String?) {}
+
+        override fun onFinalResult(result: String?) {
+            if (!triggered) {
+                result?.parsePartial()?.findAnyOf(phrases)?.let {
+                    triggered = true
+                    L.i("Detected phrase ${it.second}")
+                    onTriggered(it.second)
+                }
+            }
+        }
 
         override fun onPartialResult(result: String?) {
             if (!triggered) {

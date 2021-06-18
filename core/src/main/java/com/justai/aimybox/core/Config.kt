@@ -28,7 +28,8 @@ data class Config internal constructor(
     val dialogApi: DialogApi<*, *>,
     val voiceTrigger: VoiceTrigger?,
     val earcon: MediaPlayer?,
-    val recognitionBehavior: RecognitionBehavior
+    val recognitionBehavior: RecognitionBehavior,
+    val stopRecognitionBehavior: StopRecognitionBehavior
 ) {
 
     companion object {
@@ -36,7 +37,7 @@ data class Config internal constructor(
          * Create new [Config] object.
          *
          * @param block intended to configure optional parameters,
-         * such as [VoiceTrigger], [CustomSkill]s, [RecognitionBehavior]
+         * such as [VoiceTrigger], [CustomSkill]s, [RecognitionBehavior], [StopRecognitionBehavior]
          *
          * @see Config.update
          * @see SpeechToText
@@ -59,7 +60,11 @@ data class Config internal constructor(
         /**
          * @see RecognitionBehavior
          * */
-        var recognitionBehavior: RecognitionBehavior = RecognitionBehavior.SYNCHRONOUS
+        var recognitionBehavior: RecognitionBehavior = RecognitionBehavior.SYNCHRONOUS,
+        /**
+         * @see StopRecognitionBehavior
+         */
+        var stopRecognitionBehavior: StopRecognitionBehavior = StopRecognitionBehavior.CANCEL_REQUEST
     ) {
 
         private var earcon: MediaPlayer? = null
@@ -80,7 +85,8 @@ data class Config internal constructor(
             dialogApi,
             voiceTrigger,
             earcon,
-            recognitionBehavior
+            recognitionBehavior,
+            stopRecognitionBehavior
         )
 
         fun setEarconRes(context: Context, @RawRes earconRes: Int? = null) {
@@ -111,10 +117,27 @@ data class Config internal constructor(
          * Voice trigger is active only if Aimybox is in state [Aimybox.State.STANDBY]
          * */
         SYNCHRONOUS,
+
         /**
          * Voice trigger is active if Aimybox is in any state excluding [Aimybox.State.SPEAKING].
          * If the new recognition is done before the old response from dialog api is received, the response will be discarded and a new request begins.
          * */
         ALLOW_OVERRIDE
+    }
+
+
+    /**
+     * Determines the system behavior in the case when a user attempts to stop speech recognition.
+     * */
+    enum class StopRecognitionBehavior {
+        /**
+         * Cancel recognition entirely and abandon all results.
+         */
+        CANCEL_REQUEST,
+
+        /**
+         * Stops recognition and send recognized text.
+         */
+        PROCESS_REQUEST
     }
 }

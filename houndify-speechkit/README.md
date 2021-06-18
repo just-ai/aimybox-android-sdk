@@ -10,7 +10,6 @@ Speech recognition by [Houndify](https://www.houndify.com/)
 4. Add dependencies to your module's build.gradle:
 ```kotlin
     repositories {
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
         mavenCentral()
     }
     

@@ -71,10 +71,9 @@ class AudioRecorder(
      * @return a flow of ByteArrays which contains recorded audio data.
      * */
     fun startRecordingBytes(): Flow<ByteArray> {
-//        return flow
         return flow {
 
-        lateinit var recorder: AudioRecord
+            lateinit var recorder: AudioRecord
 
             try {
                 L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
@@ -109,7 +108,7 @@ class AudioRecorder(
                 currentCoroutineContext().cancel()
                 L.e("Uncaught AudioRecord exception", e)
             } finally {
-                kotlinx.coroutines.withContext(NonCancellable) {
+                withContext(NonCancellable) {
                     recorder.release()
                     L.i("Recording finished")
                     currentCoroutineContext().cancel()
@@ -131,6 +130,8 @@ class AudioRecorder(
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
     suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
+
+    fun interruptAudioRecording() = coroutineContext.cancelChildren()
 
     /**
      * Calculates a RMS level from recorded chunk

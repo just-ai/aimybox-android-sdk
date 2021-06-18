@@ -7,6 +7,7 @@ import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.Config
+import com.justai.aimybox.core.Config.*
 import com.justai.aimybox.core.CustomSkill
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
@@ -17,10 +18,7 @@ import com.justai.aimybox.texttospeech.TextToSpeechComponent
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import com.justai.aimybox.voicetrigger.VoiceTriggerComponent
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.channels.broadcast
-import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.channels.*
 
 /**
  * The main library class, provides access to all library features.
@@ -212,7 +210,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
             stopSpeaking().join()
 
-            if (config.recognitionBehavior == Config.RecognitionBehavior.SYNCHRONOUS) {
+            if (config.recognitionBehavior == RecognitionBehavior.SYNCHRONOUS) {
                 voiceTrigger.stop()
             }
 
@@ -263,7 +261,8 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         }
     }.apply {
         invokeOnCompletion { cause ->
-            if (cause is CancellationException) onRecognitionCancelled()
+            if (cause is CancellationException)
+                onRecognitionCancelled()
         }
     } else null
 
@@ -296,12 +295,22 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun toggleRecognition(): Job = launch {
-        if (state == State.LISTENING) {
-            cancelRecognition().join()
-        } else {
-            config.earcon?.start()
-            startRecognition()
+        when {
+            state != State.LISTENING -> {
+                config.earcon?.start()
+                startRecognition()
+            }
+            config.stopRecognitionBehavior == StopRecognitionBehavior.PROCESS_REQUEST -> {
+                interruptRecognition()
+            }
+            else -> {
+                cancelRecognition().join()
+            }
         }
+    }
+
+    fun interruptRecognition(): Job = launch {
+        speechToText.interruptRecognition()
     }
 
     /* API */
@@ -318,7 +327,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         cancelRecognition().join()
         stopSpeaking().join()
 
-        if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) {
+        if (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE) {
             voiceTrigger.start()
         }
 
@@ -340,7 +349,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         cancelRecognition().join()
         stopSpeaking().join()
 
-        if (config.recognitionBehavior == Config.RecognitionBehavior.ALLOW_OVERRIDE) {
+        if (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE) {
             voiceTrigger.start()
         }
 
@@ -361,14 +370,17 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
          * Aimybox is waiting for interaction. If voice trigger is defined, it is active in this state.
          * */
         STANDBY,
+
         /**
          * Aimybox is recognizing speech.
          * */
         LISTENING,
+
         /**
          * Aimybox is waiting for a dialog API to process the request.
          * */
         PROCESSING,
+
         /**
          * Aimybox is synthesizing speech.
          * */
@@ -385,10 +397,12 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
          * Go to standby state.
          * */
         STANDBY,
+
         /**
          * Start speech recognition.
          * */
         RECOGNITION,
+
         /**
          * Do nothing after synthesis.
          *

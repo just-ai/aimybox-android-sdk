@@ -9,11 +9,12 @@ import java.io.InputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-
 internal class YandexSynthesisApi(
     private val iAmTokenProvider: IAmTokenProvider,
-    private val folderId: String
-) {
+    private val folderId: String,
+    var config: YandexTextToSpeech.Config,
+): AbstractYandexSynthesisApi {
+
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
@@ -22,10 +23,9 @@ internal class YandexSynthesisApi(
         .addInterceptor(loggingInterceptor)
         .build()
 
-    suspend fun request(
+    override suspend fun request(
         text: String,
-        language: Language,
-        config: YandexTextToSpeech.Config
+        language: Language
     ): ByteArray {
         val token = iAmTokenProvider.getOAuthToken()
 

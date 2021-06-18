@@ -1,5 +1,4 @@
 import com.justai.gradle.project.configureRootProject
-import com.justai.gradle.project.projectConfig
 
 val coreProject: Project
     get() = rootProject.project("core")
@@ -7,6 +6,7 @@ val coreProject: Project
 buildscript {
     repositories {
         google()
+        mavenCentral()
         jcenter()
     }
 
@@ -20,7 +20,7 @@ buildscript {
     }
 }
 
-val versionProject = "0.16.3"
+val versionProject = "0.16.5"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -35,23 +35,14 @@ allprojects {
     version = versionProject
     repositories {
         google()
-        jcenter()
         mavenCentral()
         mavenLocal()
         maven("https://kotlin.bintray.com/kotlinx")
-        maven("https://dl.bintray.com/aimybox/aimybox-android-sdk/")
+        maven("https://alphacephei.com/maven")
+        flatDir {
+            setDirs(listOf("pocketsphinx-android-lib"))
+        }
     }
-}
-
-tasks.register("localPublishAll") {
-    group = "aimybox"
-
-    val publicationTasks = subprojects.mapNotNull { project ->
-        if (project.projectConfig.createMavenPublication) "${project.name}:${project.projectConfig.mavenLocalPublicationTask}"
-        else null
-    }.toTypedArray()
-
-    dependsOn(*publicationTasks)
 }
 
 tasks.register<Delete>("clean") {

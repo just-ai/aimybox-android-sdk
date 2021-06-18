@@ -7,10 +7,10 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import org.kaldi.KaldiRecognizer
-import org.kaldi.Model
-import org.kaldi.RecognitionListener
-import org.kaldi.SpeechService
+import org.vosk.Model
+import org.vosk.Recognizer
+import org.vosk.android.RecognitionListener
+import org.vosk.android.SpeechService
 import java.lang.Exception
 
 class KaldiSpeechToText(
@@ -21,12 +21,6 @@ class KaldiSpeechToText(
 
     private var recognizer: SpeechService? = null
     private val initialization = CompletableDeferred<Model>()
-
-    companion object {
-        init {
-            System.loadLibrary("kaldi_jni")
-        }
-    }
 
     init {
         launch {
@@ -47,10 +41,9 @@ class KaldiSpeechToText(
         val channel = Channel<Result>()
         launch {
             val model = initialization.await()
-            val kaldiRecognizer = KaldiRecognizer(model, 16000f)
+            val kaldiRecognizer = Recognizer(model, 16000f)
             recognizer = SpeechService(kaldiRecognizer, 16000f).apply {
-                addListener(RecognizerListener(channel))
-                startListening()
+                startListening(RecognizerListener(channel))
             }
         }
         return channel
@@ -63,6 +56,13 @@ class KaldiSpeechToText(
         override val coroutineContext = Dispatchers.IO
 
         override fun onResult(result: String?) {
+            launch {
+                channel.send(Result.Final(result?.parseResult()))
+                finish()
+            }
+        }
+
+        override fun onFinalResult(result: String?) {
             launch {
                 channel.send(Result.Final(result?.parseResult()))
                 finish()

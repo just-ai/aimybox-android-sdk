@@ -3,20 +3,21 @@ package com.justai.aimybox.speechkit.pocketsphinx
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.channels.ReceiveChannel
-
 import edu.cmu.pocketsphinx.Hypothesis
 import edu.cmu.pocketsphinx.RecognitionListener
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
-import java.lang.Exception
 
 class PocketsphinxSpeechToText(
     recognizerProvider: PocketsphinxRecognizerProvider,
     grammarFilePath: String,
     private val timeout: Long = 5000
-): SpeechToText(), CoroutineScope {
+): SpeechToText() {
 
     companion object {
         private const val GRAMMAR_SEARCH = "grammar"
@@ -39,7 +40,9 @@ class PocketsphinxSpeechToText(
 
         override fun onPartialResult(hyp: Hypothesis?) {
             launch {
-                channel.send(Result.Partial(hyp?.hypstr))
+                val text = hyp?.hypstr
+                val result = if (mustInterruptRecognition) Result.Final(text) else Result.Partial(text)
+                channel.send(result)
             }
         }
 
