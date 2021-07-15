@@ -6,7 +6,7 @@ import com.justai.aimybox.model.TextSpeech
 import com.justai.aimybox.texttospeech.BaseTextToSpeech
 import kotlinx.coroutines.cancel
 
-abstract class AbstractYandexTextToSpeech<T: AbstractYandexTextToSpeech.BaseConfig>(
+abstract class AbstractYandexTextToSpeech<T : AbstractYandexTextToSpeech.BaseConfig>(
     context: Context,
     protected val iAmTokenProvider: IAmTokenProvider,
     protected val folderId: String,

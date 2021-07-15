@@ -54,7 +54,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
         cancelRunningJob()
         withContext(coroutineContext) {
             val request = customSkills.fold(createRequest(query)) { request, skill ->
-                skill.onRequest(request)
+                skill.onRequest(request, aimybox)
             }
 
             val response = try {
