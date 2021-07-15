@@ -106,14 +106,16 @@ internal class YandexRecognitionApi(
 
     private fun attachHeaders(stub: SttServiceGrpc.SttServiceStub, token: String): SttServiceGrpc.SttServiceStub {
         val metadata = Metadata().apply {
-            val authKey = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
-            val authValue = "Bearer $token"
-            put(authKey, authValue)
-            val loggingKey = Metadata.Key.of("x-data-logging-enabled", Metadata.ASCII_STRING_MARSHALLER)
-            val loggingValue = config.enableLoggingData.toString()
-            put(loggingKey, loggingValue)
+            put("authorization", "Bearer $token")
+            put("x-data-logging-enabled", config.enableLoggingData)
+            put("x-normalize-partials", config.normalizePartialData)
         }
         return MetadataUtils.attachHeaders(stub, metadata)
     }
 
+    private fun Metadata.put(key: String, value: Any) {
+        val newKey = Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER)
+        val newValue = value.toString()
+        put(newKey, newValue)
+    }
 }
