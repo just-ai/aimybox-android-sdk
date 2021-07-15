@@ -13,7 +13,7 @@ interface CustomSkill<TRequest : Request, in TResponse : Response> {
      * This method will be called just before any request to dialog api.
      * You can modify the request or return it without changes.
      * */
-    suspend fun onRequest(request: TRequest): TRequest = request
+    suspend fun onRequest(request: TRequest, aimybox: Aimybox): TRequest = request
 
     /**
      * Determines whether the current skill can handle the [response].
