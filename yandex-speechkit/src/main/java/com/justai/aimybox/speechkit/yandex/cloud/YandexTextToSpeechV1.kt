@@ -12,4 +12,8 @@ class YandexTextToSpeechV1(
     context, iAmTokenProvider, folderId, defaultLanguage, config
 ) {
     override val api: AbstractYandexSynthesisApi = YandexSynthesisApi(iAmTokenProvider, folderId, config)
+
+    fun changeConfig(config: YandexTextToSpeech.Config) {
+        (api as YandexSynthesisApi).config = config
+    }
 }
