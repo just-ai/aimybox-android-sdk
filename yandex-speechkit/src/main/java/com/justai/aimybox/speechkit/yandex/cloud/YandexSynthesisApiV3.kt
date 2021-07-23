@@ -5,10 +5,10 @@ import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
 import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.suspendCancellableCoroutine
-import speechkit.tts.v3.SynthesizerGrpc
-import speechkit.tts.v3.Tts
-import speechkit.tts.v3.Tts.AudioFormatOptions
-import speechkit.tts.v3.Tts.ContainerAudio
+import yandex.cloud.api.ai.tts.v3.SynthesizerGrpc
+import yandex.cloud.api.ai.tts.v3.Tts
+import yandex.cloud.api.ai.tts.v3.Tts.AudioFormatOptions
+import yandex.cloud.api.ai.tts.v3.Tts.ContainerAudio
 import java.io.InputStream
 import java.util.*
 import kotlin.coroutines.resume
@@ -38,14 +38,19 @@ internal class YandexSynthesisApiV3(
         val outputAudioSpec = AudioFormatOptions.newBuilder()
             .setContainerAudio(containerAudio)
 
-        val hint = Tts.Hints.newBuilder()
+        val voiceHint = Tts.Hints.newBuilder()
             .setVoice(config.voice.stringValue)
-
+        val speedHint = Tts.Hints.newBuilder()
+            .setSpeed(config.speed.floatValue.toDouble())
+        val volumeHint = Tts.Hints.newBuilder()
+            .setVolume(config.volume.doubleValue)
 
         val request = Tts.UtteranceSynthesisRequest.newBuilder()
             .setModel(VoiceModel.GENERAL.stringValue)
             .setText(text)
-            .addHints(hint)
+            .addHints(voiceHint)
+            .addHints(speedHint)
+            .addHints(volumeHint)
             .setOutputAudioSpec(outputAudioSpec)
             .build()
 

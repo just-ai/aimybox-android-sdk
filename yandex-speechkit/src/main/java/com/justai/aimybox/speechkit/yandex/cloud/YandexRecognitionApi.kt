@@ -8,8 +8,8 @@ import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import yandex.cloud.ai.stt.v2.SttServiceGrpc
-import yandex.cloud.ai.stt.v2.SttServiceOuterClass
+import yandex.cloud.api.ai.stt.v2.SttServiceGrpc
+import yandex.cloud.api.ai.stt.v2.SttServiceOuterClass
 import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
 
