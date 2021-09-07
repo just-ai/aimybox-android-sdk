@@ -46,7 +46,6 @@ internal class YandexSynthesisApiV3(
             .setVolume(config.volume.doubleValue)
 
         val request = Tts.UtteranceSynthesisRequest.newBuilder()
-            .setModel(VoiceModel.GENERAL.stringValue)
             .setText(text)
             .addHints(voiceHint)
             .addHints(speedHint)
