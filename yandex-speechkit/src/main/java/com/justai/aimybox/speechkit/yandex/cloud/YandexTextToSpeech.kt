@@ -49,6 +49,8 @@ class YandexTextToSpeech private constructor() {
         override val apiUrl: String = "tts.api.cloud.yandex.net",
         val apiPort: Int = 443,
         override val voice: Voice = Voice.V3.KUZNETSOV,
+        val speed: Speed = Speed.DEFAULT,
+        val volume: Volume = Volume.DEFAULT,
         override val enableLoggingData: Boolean = false,
     ) : AbstractYandexTextToSpeech.BaseConfig(apiUrl, voice, enableLoggingData)
 }
