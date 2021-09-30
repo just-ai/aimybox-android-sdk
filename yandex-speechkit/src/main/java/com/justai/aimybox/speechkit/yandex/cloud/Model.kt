@@ -57,9 +57,9 @@ class Speed(val value: Float) {
 
 class Volume(val value: Double) {
     companion object {
-        const val MAX = 1.0
-        const val MIN = 0.1
-        val DEFAULT = Volume(1.0)
+        const val MAX = 0.0
+        const val MIN = -145.0
+        val DEFAULT = Volume(-19.0)
     }
 
     internal val doubleValue = value.coerceIn(MIN..MAX)
