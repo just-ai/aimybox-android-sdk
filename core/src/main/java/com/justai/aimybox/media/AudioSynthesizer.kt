@@ -37,6 +37,7 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
     }
 
     suspend fun cancel() {
+        mediaPlayer.stop()
         contextJob.cancelChildrenAndJoin()
     }
 

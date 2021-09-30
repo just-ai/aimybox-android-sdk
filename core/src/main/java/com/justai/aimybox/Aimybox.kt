@@ -3,6 +3,7 @@ package com.justai.aimybox
 import android.Manifest
 import android.annotation.SuppressLint
 import androidx.annotation.RequiresPermission
+import com.google.gson.JsonElement
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
@@ -95,7 +96,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     private val voiceTrigger =
         VoiceTriggerComponent(voiceTriggerEvents, exceptions, onTriggered = ::toggleRecognition)
 
-    private val components = listOf(speechToText, textToSpeech, dialogApi)
+    private val components = listOf(speechToText, textToSpeech, dialogApi, voiceTrigger)
 
     /* State */
 
@@ -321,7 +322,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * @return [Job] which completes when the response is received.
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun sendRequest(query: String) = launch {
+    fun sendRequest(query: String, additionalData: Map<String, JsonElement>? = null) = launch {
         state = State.PROCESSING
 
         cancelRecognition().join()
@@ -331,7 +332,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
             voiceTrigger.start()
         }
 
-        val response = dialogApi.send(query, this@Aimybox)
+        val response = dialogApi.send(query, this@Aimybox, additionalData)
 
         if (response == null) onEmptyResponse()
     }
@@ -343,7 +344,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * @return [Job] which completes when the response is received.
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun sendSilentRequest(query: String) = launch {
+    fun sendSilentRequest(query: String, additionalData: Map<String, JsonElement>? = null) = launch {
         state = State.PROCESSING
 
         cancelRecognition().join()
@@ -353,7 +354,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
             voiceTrigger.start()
         }
 
-        dialogApi.send(query, this@Aimybox, isSilentRequest = true)
+        dialogApi.send(query, this@Aimybox, additionalData, isSilentRequest = true)
     }
 
     fun cancelPendingRequest() = launch { dialogApi.cancelRunningJob() }

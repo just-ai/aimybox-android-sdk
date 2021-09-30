@@ -2,8 +2,11 @@ package com.justai.aimybox.api
 
 import android.Manifest
 import androidx.annotation.RequiresPermission
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.api.aimybox.AimyboxDialogApi
+import com.justai.aimybox.api.aimybox.AimyboxRequest
 import com.justai.aimybox.core.*
 import com.justai.aimybox.extensions.className
 import com.justai.aimybox.model.Request
@@ -50,10 +53,24 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     abstract suspend fun send(request: TRequest): TResponse
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    internal suspend fun send(query: String, aimybox: Aimybox, isSilentRequest: Boolean = false) {
+    internal suspend fun send(
+        query: String,
+        aimybox: Aimybox,
+        additionalData: Map<String, JsonElement>? = null,
+        isSilentRequest: Boolean = false
+    ) {
         cancelRunningJob()
         withContext(coroutineContext) {
-            val request = customSkills.fold(createRequest(query)) { request, skill ->
+            val initialRequest = createRequest(query).run {
+                if (this !is AimyboxRequest) return@run this
+                else {
+                    val newData = data?: JsonObject()
+                    additionalData?.forEach { newData.add(it.key, it.value) }
+                    return@run copy(data = newData) as TRequest
+                }
+            }
+
+            val request = customSkills.fold(initialRequest) { request, skill ->
                 skill.onRequest(request, aimybox)
             }
 
