@@ -26,6 +26,7 @@ dependencies {
     api("com.github.salomonbrys.kotson:kotson" version { kotson })
 
     for (notation in (Library.Test.instrumentedTest + Library.Test.unitTest)) {
+        androidTestImplementation(notation)
         testImplementation(notation)
     }
 }
