@@ -16,7 +16,8 @@ internal class VoiceTriggerComponent(
 ) : AimyboxComponent("VT") {
 
     private var delegate: VoiceTrigger? = null
-    private var isStarted = AtomicBoolean(false)
+    var isStarted = AtomicBoolean(false)
+        private set
 
     internal suspend fun start() {
         delegate?.let { delegate ->
@@ -37,8 +38,9 @@ internal class VoiceTriggerComponent(
 
     internal suspend fun stop() {
         delegate?.let { delegate ->
-            if (isStarted.compareAndSet(true, false)) {
+            if (isStarted.get()) {
                 delegate.stopDetection()
+                isStarted.set(false)
                 events.send(VoiceTrigger.Event.Stopped)
             }
         }

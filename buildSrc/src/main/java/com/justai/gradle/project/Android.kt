@@ -22,6 +22,7 @@ fun Project.configureAndroid(closure: BaseExtension.() -> Unit) {
 
             versionName = config.version
             versionCode = config.versionCode
+            testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
 
         compileOptions {

@@ -2,6 +2,7 @@ package com.justai.aimybox
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.core.AimyboxComponent
@@ -210,6 +211,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
             stopSpeaking().join()
 
+            Log.d("Config", config.toString())
             if (config.recognitionBehavior == RecognitionBehavior.SYNCHRONOUS) {
                 voiceTrigger.stop()
             }
@@ -261,8 +263,9 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         }
     }.apply {
         invokeOnCompletion { cause ->
-            if (cause is CancellationException)
+            if (cause is CancellationException) {
                 onRecognitionCancelled()
+            }
         }
     } else null
 
@@ -295,6 +298,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun toggleRecognition(): Job = launch {
+        val state = state
         when {
             state != State.LISTENING -> {
                 config.earcon?.start()
@@ -323,7 +327,6 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun sendRequest(query: String) = launch {
         state = State.PROCESSING
-
         cancelRecognition().join()
         stopSpeaking().join()
 
@@ -332,7 +335,6 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         }
 
         val response = dialogApi.send(query, this@Aimybox)
-
         if (response == null) onEmptyResponse()
     }
 
