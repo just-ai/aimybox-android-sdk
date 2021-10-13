@@ -29,9 +29,8 @@ internal class YandexRecognitionApi(
     private val job = Job()
     override val coroutineContext: CoroutineContext = Dispatchers.IO + job
 
-    private val channel = ManagedChannelBuilder
-        .forAddress(config.apiUrl, config.apiPort)
-        .build()
+    private val channel = PinnedChannelBuilder
+        .build(config.apiUrl, config.apiPort, config.pinningConfig)
 
     private val stub = SttServiceGrpc.newStub(channel)
 
