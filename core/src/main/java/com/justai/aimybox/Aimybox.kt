@@ -5,11 +5,8 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.api.DialogApi
-import com.justai.aimybox.core.AimyboxComponent
-import com.justai.aimybox.core.AimyboxException
-import com.justai.aimybox.core.Config
+import com.justai.aimybox.core.*
 import com.justai.aimybox.core.Config.*
-import com.justai.aimybox.core.CustomSkill
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.Speech
 import com.justai.aimybox.speechtotext.SpeechToText
@@ -123,6 +120,21 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
     init {
         launch { updateConfiguration(initialConfig) }
+
+        // Fix for Kaldi Voice Trigger behaviour
+
+        exceptions.observe {
+            val mustVoiceTriggerBeStarted = state == State.STANDBY ||
+                    (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE
+                            && state != State.LISTENING
+                            )
+            if (it is VoiceTriggerException && mustVoiceTriggerBeStarted) {
+                voiceTrigger.stop()
+                delay(200)
+                voiceTrigger.start()
+            }
+        }
+
     }
 
     /* Common */
@@ -363,6 +375,14 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
     private fun onEmptyResponse() {
         if (state == State.PROCESSING) standby()
     }
+
+    private fun <T> BroadcastChannel<T>.observe(action: suspend (T) -> Unit) {
+        val channel = openSubscription()
+        launch {
+            channel.consumeEach { action(it) }
+        }.invokeOnCompletion { channel.cancel() }
+    }
+
 
     /**
      * Determines every possible state of Aimybox.

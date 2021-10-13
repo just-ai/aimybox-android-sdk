@@ -56,4 +56,9 @@ internal class VoiceTriggerComponent(
         }
     }
 
+    override suspend fun cancelRunningJob() {
+        delegate?.stopDetection()
+        super.cancelRunningJob()
+    }
+
 }
