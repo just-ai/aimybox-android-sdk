@@ -14,8 +14,9 @@ import org.vosk.android.SpeechService
 import java.lang.Exception
 
 class KaldiSpeechToText(
-    assets: KaldiAssets
-): SpeechToText(), CoroutineScope {
+    assets: KaldiAssets,
+    recognitionTimeout: Long = 10000L
+): SpeechToText(recognitionTimeout), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
 

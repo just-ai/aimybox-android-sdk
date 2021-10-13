@@ -20,8 +20,9 @@ import kotlin.coroutines.CoroutineContext
 class KaldiWebsocketSpeechToText(
     private val uri: String,
     sampleRate: Int = 8000,
-    maxAudioChunks: Int? = null
-): SpeechToText(maxAudioChunks) {
+    maxAudioChunks: Int? = null,
+    recognitionTimeout: Long = 10000L
+): SpeechToText(recognitionTimeout, maxAudioChunks) {
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 

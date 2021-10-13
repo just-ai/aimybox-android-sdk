@@ -24,8 +24,9 @@ private val L = Logger("Houndify Speechkit")
 class HoundifySpeechToText(
     context: Context,
     clientId: String,
-    clientKey: String
-) : SpeechToText() {
+    clientKey: String,
+    recognitionTimeout: Long = 10000L
+) : SpeechToText(recognitionTimeout) {
 
     override val coroutineContext = Dispatchers.IO + Job()
 

@@ -22,10 +22,9 @@ class YandexSpeechToText(
     folderId: String,
     language: Language,
     config: Config = Config(),
-    maxAudioChunks: Int? = null
-) : SpeechToText(maxAudioChunks) {
-
-    override val recognitionTimeoutMs = 10000L
+    maxAudioChunks: Int? = null,
+    recognitionTimeout: Long = 10000L
+) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 

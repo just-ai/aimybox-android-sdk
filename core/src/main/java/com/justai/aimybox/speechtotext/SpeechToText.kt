@@ -13,13 +13,14 @@ import kotlinx.coroutines.channels.SendChannel
  * */
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class SpeechToText(
+    recognitionTimeout: Long = 10000L,
     val maxAudioChunks: Int? = null
 ) : CoroutineScope {
 
     /**
      * Recognition will be canceled if no results received within this interval.
      * */
-    open val recognitionTimeoutMs = 10000L
+    open val recognitionTimeoutMs = maxOf(3000L, recognitionTimeout)
 
     /**
      * Counts amount of received audio chunks between updates of recognized text.
