@@ -1,8 +1,13 @@
 package com.justai.aimybox.speechkit.yandex.cloud
 
 import com.google.gson.annotations.SerializedName
-import com.squareup.okhttp.*
+import com.squareup.okhttp.OkHttpClient
 import com.squareup.okhttp.Protocol
+import com.squareup.okhttp.Request
+import com.squareup.okhttp.RequestBody
+import com.squareup.okhttp.MediaType
+import com.squareup.okhttp.Callback
+import com.squareup.okhttp.Response
 import kotlinx.coroutines.CompletableDeferred
 import java.io.IOException
 import java.util.*
