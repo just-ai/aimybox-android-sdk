@@ -2,6 +2,7 @@ package com.justai.aimybox.speechkit.yandex.cloud
 
 import com.google.gson.annotations.SerializedName
 import com.squareup.okhttp.*
+import com.squareup.okhttp.Protocol
 import kotlinx.coroutines.CompletableDeferred
 import java.io.IOException
 import java.util.*
@@ -34,7 +35,9 @@ class IAmTokenGenerator(private val yandexPassportOAuthToken: String) : IAmToken
                     val token = gson.fromJson(body, IAmToken::class.java)
                     deferred.complete(token)
                 } catch (e: Throwable) {
-                    deferred.completeExceptionally(IOException("Failed to parse token from response: $body", e))
+                    deferred.completeExceptionally(
+                        IOException("Failed to parse token from response: $body", e)
+                    )
                 }
             }
         })
