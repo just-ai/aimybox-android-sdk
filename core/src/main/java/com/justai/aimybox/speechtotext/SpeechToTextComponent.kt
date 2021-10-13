@@ -97,7 +97,7 @@ internal class SpeechToTextComponent(
 
     private fun startTimeout(timeout: Long) = launch {
         delay(timeout)
-        exceptionChannel.send(RecognitionTimeoutException())
+        exceptionChannel.send(RecognitionTimeoutException(timeout))
         cancelRunningJob()
     }
 

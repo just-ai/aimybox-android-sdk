@@ -52,5 +52,6 @@ class YandexTextToSpeech private constructor() {
         val speed: Speed = Speed.DEFAULT,
         val volume: Volume = Volume.DEFAULT,
         override val enableLoggingData: Boolean = false,
+        val pinningConfig: PinningConfig? = null
     ) : AbstractYandexTextToSpeech.BaseConfig(apiUrl, voice, enableLoggingData)
 }
