@@ -27,8 +27,9 @@ class GoogleCloudSpeechToText(
     credentials: GoogleCloudCredentials,
     private val locale: Locale,
     private val config: Config = Config(),
-    maxAudioChunks: Int? = null
-) : SpeechToText(maxAudioChunks) {
+    maxAudioChunks: Int? = null,
+    recognitionTimeout: Long = 10000L
+) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
     override val coroutineContext = Dispatchers.IO
 

@@ -51,7 +51,9 @@ open class VoiceTriggerException(message: String? = null, cause: Throwable? = nu
  * */
 open class ApiException(message: String? = null, cause: Throwable? = null) : AimyboxException(message, cause)
 
-class RecognitionTimeoutException : SpeechToTextException()
+class RecognitionTimeoutException(timeout: Long) : SpeechToTextException(
+    message = "Recognition was cancelled after timeout ($timeout ms)."
+)
 
 class ApiRequestTimeoutException(
     request: Request,

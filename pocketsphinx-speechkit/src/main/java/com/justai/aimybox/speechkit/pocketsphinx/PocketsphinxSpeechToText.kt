@@ -16,8 +16,9 @@ import java.io.File
 class PocketsphinxSpeechToText(
     recognizerProvider: PocketsphinxRecognizerProvider,
     grammarFilePath: String,
-    private val timeout: Long = 5000
-): SpeechToText() {
+    private val timeout: Long = 5000,
+    recognitionTimeout: Long = 10000L
+): SpeechToText(recognitionTimeout) {
 
     companion object {
         private const val GRAMMAR_SEARCH = "grammar"
