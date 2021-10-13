@@ -106,7 +106,7 @@ internal class YandexRecognitionApi(
 
     private fun attachHeaders(stub: SttServiceGrpc.SttServiceStub, token: String): SttServiceGrpc.SttServiceStub {
         val metadata = Metadata().apply {
-            put("authorization", "Bearer $token")
+            put("authorization", "${iAmTokenProvider.authType.authKeyString} $token")
             put("x-data-logging-enabled", config.enableLoggingData)
             put("x-normalize-partials", config.normalizePartialData)
         }

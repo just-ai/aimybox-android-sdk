@@ -88,9 +88,9 @@ internal class YandexSynthesisApiV3(
     }
 
     private suspend fun SynthesizerGrpc.SynthesizerStub.attachHeaders(): SynthesizerGrpc.SynthesizerStub {
-        val token = iAmTokenProvider.getOAuthToken()
+        val iamToken = iAmTokenProvider.getOAuthToken()
         val metadata = Metadata().apply {
-            put("authorization", "Bearer $token")
+            put("authorization", "${iAmTokenProvider.authType.authKeyString} $iamToken")
             put("x-data-logging-enabled", config.enableLoggingData.toString())
             put("x-client-request-id", userId)
             put("x-folder-id", folderId)

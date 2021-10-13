@@ -9,6 +9,8 @@ import java.util.*
 class IAmTokenGenerator(private val yandexPassportOAuthToken: String) : IAmTokenProvider {
     private val client = OkHttpClient().setProtocols(listOf(Protocol.HTTP_1_1))
 
+    override val authType = IAmTokenProvider.AuthType.BEARER
+
     override suspend fun getOAuthToken(): String {
         val request = Request.Builder().apply {
             url(BuildConfig.TOKEN_API_URL)

@@ -43,7 +43,7 @@ internal class YandexSynthesisApi(
 
         val request = Request.Builder()
             .url(requestUrl)
-            .addHeader("Authorization", "Bearer $token")
+            .addHeader("Authorization", "${iAmTokenProvider.authType.authKeyString} $token")
             .addHeader("x-data-logging-enabled", config.enableLoggingData.toString())
             .build()
 
