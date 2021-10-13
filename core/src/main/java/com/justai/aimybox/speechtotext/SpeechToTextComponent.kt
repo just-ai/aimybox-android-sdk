@@ -69,10 +69,10 @@ internal class SpeechToTextComponent(
                 finalResult
             }
 
-            timeoutTask.cancel()
             val finalResult = tryOrNull {
                 recognitionResult?.await()
             }
+            timeoutTask.cancel()
             eventChannel.send(
                 if (finalResult.isNullOrBlank()) {
                     SpeechToText.Event.EmptyRecognitionResult
