@@ -1,6 +1,5 @@
 package com.justai.aimybox.speechkit.yandex.cloud
 
-import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
 import io.grpc.stub.StreamObserver
@@ -20,9 +19,7 @@ internal class YandexSynthesisApiV3(
     private val folderId: String,
     val config: YandexTextToSpeech.ConfigV3,
 ): AbstractYandexSynthesisApi {
-    private val channel = ManagedChannelBuilder
-        .forAddress(config.apiUrl, config.apiPort)
-        .build()
+    private val channel = PinnedChannelBuilder.build(config.apiUrl, config.apiPort, config.pinningConfig)
 
     private val stub: SynthesizerGrpc.SynthesizerStub = SynthesizerGrpc.newStub(channel)
 
