@@ -105,7 +105,8 @@ class YandexSpeechToText(
         val enablePartialResults: Boolean = true,
         val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
         val enableLoggingData: Boolean = false,
-        val normalizePartialData: Boolean = false
+        val normalizePartialData: Boolean = false,
+        val pinningConfig: PinningConfig? = null
     )
 }
 
