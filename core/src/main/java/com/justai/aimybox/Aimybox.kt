@@ -91,7 +91,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
     @SuppressLint("MissingPermission")
     private val voiceTrigger =
-        VoiceTriggerComponent(voiceTriggerEvents, exceptions, onTriggered = ::toggleRecognition)
+        VoiceTriggerComponent(voiceTriggerEvents, exceptions, ::toggleRecognitionFromTrigger)
 
     private val components = listOf(speechToText, textToSpeech, dialogApi)
 
@@ -325,11 +325,25 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         }
     }
 
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    fun toggleRecognitionFromTrigger(triggerPhrase: String?): Job = launch {
+        val newConfig = Builder(config).apply {
+            config.onVoiceTriggerAction(this, triggerPhrase)
+        }.build()
+        if (config != newConfig) {
+            speechToText.setDelegate(newConfig.speechToText)
+            textToSpeech.setDelegate(newConfig.textToSpeech)
+            voiceTrigger.setDelegate(newConfig.voiceTrigger)
+            this@Aimybox.config = newConfig
+        }
+        toggleRecognition().join()
+    }
+
     fun interruptRecognition(): Job = launch {
         speechToText.interruptRecognition()
     }
 
-    /* API */
+/* API */
 
     /**
      * Send the [request] to a dialog API.

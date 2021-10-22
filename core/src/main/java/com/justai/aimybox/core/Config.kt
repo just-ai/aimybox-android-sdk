@@ -29,7 +29,8 @@ data class Config internal constructor(
     val voiceTrigger: VoiceTrigger?,
     val earcon: MediaPlayer?,
     val recognitionBehavior: RecognitionBehavior,
-    val stopRecognitionBehavior: StopRecognitionBehavior
+    val stopRecognitionBehavior: StopRecognitionBehavior,
+    val onVoiceTriggerAction: Builder.(String?) -> Unit
 ) {
 
     companion object {
@@ -64,7 +65,9 @@ data class Config internal constructor(
         /**
          * @see StopRecognitionBehavior
          */
-        var stopRecognitionBehavior: StopRecognitionBehavior = StopRecognitionBehavior.CANCEL_REQUEST
+        var stopRecognitionBehavior: StopRecognitionBehavior = StopRecognitionBehavior.CANCEL_REQUEST,
+
+        var onVoiceTriggerAction: Builder.(String?) -> Unit = {}
     ) {
 
         private var earcon: MediaPlayer? = null
@@ -74,7 +77,9 @@ data class Config internal constructor(
             prototype.textToSpeech,
             prototype.dialogApi,
             prototype.voiceTrigger,
-            prototype.recognitionBehavior
+            prototype.recognitionBehavior,
+            prototype.stopRecognitionBehavior,
+            prototype.onVoiceTriggerAction
         ) {
             earcon = prototype.earcon
         }
@@ -86,7 +91,8 @@ data class Config internal constructor(
             voiceTrigger,
             earcon,
             recognitionBehavior,
-            stopRecognitionBehavior
+            stopRecognitionBehavior,
+            onVoiceTriggerAction
         )
 
         fun setEarconRes(context: Context, @RawRes earconRes: Int? = null) {

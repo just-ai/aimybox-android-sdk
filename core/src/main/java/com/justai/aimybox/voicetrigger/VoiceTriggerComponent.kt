@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class VoiceTriggerComponent(
     private val events: SendChannel<VoiceTrigger.Event>,
     private val exceptions: SendChannel<AimyboxException>,
-    private val onTriggered: () -> Job
+    private val onTriggered: (String?) -> Job
 ) : AimyboxComponent("VT") {
 
     private var delegate: VoiceTrigger? = null
@@ -25,7 +25,7 @@ internal class VoiceTriggerComponent(
                 events.send(VoiceTrigger.Event.Started)
                 delegate.startDetection(
                     onTriggered = { phrase ->
-                        onTriggered()
+                        onTriggered(phrase)
                         events.offer(VoiceTrigger.Event.Triggered(phrase))
                     },
                     onException = { e ->
