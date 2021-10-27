@@ -18,8 +18,9 @@ internal class YandexSynthesisApiV3(
     private val iAmTokenProvider: IAmTokenProvider,
     private val folderId: String,
     val config: YandexTextToSpeech.ConfigV3,
-): AbstractYandexSynthesisApi {
-    private val channel = PinnedChannelBuilder.build(config.apiUrl, config.apiPort, config.pinningConfig)
+) : AbstractYandexSynthesisApi {
+    private val channel =
+        PinnedChannelBuilder.build(config.apiUrl, config.apiPort, config.pinningConfig)
 
     private val stub: SynthesizerGrpc.SynthesizerStub = SynthesizerGrpc.newStub(channel)
 
@@ -56,9 +57,12 @@ internal class YandexSynthesisApiV3(
             val responseObserver = object : StreamObserver<Tts.UtteranceSynthesisResponse> {
                 override fun onNext(value: Tts.UtteranceSynthesisResponse?) {
                     when {
-                        value == null -> {}
-                        !value.hasAudioChunk() -> {}
-                        value.audioChunk.data.isEmpty -> {}
+                        value == null -> {
+                        }
+                        !value.hasAudioChunk() -> {
+                        }
+                        value.audioChunk.data.isEmpty -> {
+                        }
                         else -> {
                             val byteData = value.audioChunk.data.newInput()
                             continuation.resume(byteData)

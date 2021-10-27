@@ -2,7 +2,7 @@ package com.justai.aimybox.speechkit.yandex.cloud
 
 import android.content.Context
 
-class YandexTextToSpeechV1(
+class YandexTextToSpeechV1 internal constructor(
     context: Context,
     iAmTokenProvider: IAmTokenProvider,
     folderId: String,
@@ -11,7 +11,8 @@ class YandexTextToSpeechV1(
 ): AbstractYandexTextToSpeech<YandexTextToSpeech.Config>(
     context, iAmTokenProvider, folderId, defaultLanguage, config
 ) {
-    override val api: AbstractYandexSynthesisApi = YandexSynthesisApi(iAmTokenProvider, folderId, config)
+    override val api: AbstractYandexSynthesisApi =
+        YandexSynthesisApi(iAmTokenProvider, folderId, config)
 
     fun changeConfig(config: YandexTextToSpeech.Config) {
         (api as YandexSynthesisApi).config = config
