@@ -12,6 +12,7 @@ class Language(internal val stringValue: String) {
 class VoiceModel(internal val stringValue: String) {
     companion object {
         val GENERAL = VoiceModel("general")
+        val DEPRECATED = VoiceModel("general:deprecated")
         val MAPS = VoiceModel("maps")
         val DATES = VoiceModel("dates")
         val NAMES = VoiceModel("names")
