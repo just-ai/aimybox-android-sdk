@@ -2,8 +2,14 @@ package com.justai.aimybox
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.util.Log
+import android.content.Context
+import android.media.AudioFocusRequest
+import android.media.AudioManager
+import android.media.AudioManager.*
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import androidx.core.content.ContextCompat.getSystemService
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.core.*
 import com.justai.aimybox.core.Config.*
@@ -25,11 +31,22 @@ import kotlinx.coroutines.channels.*
  * These components and some other parameters are defined in [Config].
  *
  * @param initialConfig initial configuration. Can be changed by [updateConfiguration] method.
+ * @param applicationContext need to pause/resume playing audio stream while assistant is running.
+ * If this parameter is `null`, audio would not be paused.
  *
  * @see Config
  * */
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class Aimybox(initialConfig: Config) : CoroutineScope {
+class Aimybox(
+    initialConfig: Config,
+    applicationContext: Context?
+) : CoroutineScope {
+
+    @Deprecated(
+        "Audio focus cannot be requested. Use constructor with application context instead.",
+        ReplaceWith("Aimybox(initialConfig, context)")
+    )
+    constructor(initialConfig: Config) : this(initialConfig, null)
 
     private val L = Logger()
 
@@ -109,7 +126,14 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * */
     var state: State
         get() = stateChannel.value
-        private set(value) = stateChannel.sendBlocking(value)
+        private set(value) {
+            when (value) {
+                State.STANDBY -> abandonRequestAudioFocus()
+                State.LISTENING, State.SPEAKING -> requestAudioFocus()
+                State.PROCESSING -> Unit
+            }
+            stateChannel.sendBlocking(value)
+        }
 
     /**
      * When muted, Aimybox can send requests and receive responses,
@@ -223,7 +247,6 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
 
             stopSpeaking().join()
 
-            Log.d("Config", config.toString())
             if (config.recognitionBehavior == RecognitionBehavior.SYNCHRONOUS) {
                 voiceTrigger.stop()
             }
@@ -257,6 +280,46 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
      * @return [Job] which completes when recognition is finished, or null if [isMuted].
      *
      * */
+
+    private val mAudioManager =
+        applicationContext?.let { getSystemService(it, AudioManager::class.java) }
+
+    private val audioFocusChangeListener =
+        OnAudioFocusChangeListener {
+            when (it) {
+                AUDIOFOCUS_GAIN -> L.d("AudioFocus Gain")
+                AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT, AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK ->
+                    L.d("AudioFocus Loss")
+            }
+        }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private val audioFocusRequest =
+        AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
+            .setOnAudioFocusChangeListener(audioFocusChangeListener)
+            .build()
+
+    private fun requestAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mAudioManager?.requestAudioFocus(audioFocusRequest)
+        } else {
+            mAudioManager?.requestAudioFocus(
+                audioFocusChangeListener,
+                STREAM_MUSIC,
+                AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
+            )
+        }
+
+    }
+
+    private fun abandonRequestAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mAudioManager?.abandonAudioFocusRequest(audioFocusRequest)
+        } else {
+            mAudioManager?.abandonAudioFocus(audioFocusChangeListener)
+        }
+    }
+
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun startRecognition(): Job? = if (!isMuted) launch {
         if (state == State.LISTENING) return@launch
@@ -268,6 +331,7 @@ class Aimybox(initialConfig: Config) : CoroutineScope {
         voiceTrigger.stop()
 
         val speech = speechToText.recognizeSpeech()
+
         if (!speech.isNullOrBlank()) {
             sendRequest(speech)
         } else {
