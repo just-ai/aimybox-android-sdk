@@ -294,14 +294,30 @@ class Aimybox(
         }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private val audioFocusRequest =
+    private fun buildAudioFocusRequest() =
         AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
             .setOnAudioFocusChangeListener(audioFocusChangeListener)
             .build()
 
+    private var hasAudioFocus : Boolean = false
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private var audioFocusRequest : AudioFocusRequest? = buildAudioFocusRequest()
+
     private fun requestAudioFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mAudioManager?.requestAudioFocus(audioFocusRequest)
+            if (hasAudioFocus){
+                return
+            }
+            if (audioFocusRequest == null ) {
+                audioFocusRequest = buildAudioFocusRequest()
+            }
+            audioFocusRequest?.let {
+                val requestResult = mAudioManager?.requestAudioFocus(it)
+                if (requestResult == AUDIOFOCUS_REQUEST_GRANTED){
+                    hasAudioFocus = true
+                }
+            }
         } else {
             mAudioManager?.requestAudioFocus(
                 audioFocusChangeListener,
@@ -314,7 +330,11 @@ class Aimybox(
 
     private fun abandonRequestAudioFocus() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mAudioManager?.abandonAudioFocusRequest(audioFocusRequest)
+            if (!hasAudioFocus){
+                return
+            }
+            audioFocusRequest?.let { mAudioManager?.abandonAudioFocusRequest(it) }
+            hasAudioFocus = false
         } else {
             mAudioManager?.abandonAudioFocus(audioFocusChangeListener)
         }
