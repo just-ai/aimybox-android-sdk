@@ -287,9 +287,14 @@ class Aimybox(
     private val audioFocusChangeListener =
         OnAudioFocusChangeListener {
             when (it) {
-                AUDIOFOCUS_GAIN -> L.d("AudioFocus Gain")
-                AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT, AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK ->
+                AUDIOFOCUS_GAIN -> {
+                    L.d("AudioFocus Gain")
+                    hasAudioFocus = true
+                }
+                AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT, AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                     L.d("AudioFocus Loss")
+                    hasAudioFocus = false
+                }
             }
         }
 
@@ -302,42 +307,51 @@ class Aimybox(
     private var hasAudioFocus : Boolean = false
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private var audioFocusRequest : AudioFocusRequest? = buildAudioFocusRequest()
+    private var audioFocusRequest : AudioFocusRequest? = null
+    init{
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            audioFocusRequest = buildAudioFocusRequest()
+        }
+    }
+
 
     private fun requestAudioFocus() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (hasAudioFocus){
-                return
-            }
+        if (hasAudioFocus){
+            return
+        }
+        val requestResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (audioFocusRequest == null ) {
                 audioFocusRequest = buildAudioFocusRequest()
             }
             audioFocusRequest?.let {
-                val requestResult = mAudioManager?.requestAudioFocus(it)
-                if (requestResult == AUDIOFOCUS_REQUEST_GRANTED){
-                    hasAudioFocus = true
-                }
-            }
+                mAudioManager?.requestAudioFocus(it)
+            } ?: AUDIOFOCUS_REQUEST_FAILED
         } else {
-            mAudioManager?.requestAudioFocus(
+             mAudioManager?.requestAudioFocus(
                 audioFocusChangeListener,
                 STREAM_MUSIC,
                 AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
             )
         }
 
+        if (requestResult == AUDIOFOCUS_REQUEST_GRANTED){
+            hasAudioFocus = true
+        }
+
     }
 
     private fun abandonRequestAudioFocus() {
+        if (!hasAudioFocus){
+            return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (!hasAudioFocus){
-                return
+            audioFocusRequest?.let { focusRequest ->
+                mAudioManager?.abandonAudioFocusRequest(focusRequest)
             }
-            audioFocusRequest?.let { mAudioManager?.abandonAudioFocusRequest(it) }
-            hasAudioFocus = false
         } else {
             mAudioManager?.abandonAudioFocus(audioFocusChangeListener)
         }
+        hasAudioFocus = false
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)

@@ -15,6 +15,7 @@ internal object PinnedChannelBuilder {
     ): ManagedChannel {
         val channelBuilder: ManagedChannelBuilder<*> = ManagedChannelBuilder.forAddress(host, port)
             .maxInboundMessageSize(16 * 1024 * 1024)
+
         if (pinningConfig == null) return channelBuilder.build()
         val serverHostOverride = pinningConfig.serverHostOverride
         val certsKS = pinningConfig.certsKS
