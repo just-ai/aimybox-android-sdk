@@ -142,10 +142,23 @@ class Aimybox(
     var isMuted = false
         private set
 
+
+    var isVoiceTriggerActivated: Boolean = true
+        set(value) {
+            field = value
+            launch {
+                if (field) {
+                    voiceTrigger.start()
+                } else {
+                    voiceTrigger.stop()
+                }
+            }
+        }
+
     init {
         launch { updateConfiguration(initialConfig) }
 
-        // Fix for Kaldi Voice Trigger behaviour
+        // Fix for Kaldi Voice Trigger behaviour.
 
         exceptions.observe {
             val mustVoiceTriggerBeStarted = state == State.STANDBY ||
@@ -155,7 +168,9 @@ class Aimybox(
             if (it is VoiceTriggerException && mustVoiceTriggerBeStarted) {
                 voiceTrigger.stop()
                 delay(200)
-                voiceTrigger.start()
+                if (isVoiceTriggerActivated) {
+                    voiceTrigger.start()
+                }
             }
         }
 
@@ -188,7 +203,9 @@ class Aimybox(
         state = State.STANDBY
 
         cancelCurrentTask()
-        voiceTrigger.start()
+        if (isVoiceTriggerActivated) {
+            voiceTrigger.start()
+        }
     }
 
     fun mute() = launch {
@@ -201,9 +218,12 @@ class Aimybox(
     }
 
     fun unmute() = launch {
-        voiceTrigger.start()
+        if (isVoiceTriggerActivated){
+            voiceTrigger.start()
+        }
         isMuted = false
     }
+
 
     /* TTS */
 
@@ -267,6 +287,8 @@ class Aimybox(
         } else null
 
     fun stopSpeaking() = launch { textToSpeech.cancelRunningJob() }
+
+
 
     /* STT */
 
@@ -441,7 +463,9 @@ class Aimybox(
         stopSpeaking().join()
 
         if (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE) {
-            voiceTrigger.start()
+            if (isVoiceTriggerActivated) {
+                voiceTrigger.start()
+            }
         }
 
         val response = dialogApi.send(query, this@Aimybox)
@@ -462,7 +486,9 @@ class Aimybox(
         stopSpeaking().join()
 
         if (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE) {
-            voiceTrigger.start()
+            if (isVoiceTriggerActivated) {
+                voiceTrigger.start()
+            }
         }
 
         dialogApi.send(query, this@Aimybox, isSilentRequest = true)
