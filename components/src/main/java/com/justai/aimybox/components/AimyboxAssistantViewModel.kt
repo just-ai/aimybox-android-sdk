@@ -1,5 +1,7 @@
 package com.justai.aimybox.components
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.LiveData
@@ -15,11 +17,8 @@ import com.justai.aimybox.model.reply.Reply
 import com.justai.aimybox.model.reply.TextReply
 import com.justai.aimybox.speechtotext.SpeechToText
 import com.justai.aimybox.voicetrigger.VoiceTrigger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.launch
 
 /**
  * Aimybox Fragment's view model.
@@ -106,26 +105,48 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         widgetsInternal.value = currentList.plus(widget)
     }
 
+    private var recognitionTimeoutJob: Job? = null
+    var delayAfterSpeech: Long = aimybox.config.speechToText.recognitionTimeoutMs
+
+    @SuppressLint("MissingPermission")
     private fun onSpeechToTextEvent(event: SpeechToText.Event) {
         val previousText =
             (widgets.value?.find { it is RecognitionWidget } as? RecognitionWidget)?.text
 
         when (event) {
             is SpeechToText.Event.RecognitionStarted -> isAssistantVisibleInternal.postValue(true)
-            is SpeechToText.Event.RecognitionPartialResult -> event.text
-                ?.takeIf { it.isNotBlank() }
-                ?.let { text ->
-                    removeRecognitionWidgets { plus(RecognitionWidget(text, previousText)) }
+            is SpeechToText.Event.RecognitionPartialResult -> {
+                event.text
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { text ->
+                        removeRecognitionWidgets { plus(RecognitionWidget(text, previousText)) }
+                    }
+
+                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
+                    recognitionTimeoutJob?.let { job ->
+                        if (job.isActive) {
+                            launch { job.cancelAndJoin() }
+                            Log.d("Delay", "canceled previous")
+                        }
+                    }
+                    Log.d("Delay", "event come. Delay: $delayAfterSpeech")
+                    recognitionTimeoutJob = launch {
+                            delay(delayAfterSpeech)
+                            aimybox.stopRecognition()
+                            Log.d("Delay", "stop recognition")
+                    }
                 }
-            is SpeechToText.Event.EmptyRecognitionResult,
-            SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
-            is SpeechToText.Event.SoundVolumeRmsChanged -> {
-                soundVolumeRmsMutable.postValue(event.rmsDb)
             }
+        is SpeechToText.Event.EmptyRecognitionResult,
+        SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
+        is SpeechToText.Event.SoundVolumeRmsChanged -> {
+            soundVolumeRmsMutable.postValue(event.rmsDb)
         }
     }
+    }
 
-    private fun onDialogApiEvent(event: DialogApi.Event) {
+
+private fun onDialogApiEvent(event: DialogApi.Event) {
         when (event) {
             is DialogApi.Event.ResponseReceived -> {
                 removeButtonWidgets()
