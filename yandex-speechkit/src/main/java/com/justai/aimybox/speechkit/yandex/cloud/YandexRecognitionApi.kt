@@ -72,7 +72,8 @@ internal class YandexRecognitionApi(
                 config.voiceModel,
                 config.enableProfanityFilter,
                 config.enablePartialResults,
-                config.sampleRate.longValue
+                config.sampleRate.longValue,
+                config.rawResults
             ),
             folderId
         )
@@ -85,7 +86,8 @@ internal class YandexRecognitionApi(
         voiceModel: VoiceModel,
         enableProfanityFilter: Boolean,
         enablePartialResults: Boolean,
-        sampleRate: Long
+        sampleRate: Long,
+        rawResults: Boolean
     ): SttServiceOuterClass.RecognitionSpec = SttServiceOuterClass.RecognitionSpec.newBuilder().apply {
         languageCode = language.stringValue
         model = voiceModel.stringValue
@@ -93,6 +95,7 @@ internal class YandexRecognitionApi(
         partialResults = enablePartialResults
         sampleRateHertz = sampleRate
         audioEncoding = SttServiceOuterClass.RecognitionSpec.AudioEncoding.LINEAR16_PCM
+        this.rawResults = rawResults
     }.build()
 
     private fun createRecognitionConfig(
