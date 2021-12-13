@@ -4,7 +4,7 @@ import com.justai.gradle.project.configureProject
 
 plugins {
     id("com.android.library")
-    id("com.google.protobuf")
+    id("com.google.protobuf") version "0.8.18"
     `aimybox-publish`
 }
 
@@ -21,7 +21,20 @@ project.configureAndroid {
             "\"https://iam.api.cloud.yandex.net/iam/v1/tokens\""
         )
     }
+
+    sourceSets{
+        getByName("main"){
+            proto {
+                srcDir("src/main/protobuf")
+            }
+        }
+    }
 }
+rootProject.tasks.withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -29,6 +42,8 @@ java {
 
 dependencies {
     implementation(project(":core"))
+
+  //  protobuf(files("src/main/proto/"))
 
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.stdLib)
@@ -41,15 +56,16 @@ dependencies {
     implementation("io.grpc:grpc-protobuf" version { grpc })
     implementation("io.grpc:grpc-stub" version { grpc })
 
-    implementation ("com.google.code.gson:gson:2.8.5")
+    implementation ("com.google.code.gson:gson:2.8.9")
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
-    implementation ("com.google.protobuf:protobuf-java:3.17.2")
+    implementation ("com.google.protobuf:protobuf-java:3.19.1")
 }
 
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.15.2"
+        artifact = "com.google.protobuf:protoc:3.19.1"
+
     }
     plugins {
         id("grpc") { artifact = "io.grpc:protoc-gen-grpc-java" version { grpc } }
@@ -69,6 +85,7 @@ protobuf {
         }
     }
 }
+
 
 //    implementation("io.grpc:grpc-okhttp:1.42.1")
 //    //implementation("io.grpc:grpc-protobuf-lite:1.42.1")

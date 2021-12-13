@@ -132,7 +132,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                     Log.d("Delay", "event come. Delay: $delayAfterSpeech")
                     recognitionTimeoutJob = launch {
                             delay(delayAfterSpeech)
-                            aimybox.stopRecognition()
+                            aimybox.stopRecognitionAndChangeState()
                             Log.d("Delay", "stop recognition")
                     }
                 }

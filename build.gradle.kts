@@ -16,11 +16,11 @@ buildscript {
         classpath(Plugin.dokka)
         classpath(Plugin.bintray)
         classpath(Plugin.buildInfoExtractor)
-        classpath(Plugin.protobuf)
+        //classpath(Plugin.protobuf)
     }
 }
 
-val versionProject = "0.17.4"
+val versionProject = "0.17.3-SNAPSHOT"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -37,8 +37,9 @@ allprojects {
         google()
         mavenCentral()
         mavenLocal()
-        maven("https://kotlin.bintray.com/kotlinx")
         maven("https://alphacephei.com/maven")
+        maven("https://houndify.com/maven/") { name = "Houndify" }
+        maven("https://kotlin.bintray.com/kotlinx")
         flatDir {
             setDirs(listOf("pocketsphinx-android-lib"))
         }

@@ -22,5 +22,6 @@ dependencies {
     implementation(Library.Kotlin.coroutines)
 
     implementation("com.google.cloud:google-cloud-dialogflow:2.6.2")
-    implementation("io.grpc:grpc-okhttp:1.36.0")
+    //implementation("io.grpc:grpc-okhttp:1.36.0")
+    implementation("io.grpc:grpc-okhttp" version { grpc })
 }

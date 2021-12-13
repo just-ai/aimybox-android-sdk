@@ -447,6 +447,12 @@ class Aimybox(
      * */
     fun stopRecognition(): Job = launch { speechToText.stopRecognition() }
 
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    fun stopRecognitionAndChangeState(): Job = launch {
+        speechToText.stopRecognition()
+        state = State.STANDBY
+    }
+
 
     /**
      * Cancels the current recognition and discard partial recognition results.

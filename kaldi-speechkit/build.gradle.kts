@@ -19,16 +19,17 @@ project.configureAndroid {
     }
 }
 
-repositories {
-    maven("https://alphacephei.com/maven/")
-}
+//repositories {
+//    maven("https://alphacephei.com/maven/")
+//}
 
 dependencies {
     implementation(project(":core"))
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
-    implementation ("net.java.dev.jna:jna:5.8.0@aar")
+
     implementation("com.alphacephei:vosk-android:0.3.23")
+    implementation ("net.java.dev.jna:jna:5.8.0@aar")
     implementation("com.neovisionaries:nv-websocket-client:2.9")
 }
