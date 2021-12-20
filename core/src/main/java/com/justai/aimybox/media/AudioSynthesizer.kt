@@ -10,7 +10,7 @@ import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.texttospeech.TextToSpeech
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
+
 
 /**
  * Designed for usage inside [TextToSpeech] to play SSML audio and [AudioSpeech].
@@ -21,9 +21,9 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
 
     private val L = Logger(className)
 
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
-
     private var mediaPlayer = MediaPlayer()
+
+    override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
 
     suspend fun play(source: AudioSpeech) {
         L.assert(contextJob.isActive) {
@@ -32,12 +32,12 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
         L.assert(!contextJob.children.any { it.isActive }) {
             "Can't play $source: AudioSynthesizer is busy."
         }
-
         launchPlayer(source).join()
     }
 
     suspend fun cancel() {
         mediaPlayer.stop()
+        mediaPlayer.reset()
         contextJob.cancelChildrenAndJoin()
     }
 
@@ -49,25 +49,29 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
     private fun launchPlayer(source: AudioSpeech) = launch {
         val scope = this
         try {
-            source.load(context, mediaPlayer)
-            mediaPlayer.prepare()
-            suspendCancellableCoroutine { continuation ->
-                mediaPlayer.setOnCompletionListener { continuation.resume(Unit) }
-                mediaPlayer.setOnErrorListener { _, what, _ ->
+            withContext(Dispatchers.IO) {
+                source.load(context, mediaPlayer)
+            }
+            mediaPlayer.apply {
+                setOnCompletionListener {
+                    it.reset()
+                }
+                setOnPreparedListener {
+                    it.start()
+                }
+                prepareAsync()
+                setOnErrorListener { _, what, _ ->
                     L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
                     scope.cancel()
                     true
                 }
-                mediaPlayer.start()
             }
+
         } catch (e: CancellationException) {
             L.w("AudioSynthesizer is cancelled.")
+            mediaPlayer.reset()
         } catch (e: Throwable) {
             L.e(e)
-        } finally {
-            withContext(NonCancellable) {
-                mediaPlayer.reset()
-            }
         }
     }
 }

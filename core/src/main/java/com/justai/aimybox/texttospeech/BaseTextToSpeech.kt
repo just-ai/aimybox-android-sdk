@@ -3,6 +3,7 @@ package com.justai.aimybox.texttospeech
 import android.content.Context
 import androidx.annotation.CallSuper
 import com.justai.aimybox.core.TextToSpeechException
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.extensions.contextJob
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.media.AudioSynthesizer
@@ -71,6 +72,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
     override suspend fun stop() {
         wasCancelled = true
         audioSynthesizer.cancel()
+        contextJob.cancelChildrenAndJoin()
     }
 
     @CallSuper
