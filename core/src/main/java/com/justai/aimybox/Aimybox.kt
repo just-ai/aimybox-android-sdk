@@ -273,8 +273,8 @@ class Aimybox(
      * @see NextAction
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY): Job? =
-        speak(listOf(speech), nextAction)
+    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY, onlyText: Boolean = true): Job? =
+        speak(listOf(speech), nextAction, onlyText)
 
     /**
      * Start synthesis of the provided [speeches].
@@ -291,7 +291,7 @@ class Aimybox(
      * @see NextAction
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY): Job? =
+    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY, onlyText: Boolean = true): Job? =
         if (!isMuted) launch {
             if (state == State.SPEAKING) return@launch
             state = State.SPEAKING
@@ -302,7 +302,7 @@ class Aimybox(
                 voiceTrigger.stop()
             }
 
-            textToSpeech.speak(speeches)
+            textToSpeech.speak(speeches, onlyText)
         }.apply {
             invokeOnCompletion { cause ->
                 if (cause is CancellationException) {

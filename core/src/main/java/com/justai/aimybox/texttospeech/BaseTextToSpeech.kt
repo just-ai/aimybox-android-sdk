@@ -35,10 +35,10 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
      * */
     abstract suspend fun speak(speech: TextSpeech)
 
-    final override suspend fun synthesize(speechSequence: List<Speech>) = withContext(coroutineContext) {
+    final override suspend fun synthesize(speechSequence: List<Speech>, onlyText : Boolean) = withContext(coroutineContext) {
         wasCancelled = false
         speechSequence.asFlow()
-            .extractSSML()
+            .extractSSML(onlyText)
             .collect { speech ->
                 if (isActive) {
                     try {
@@ -80,10 +80,17 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
         audioSynthesizer.release()
     }
 
-    private fun Flow<Speech>.extractSSML() = map { speech ->
+
+    private fun Flow<Speech>.extractSSML(useOnlyText: Boolean = true) = map { speech ->
         when (speech) {
             is AudioSpeech -> flowOf(speech)
-            is TextSpeech -> parser.extractSSML(speech.text)
+            is TextSpeech -> {
+                if (useOnlyText){
+                    flowOf(speech)
+                } else {
+                    parser.extractSSML(speech.text)
+                }
+            }
         }
     }.flattenConcat()
 }

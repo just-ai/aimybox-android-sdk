@@ -28,8 +28,8 @@ object Version {
     const val kotson = "2.5.0"
 
     // Test
-    const val mockk = "1.10.6"
-    const val androidxTest = "1.3.0"
+    const val mockk = "1.12.2"
+    const val androidxTest = "1.4.0"
 }
 
 infix fun String.version(versionProvider: Version.() -> String) =

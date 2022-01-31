@@ -20,7 +20,7 @@ buildscript {
     }
 }
 
-val versionProject = "0.17.3-SNAPSHOT"
+val versionProject = "0.17.4-alpha.1"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -49,5 +49,9 @@ allprojects {
 tasks.register<Delete>("clean") {
     group = "aimybox:util"
     delete(*(allprojects.map { it.buildDir }.toTypedArray()))
-    delete(".gradle")
+//    delete(".gradle")
 }
+
+//tasks.register("clean", Delete::class) {
+//    delete(rootProject.buildDir)
+//}
