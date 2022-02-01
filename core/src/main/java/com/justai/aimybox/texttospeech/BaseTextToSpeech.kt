@@ -39,6 +39,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
         wasCancelled = false
         speechSequence.asFlow()
             .extractSSML(onlyText)
+            .handleErrors()
             .collect { speech ->
                 if (isActive) {
                     try {
@@ -89,8 +90,13 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
                     flowOf(speech)
                 } else {
                     parser.extractSSML(speech.text)
+
                 }
             }
         }
     }.flattenConcat()
+
+    private fun <T> Flow<T>.handleErrors(): Flow<T> = catch {
+            e -> onException(TextToSpeechException(cause = e))
+    }
 }
