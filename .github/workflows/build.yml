@@ -15,6 +15,12 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
+      - name: Get secrets for local.properties
+        run: |
+          echo ${{ secrets.SECRING_MEM_GPG }} > ./secring-mem.gpg
+          echo ${{ secrets.LOCAL_PROPERTIES }} > ./local.properties
+          echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
+
       - name: Build with gradle
         run: |
           chmod +x gradlew
