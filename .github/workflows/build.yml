@@ -16,9 +16,12 @@ jobs:
           distribution: 'adopt'
 
       - name: Get secrets for local.properties
+        env:
+          SECRING_MEM_GPG: ${{ secrets.SECRING_MEM_GPG }}
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
         run: |
-          echo ${{ secrets.SECRING_MEM_GPG }} > ./secring-mem.gpg
-          echo ${{ secrets.LOCAL_PROPERTIES }} > ./local.properties
+          echo "$SECRING_MEM_GPG" > ./secring-mem.gpg
+          echo "$LOCAL_PROPERTIES" > ./local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
 
       - name: Build with gradle
