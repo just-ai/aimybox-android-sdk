@@ -36,18 +36,17 @@ jobs:
           chmod +x gradlew
           ./gradlew build
 
-      - name: debug
+      - name: show tasks
         run: |
-          cat ./local.properties
-          cat ./secring-mem.gpg
+          ./gradlew tasks
 
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
-
-      - name: Publish packages
-        uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
-        with:
-          arguments: publish
+#      - name: Validate Gradle wrapper
+#        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
+#
+#      - name: Publish packages
+#        uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
+#        with:
+#          arguments: publish
 
 
 #      - name: Publish with gradle
