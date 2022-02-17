@@ -21,15 +21,6 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
-      - name: Get secrets for local.properties
-        env:
-          SECRING_MEM_GPG: ${{ secrets.SECRING_MEM_GPG }}
-          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
-        run: |
-          echo "$SECRING_MEM_GPG" > ./secring-mem.gpg
-          echo "$LOCAL_PROPERTIES" > ./local.properties
-          echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
-
       - name: Build with gradle
         run: |
           chmod +x gradlew
@@ -40,7 +31,13 @@ jobs:
           ./gradlew tasks --all
 
       - name: Publish with gradle
+        env:
+          SECRING_MEM_GPG: ${{ secrets.SECRING_MEM_GPG }}
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
         run: |
+          echo "${{ env.SECRING_MEM_GPG }}" > ./secring-mem.gpg
+          echo "${{ env.LOCAL_PROPERTIES }}" > ./local.properties
+          echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
           ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
 #      - name: Validate Gradle wrapper
