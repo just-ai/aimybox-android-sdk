@@ -31,13 +31,13 @@ jobs:
           ./gradlew tasks --all
 
       - name: Publish with gradle
-        env:
-          SECRING_MEM_GPG: ${{ secrets.SECRING_MEM_GPG }}
-          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
+#        env:
+#          SECRING_MEM_GPG: ${{ secrets.SECRING_MEM_GPG }}
+#          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
         run: |
-          echo "${{ env.SECRING_MEM_GPG }}" > ./secring-mem.gpg
-          echo "${{ env.LOCAL_PROPERTIES }}" > ./local.properties
-          echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
+          echo ${{ secrets.SECRING_MEM_GPG }} > ${{ github.workspace }}/secring-mem.gpg
+          echo ${{ secrets.LOCAL_PROPERTIES }} > ${{ github.workspace }}/local.properties
+          echo "signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg" >> ./local.properties
           ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
 #      - name: Validate Gradle wrapper
