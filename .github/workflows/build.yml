@@ -26,35 +26,27 @@ jobs:
           chmod +x gradlew
           ./gradlew build
 
-      - name: show tasks
-        run: |
-          ./gradlew tasks --all
-
       - name: Publish with gradle
         env:
           SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SIGNING_KEYID: ${{ secrets.SIGNING_KEYID }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          TOKEN: ${{ secrets.TOKEN }}
           SECRING_MEM_GPG: ${{ secrets.SECRING_MEM_GPG }}
         run: |
           echo $SECRING_MEM_GPG > ${{ github.workspace }}/secring-mem.gpg
-          echo sonatype.user=$SONATYPE_USER > ${{ github.workspace }}/local.properties
-          echo sonatype.password=$SONATYPE_PASSWORD >> ${{ github.workspace }}/local.properties
-          echo signing.keyId=$SIGNING_KEYID >> ${{ github.workspace }}/local.properties
-          echo signing.password=$SIGNING_PASSWORD >> ${{ github.workspace }}/local.properties
+          echo sonatype.user=$SONATYPE_USER\n > ${{ github.workspace }}/local.properties
+          echo sonatype.password=$SONATYPE_PASSWORD\n >> ${{ github.workspace }}/local.properties
+          echo signing.keyId=$SIGNING_KEYID\n >> ${{ github.workspace }}/local.properties
+          echo signing.password=$SIGNING_PASSWORD\n >> ${{ github.workspace }}/local.properties
+          echo github.token=$TOKEN\n >> ${{ github.workspace }}/local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
           ls -la ./local.properties
 
-      - name: Get file content
-        id: var
-        run: echo ::set-output name=local_properties::$(cat ${{ github.workspace }}/local.properties)
-      - name: Get output
-        run: echo ${{ steps.var.outputs.local_properties }}
-
-#      - name: run task
-#        run: |
-#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+      - name: run task
+        run: |
+          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
 #      - name: Validate Gradle wrapper
 #        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
