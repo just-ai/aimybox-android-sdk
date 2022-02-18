@@ -48,13 +48,13 @@ jobs:
 
       - name: Get file content
         id: var
-        run: echo ::set-output name=local_properties::$(cat ./local_properties)
+        run: echo ::set-output name=local_properties::$(cat ${{ github.workspace }}/local.properties)
       - name: Get output
         run: echo ${{ steps.var.outputs.local_properties }}
 
-      - name: run task
-        run: |
-          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+#      - name: run task
+#        run: |
+#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
 #      - name: Validate Gradle wrapper
 #        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
