@@ -35,7 +35,6 @@ jobs:
           TOKEN: ${{ secrets.TOKEN }}
           SECRING_GPG: ${{ secrets.SECRING_MEM_GPG }}
         run: |
-          pwd
           echo $SECRING_GPG > ${{ github.workspace }}/secring-mem.gpg
           echo sonatype.user=$SONATYPE_USER\n > ${{ github.workspace }}/local.properties
           echo sonatype.password=$SONATYPE_PASSWORD\n >> ${{ github.workspace }}/local.properties
@@ -43,11 +42,19 @@ jobs:
           echo signing.password=$SIGNING_PASSWORD\n >> ${{ github.workspace }}/local.properties
           echo github.token=$TOKEN\n >> ${{ github.workspace }}/local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
-          ls -la ./local.properties
+          pwd
+          ls -lah
+#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
-      - name: run task
-        run: |
-          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+      - name: Save artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: upload
+          path: ./*
+
+#      - name: run task
+#        run: |
+#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
 #      - name: Validate Gradle wrapper
 #        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
