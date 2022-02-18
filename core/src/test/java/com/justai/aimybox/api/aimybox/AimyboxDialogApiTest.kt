@@ -1,5 +1,8 @@
 package com.justai.aimybox.api.aimybox
 
+import android.util.Log
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertNotEquals
 import org.junit.Before
 
 import org.junit.Test
@@ -8,6 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 import java.util.*
+import kotlin.test.assertEquals
 
 @Config(manifest= Config.NONE)
 @RunWith(RobolectricTestRunner::class)
@@ -29,6 +33,11 @@ class AimyboxDialogApiTest {
 
     @Test
     fun sendRequest() {
-        dialogApi.createRequest("/start")
+        runBlocking {
+            val request = dialogApi.createRequest("/start")
+            val response = dialogApi.send(request)
+            assertNotEquals(0, response.json.size())
+            Log.i("AimyboxDialogApiTest","Server answer ${response.json}")
+        }
     }
 }

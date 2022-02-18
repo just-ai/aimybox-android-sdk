@@ -16,7 +16,7 @@ object Library {
         val kotlin = kotlin("test")
         val kotlinJUnit = kotlin("test-junit")
 
-        val mockk = "io.mockk:mockk" version { mockk }
+        val mockk = "io.mockk:mockk-android" version { mockk }
 
         val androidXRunner = "androidx.test:runner" version { androidxTest }
         val androidXRules = "androidx.test:rules" version { androidxTest }
