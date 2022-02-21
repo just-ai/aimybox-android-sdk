@@ -48,7 +48,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: upload
-          path: ./*.gpg
+          path: ./local.properties
+#          path: ./*.gpg
 
 #      - name: run task
 #        run: |
