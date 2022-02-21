@@ -42,7 +42,8 @@ jobs:
           printf "signing.password=$SIGNING_PASSWORD\n" >> ${{ github.workspace }}/local.properties
           printf "github.token=$TOKEN\n" >> ${{ github.workspace }}/local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
-          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+          ./gradlew rasa-api:publish
+#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
 
 #      - name: Save artifact
 #        uses: actions/upload-artifact@v2
