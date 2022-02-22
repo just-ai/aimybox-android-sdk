@@ -87,6 +87,7 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
             }
             suspendCancellableCoroutine { cancellableContinuation ->
                 mediaPlayer.apply {
+
                     setOnCompletionListener { player ->
                         player.reset()
                         cancellableContinuation.resume(Unit)
@@ -95,13 +96,22 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
                     setOnPreparedListener { player ->
                         player.start()
                     }
+
                     setOnErrorListener { player, what, _ ->
                         L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
-                        cancellableContinuation.resumeWithException(Throwable())
-                        scope.cancel()
+                        //scope.cancel()
+                        mediaPlayer.reset()
+                        launch {
+                            contextJob.cancelChildrenAndJoin()
+                        }
+                        if (!cancellableContinuation.isActive) {
+                            cancellableContinuation.resumeWithException(Throwable())
+                        }
                         true
                     }
+
                     prepareAsync()
+
                 }
             }
         } catch (e: CancellationException) {
