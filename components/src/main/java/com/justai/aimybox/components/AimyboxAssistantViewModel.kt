@@ -106,7 +106,8 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     }
 
     private var recognitionTimeoutJob: Job? = null
-    var delayAfterSpeech: Long = aimybox.config.speechToText.recognitionTimeoutMs
+
+    private var delayAfterSpeech: Long = aimybox.config.speechToText.delayAfterSpeech
 
     @SuppressLint("MissingPermission")
     private fun onSpeechToTextEvent(event: SpeechToText.Event) {
@@ -131,22 +132,22 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                     }
                     Log.d("Delay", "event come. Delay: $delayAfterSpeech")
                     recognitionTimeoutJob = launch {
-                            delay(delayAfterSpeech)
-                            aimybox.stopRecognitionAndChangeState()
-                            Log.d("Delay", "stop recognition")
+                        delay(delayAfterSpeech)
+                        aimybox.stopRecognitionAndChangeState()
+                        Log.d("Delay", "stop recognition")
                     }
                 }
             }
-        is SpeechToText.Event.EmptyRecognitionResult,
-        SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
-        is SpeechToText.Event.SoundVolumeRmsChanged -> {
-            soundVolumeRmsMutable.postValue(event.rmsDb)
+            is SpeechToText.Event.EmptyRecognitionResult,
+            SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
+            is SpeechToText.Event.SoundVolumeRmsChanged -> {
+                soundVolumeRmsMutable.postValue(event.rmsDb)
+            }
         }
     }
-    }
 
 
-private fun onDialogApiEvent(event: DialogApi.Event) {
+    private fun onDialogApiEvent(event: DialogApi.Event) {
         when (event) {
             is DialogApi.Event.ResponseReceived -> {
                 removeButtonWidgets()

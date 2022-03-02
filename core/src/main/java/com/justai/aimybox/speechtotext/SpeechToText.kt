@@ -14,7 +14,8 @@ import kotlinx.coroutines.channels.SendChannel
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 abstract class SpeechToText(
     recognitionTimeout: Long = 10000L,
-    val maxAudioChunks: Int? = null
+    val maxAudioChunks: Int? = null,
+    val delayAfterSpeech: Long = 10000L,
 ) : CoroutineScope {
 
 
