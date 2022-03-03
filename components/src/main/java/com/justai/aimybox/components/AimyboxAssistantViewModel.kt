@@ -26,6 +26,9 @@ import kotlinx.coroutines.channels.*
 open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     CoroutineScope by MainScope() {
 
+    /* Optional field. If you don't need delay can write 0L in this field on you view**/
+    var delayAfterSpeech: Long = 10000L
+
     private val isAssistantVisibleInternal = MutableLiveData<Boolean>()
     val isAssistantVisible = isAssistantVisibleInternal.immutable()
 
@@ -106,8 +109,6 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     }
 
     private var recognitionTimeoutJob: Job? = null
-
-    private var delayAfterSpeech: Long = aimybox.config.speechToText.delayAfterSpeech
 
     @SuppressLint("MissingPermission")
     private fun onSpeechToTextEvent(event: SpeechToText.Event) {
