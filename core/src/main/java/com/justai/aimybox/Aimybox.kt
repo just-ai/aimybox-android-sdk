@@ -98,10 +98,6 @@ class Aimybox(
      * */
     val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
 
-    /**
-     * Delay between last spoken word and STT cancellation in ms.
-     */
-   // var delayAfterSpeech : Long = config.speechToText.recognitionTimeoutMs
 
     /* Components */
 
@@ -132,7 +128,9 @@ class Aimybox(
      * Current state of Aimybox.
      * */
     var state: State
+    @Synchronized
         get() = stateChannel.value
+    @Synchronized
         private set(value) {
             when (value) {
                 State.STANDBY -> abandonRequestAudioFocus()
@@ -162,9 +160,6 @@ class Aimybox(
             }
         }
 
-//    private var recognitionTimeoutJob : Job? = null
-
-
     init {
         launch { updateConfiguration(initialConfig) }
 
@@ -183,28 +178,6 @@ class Aimybox(
                 }
             }
         }
-
-//        speechToTextEvents.observe { event ->
-//            if (event is SpeechToText.Event.RecognitionPartialResult &&
-//                delayAfterSpeech != config.speechToText.recognitionTimeoutMs){
-//                recognitionTimeoutJob?.let { job ->
-//                    if (job.isActive) {
-//                        job.cancelAndJoin()
-//                    }
-//                }
-//                recognitionTimeoutJob = launch {
-//                        withTimeoutOrNull(delayAfterSpeech ) {
-//                            val speech = speechToText.recognizeSpeech()
-////                            if (!speech.isNullOrBlank()) {
-////                                sendRequest(speech)
-////                            }
-//                            toggleRecognition()
-//                            L.d("Cancellation speech timeout")
-//                        }
-//                    }
-//
-//            }
-//        }
     }
 
     /* Common */
@@ -317,7 +290,9 @@ class Aimybox(
             }
         } else null
 
-    fun stopSpeaking() = launch { textToSpeech.cancelRunningJob() }
+    fun stopSpeaking() = launch {
+        textToSpeech.cancelRunningJob()
+    }
 
 
 
