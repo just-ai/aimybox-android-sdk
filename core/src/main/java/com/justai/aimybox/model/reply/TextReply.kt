@@ -9,7 +9,7 @@ open class TextReply(
     /**
      * Text to show in the UI. Also, this text should be synthesized, if [tts] text is null.
      * */
-    val text: String,
+    val text: String = "",
     /**
      * Text to be synthesized. Can include SSML and other markup, and therefore it should not be displayed in UI.
      * */
@@ -17,7 +17,7 @@ open class TextReply(
     /**
      * The language of the reply.
      * */
-    val language: String?
+    val language: String? = null
 ) : Reply
 
 fun TextReply.asTextSpeech() = TextSpeech(tts ?: text, language)
