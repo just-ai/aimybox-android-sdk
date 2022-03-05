@@ -60,7 +60,7 @@ class RasaDialogApi(
         val replies = ArrayList<Reply>()
         res.map { it.asJsonObject }.forEach { json ->
             if (json.has("text"))
-                replies.add(TextReply(json["text"].asString, null, null))
+                replies.add(TextReply(null, json["text"].asString))
 
             if (json.has("image"))
                 replies.add(ImageReply(json["image"].asString))

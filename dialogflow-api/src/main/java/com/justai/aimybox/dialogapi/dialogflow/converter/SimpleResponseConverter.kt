@@ -8,10 +8,10 @@ object SimpleResponseConverter:
 
     override fun convert(msg: Intent.Message.SimpleResponse) =
         TextReply(
+            tts = msg.textToSpeech,
             text = msg.displayText
                 ?.takeIf { it.isNotEmpty() }
                 ?: msg.textToSpeech,
-            tts = msg.textToSpeech,
             language = null
         )
 }
