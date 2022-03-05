@@ -83,7 +83,7 @@ class DialogflowDialogApi(
         }
             .flatten()
             .takeIf { it.isNotEmpty() }
-            ?: listOf(TextReply(qr.fulfillmentText, null))
+            ?: listOf(TextReply(null, qr.fulfillmentText))
 
         return DialogflowResponse(
             query = qr.queryText,

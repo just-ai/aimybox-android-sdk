@@ -10,5 +10,5 @@ class DummyResponse(
     override val action: String? = null
     override val intent: String? = null
     override val question: Boolean? = false
-    override val replies: List<Reply> = listOf(TextReply(query ?: "", null))
+    override val replies: List<Reply> = listOf(TextReply( null, query ?: ""))
 }
