@@ -13,8 +13,6 @@ import kotlin.test.assertEquals
 class SSMLSPeechParserTest {
     val parser = SSMLSpeechParser()
 
-
-
     @Test
     fun testSimpleText() = runBlocking {
         val text = "Hello world!"
