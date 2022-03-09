@@ -47,39 +47,7 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
         contextJob.cancel()
     }
 
-//    private fun launchPlayer(source: AudioSpeech) = launch {
-//        val scope = this
-//        try {
-//            withContext(Dispatchers.IO) {
-//                source.load(context, mediaPlayer)
-//            }
-//            mediaPlayer.apply {
-//                setOnCompletionListener {
-//                    it.reset()
-//                }
-//                setOnPreparedListener {
-//                    it.start()
-//                }
-//                prepareAsync()
-//                setOnErrorListener { _, what, _ ->
-//                    L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
-//                    scope.cancel()
-//                    true
-//                }
-//
-//            }
-//
-//        } catch (e: CancellationException) {
-//            L.w("AudioSynthesizer is cancelled.")
-//            mediaPlayer.reset()
-//        } catch (e: Throwable) {
-//            L.e(e)
-//        }
-//    }
-
     private fun launchPlayer(source: AudioSpeech) = launch {
-
-        val scope = this
 
         try {
             withContext(Dispatchers.IO) {
@@ -97,7 +65,7 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
                         player.start()
                     }
 
-                    setOnErrorListener { player, what, _ ->
+                    setOnErrorListener { _, what, _ ->
                         L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
                         //scope.cancel()
                         mediaPlayer.reset()

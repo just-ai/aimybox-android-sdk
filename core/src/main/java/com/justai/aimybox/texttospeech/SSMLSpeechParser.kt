@@ -34,7 +34,7 @@ class SSMLSpeechParser {
                 parser.setInput(reader)
 
                 while (true) {
-//                        L.d("${XmlPullParser.TYPES[parser.eventType]}: <${parser.name}> - ${parser.text}")
+
                     if (parser.eventType == XmlPullParser.END_DOCUMENT) break
 
                     when (parser.eventType) {
