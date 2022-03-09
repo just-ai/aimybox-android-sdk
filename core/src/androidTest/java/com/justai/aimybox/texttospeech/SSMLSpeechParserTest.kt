@@ -7,15 +7,11 @@ import com.justai.aimybox.model.TextSpeech
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 import kotlin.test.assertEquals
 
 @SmallTest
 class SSMLSPeechParserTest {
     val parser = SSMLSpeechParser()
-
-
 
     @Test
     fun testSimpleText() = runBlocking {

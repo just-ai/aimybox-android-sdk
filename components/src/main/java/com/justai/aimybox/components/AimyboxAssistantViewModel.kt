@@ -126,14 +126,11 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                     recognitionTimeoutJob?.let { job ->
                         if (job.isActive) {
                             launch { job.cancelAndJoin() }
-                            Log.d("Delay", "canceled previous")
                         }
                     }
-                    Log.d("Delay", "event come. Delay: $delayAfterSpeech")
                     recognitionTimeoutJob = launch {
                             delay(delayAfterSpeech)
                             aimybox.stopRecognitionAndChangeState()
-                            Log.d("Delay", "stop recognition")
                     }
                 }
             }

@@ -11,7 +11,6 @@ object Version {
     const val bintrayPlugin = "1.8.5"
     const val bintrayBuildInfoPlugin = "4.21.0"
 
-    //const val protobufPlugin = "0.8.15"
     const val protobufPlugin = "0.8.18"
 
     // Libraries
@@ -23,7 +22,6 @@ object Version {
 
     const val retrofit = "2.9.0"
     const val okHttp = "4.9.0"
-    //const val grpc = "1.35.0"
     const val grpc = "1.42.1"
     const val kotson = "2.5.0"
 

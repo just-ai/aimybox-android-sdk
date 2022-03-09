@@ -47,39 +47,7 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
         contextJob.cancel()
     }
 
-//    private fun launchPlayer(source: AudioSpeech) = launch {
-//        val scope = this
-//        try {
-//            withContext(Dispatchers.IO) {
-//                source.load(context, mediaPlayer)
-//            }
-//            mediaPlayer.apply {
-//                setOnCompletionListener {
-//                    it.reset()
-//                }
-//                setOnPreparedListener {
-//                    it.start()
-//                }
-//                prepareAsync()
-//                setOnErrorListener { _, what, _ ->
-//                    L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
-//                    scope.cancel()
-//                    true
-//                }
-//
-//            }
-//
-//        } catch (e: CancellationException) {
-//            L.w("AudioSynthesizer is cancelled.")
-//            mediaPlayer.reset()
-//        } catch (e: Throwable) {
-//            L.e(e)
-//        }
-//    }
-
     private fun launchPlayer(source: AudioSpeech) = launch {
-
-        val scope = this
 
         try {
             withContext(Dispatchers.IO) {
@@ -87,6 +55,7 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
             }
             suspendCancellableCoroutine { cancellableContinuation ->
                 mediaPlayer.apply {
+
                     setOnCompletionListener { player ->
                         player.reset()
                         cancellableContinuation.resume(Unit)
@@ -95,13 +64,22 @@ class AudioSynthesizer(private val context: Context) : CoroutineScope {
                     setOnPreparedListener { player ->
                         player.start()
                     }
-                    setOnErrorListener { player, what, _ ->
+
+                    setOnErrorListener { _, what, _ ->
                         L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
-                        cancellableContinuation.resumeWithException(Throwable())
-                        scope.cancel()
+                        //scope.cancel()
+                        mediaPlayer.reset()
+                        launch {
+                            contextJob.cancelChildrenAndJoin()
+                        }
+                        if (!cancellableContinuation.isActive) {
+                            cancellableContinuation.resumeWithException(Throwable())
+                        }
                         true
                     }
+
                     prepareAsync()
+
                 }
             }
         } catch (e: CancellationException) {

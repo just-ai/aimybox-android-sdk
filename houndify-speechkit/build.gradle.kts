@@ -13,9 +13,9 @@ project.configureProject {
 
 project.configureAndroid {}
 
-//repositories {
-//    maven("https://houndify.com/maven/") { name = "Houndify" }
-//}
+repositories {
+    maven("https://houndify.com/maven/") { name = "Houndify" }
+}
 
 dependencies {
     implementation(project(":core"))

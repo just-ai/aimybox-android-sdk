@@ -98,10 +98,6 @@ class Aimybox(
      * */
     val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
 
-    /**
-     * Delay between last spoken word and STT cancellation in ms.
-     */
-   // var delayAfterSpeech : Long = config.speechToText.recognitionTimeoutMs
 
     /* Components */
 
@@ -118,7 +114,6 @@ class Aimybox(
     private val components = listOf(speechToText, textToSpeech, dialogApi)
 
 
-
     /* State */
 
     /**
@@ -132,14 +127,16 @@ class Aimybox(
      * Current state of Aimybox.
      * */
     var state: State
+        @Synchronized
         get() = stateChannel.value
+        @Synchronized
         private set(value) {
             when (value) {
                 State.STANDBY -> abandonRequestAudioFocus()
                 State.LISTENING, State.SPEAKING -> requestAudioFocus()
                 State.PROCESSING -> Unit
             }
-            stateChannel.sendBlocking(value)
+            stateChannel.trySendBlocking(value)
         }
 
     /**
@@ -162,9 +159,6 @@ class Aimybox(
             }
         }
 
-//    private var recognitionTimeoutJob : Job? = null
-
-
     init {
         launch { updateConfiguration(initialConfig) }
 
@@ -183,28 +177,6 @@ class Aimybox(
                 }
             }
         }
-
-//        speechToTextEvents.observe { event ->
-//            if (event is SpeechToText.Event.RecognitionPartialResult &&
-//                delayAfterSpeech != config.speechToText.recognitionTimeoutMs){
-//                recognitionTimeoutJob?.let { job ->
-//                    if (job.isActive) {
-//                        job.cancelAndJoin()
-//                    }
-//                }
-//                recognitionTimeoutJob = launch {
-//                        withTimeoutOrNull(delayAfterSpeech ) {
-//                            val speech = speechToText.recognizeSpeech()
-////                            if (!speech.isNullOrBlank()) {
-////                                sendRequest(speech)
-////                            }
-//                            toggleRecognition()
-//                            L.d("Cancellation speech timeout")
-//                        }
-//                    }
-//
-//            }
-//        }
     }
 
     /* Common */
@@ -249,7 +221,7 @@ class Aimybox(
     }
 
     fun unmute() = launch {
-        if (isVoiceTriggerActivated){
+        if (isVoiceTriggerActivated) {
             voiceTrigger.start()
         }
         isMuted = false
@@ -273,7 +245,11 @@ class Aimybox(
      * @see NextAction
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY, onlyText: Boolean = true): Job? =
+    fun speak(
+        speech: Speech,
+        nextAction: NextAction = NextAction.STANDBY,
+        onlyText: Boolean = true
+    ): Job? =
         speak(listOf(speech), nextAction, onlyText)
 
     /**
@@ -291,7 +267,11 @@ class Aimybox(
      * @see NextAction
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY, onlyText: Boolean = true): Job? =
+    fun speak(
+        speeches: List<Speech>,
+        nextAction: NextAction = NextAction.STANDBY,
+        onlyText: Boolean = true
+    ): Job? =
         if (!isMuted) launch {
             if (state == State.SPEAKING) return@launch
             state = State.SPEAKING
@@ -317,8 +297,9 @@ class Aimybox(
             }
         } else null
 
-    fun stopSpeaking() = launch { textToSpeech.cancelRunningJob() }
-
+    fun stopSpeaking() = launch {
+        textToSpeech.cancelRunningJob()
+    }
 
 
     /* STT */
@@ -357,44 +338,45 @@ class Aimybox(
             .setOnAudioFocusChangeListener(audioFocusChangeListener)
             .build()
 
-    private var hasAudioFocus : Boolean = false
+    private var hasAudioFocus: Boolean = false
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private var audioFocusRequest : AudioFocusRequest? = null
-    init{
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+    private var audioFocusRequest: AudioFocusRequest? = null
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             audioFocusRequest = buildAudioFocusRequest()
         }
     }
 
 
     private fun requestAudioFocus() {
-        if (hasAudioFocus){
+        if (hasAudioFocus) {
             return
         }
         val requestResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (audioFocusRequest == null ) {
+            if (audioFocusRequest == null) {
                 audioFocusRequest = buildAudioFocusRequest()
             }
             audioFocusRequest?.let {
                 mAudioManager?.requestAudioFocus(it)
             } ?: AUDIOFOCUS_REQUEST_FAILED
         } else {
-             mAudioManager?.requestAudioFocus(
+            mAudioManager?.requestAudioFocus(
                 audioFocusChangeListener,
                 STREAM_MUSIC,
                 AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
             )
         }
 
-        if (requestResult == AUDIOFOCUS_REQUEST_GRANTED){
+        if (requestResult == AUDIOFOCUS_REQUEST_GRANTED) {
             hasAudioFocus = true
         }
 
     }
 
     private fun abandonRequestAudioFocus() {
-        if (!hasAudioFocus){
+        if (!hasAudioFocus) {
             return
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -486,7 +468,6 @@ class Aimybox(
     fun interruptRecognition(): Job = launch {
         speechToText.interruptRecognition()
     }
-
 
 
     /* API */
