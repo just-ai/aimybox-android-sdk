@@ -17,9 +17,11 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Improved version of [TextToSpeech] with already implemented simple SSML parsing and event delivering.
  * */
-abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineScope {
+abstract class BaseTextToSpeech(context: Context) : TextToSpeech() {
 
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+    val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+
+    val scope = CoroutineScope(coroutineContext) + CoroutineName("BaseTextToSpeech")
 
     private val L = Logger("TTS")
 
@@ -73,7 +75,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
     override suspend fun stop() {
         wasCancelled = true
         audioSynthesizer.cancel()
-        contextJob.cancelChildrenAndJoin()
+        scope.contextJob.cancelChildrenAndJoin()
     }
 
     @CallSuper

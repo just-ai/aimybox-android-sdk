@@ -51,7 +51,7 @@ internal class VoiceTriggerComponent(
             delegate?.destroy()
             delegate = voiceTrigger
             if (isStarted.get()) {
-                launch { start() }
+                scope.launch { start() }
             }
         }
     }

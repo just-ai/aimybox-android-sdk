@@ -106,7 +106,7 @@ internal class SpeechToTextComponent(
 
     fun interruptRecognition() = recognitionResult?.cancel()
 
-    private fun startTimeout(timeout: Long) = launch {
+    private fun startTimeout(timeout: Long) = scope.launch {
         delay(timeout)
         exceptionChannel.send(RecognitionTimeoutException(timeout))
         cancelRunningJob()

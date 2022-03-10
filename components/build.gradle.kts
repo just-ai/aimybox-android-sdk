@@ -1,10 +1,11 @@
 import com.justai.gradle.project.configureAndroid
 import com.justai.gradle.project.configureProject
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
+    kotlin("android")
     id("com.android.library")
     `aimybox-publish`
+    id("org.jetbrains.kotlin.kapt")
 }
 
 project.configureProject {
@@ -13,9 +14,9 @@ project.configureProject {
 }
 
 project.configureAndroid {
-    tasks.withType<KotlinCompile> {
-        kotlinOptions.jvmTarget = "1.8"
-    }
+//    tasks.withType<KotlinCompile> {
+//        kotlinOptions.jvmTarget = "1.8"
+//    }
 }
 
 repositories {
@@ -35,6 +36,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
     implementation("com.google.android.material:material:1.4.0")
     implementation("com.github.bumptech.glide:glide:4.12.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.9.0")
+    kapt("com.github.bumptech.glide:compiler:4.9.0")
     implementation(project(":core"))
 }

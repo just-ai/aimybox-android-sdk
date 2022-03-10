@@ -88,7 +88,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun handle(response: TResponse, aimybox: Aimybox, isSilentRequest: Boolean = false) {
-        launch {
+        scope.launch {
             val skill = customSkills.find { it.canHandle(response) }
 
             if (skill != null) {

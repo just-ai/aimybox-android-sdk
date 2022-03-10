@@ -18,78 +18,68 @@ import kotlin.coroutines.resumeWithException
  *
  * @see TextToSpeech
  * */
-class AudioSynthesizer(private val context: Context) : CoroutineScope {
+class AudioSynthesizer(private val context: Context) {
 
     private val L = Logger(className)
 
+   // private var mediaPlayer: MediaPlayer? = null
+
     private var mediaPlayer = MediaPlayer()
 
-    override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
+
+    // override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
 
     suspend fun play(source: AudioSpeech) {
-        L.assert(contextJob.isActive) {
-            "Can't play $source: AudioSynthesizer is released."
-        }
-        L.assert(!contextJob.children.any { it.isActive }) {
-            "Can't play $source: AudioSynthesizer is busy."
-        }
-        launchPlayer(source).join()
+//        L.assert(contextJob.isActive) {
+//            "Can't play $source: AudioSynthesizer is released."
+//        }
+//        L.assert(!contextJob.children.any { it.isActive }) {
+//            "Can't play $source: AudioSynthesizer is busy."
+//        }
+        launchPlayer(source)
     }
 
     suspend fun cancel() {
-        mediaPlayer.stop()
-        mediaPlayer.reset()
-        contextJob.cancelChildrenAndJoin()
+        mediaPlayer?.stop()
+        mediaPlayer?.reset()
     }
 
     fun release() {
-        mediaPlayer.release()
-        contextJob.cancel()
+        mediaPlayer?.release()
     }
 
-    private fun launchPlayer(source: AudioSpeech) = launch {
+    private suspend fun launchPlayer(source: AudioSpeech) {
+
+       // mediaPlayer = MediaPlayer()
 
         try {
             withContext(Dispatchers.IO) {
-                source.load(context, mediaPlayer)
-            }
-            suspendCancellableCoroutine { cancellableContinuation ->
-                mediaPlayer.apply {
-
-                    setOnCompletionListener { player ->
-                        player.reset()
-                        cancellableContinuation.resume(Unit)
-                    }
-
-                    setOnPreparedListener { player ->
-                        player.start()
-                    }
-
-                    setOnErrorListener { _, what, _ ->
-                        L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
-                        //scope.cancel()
-                        mediaPlayer.reset()
-                        launch {
-                            contextJob.cancelChildrenAndJoin()
-                        }
-                        if (!cancellableContinuation.isActive) {
-                            cancellableContinuation.resumeWithException(Throwable())
-                        }
-                        true
-                    }
-
-                    prepareAsync()
-
+                mediaPlayer?.let {
+                    source.load(context, it)
                 }
+
             }
+
+            mediaPlayer?.setOnCompletionListener { player ->
+                player.reset()
+            }
+            mediaPlayer?.setOnPreparedListener { player ->
+                player.start()
+            }
+            mediaPlayer?.setOnErrorListener { player, what, _ ->
+                L.e("MediaPlayer error code $what. Stopping AudioSynthesizer.")
+                player.reset()
+                true
+            }
+
+            mediaPlayer?.prepareAsync()
+
         } catch (e: CancellationException) {
             L.w("AudioSynthesizer is cancelled.")
         } catch (e: Throwable) {
             L.e(e)
         } finally {
-            withContext(NonCancellable) {
-                mediaPlayer.reset()
-            }
+            mediaPlayer?.reset()
         }
     }
 }

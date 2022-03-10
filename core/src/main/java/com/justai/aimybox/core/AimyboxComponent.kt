@@ -4,22 +4,20 @@ import androidx.annotation.CallSuper
 import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.extensions.contextJob
 import com.justai.aimybox.logging.Logger
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 
-abstract class AimyboxComponent(name: String) : CoroutineScope {
+abstract class AimyboxComponent(name: String)  {
 
-    override val coroutineContext = Dispatchers.IO + Job() + CoroutineName("Aimybox($name)")
+    val coroutineContext = Dispatchers.IO + Job() + CoroutineName("Aimybox($name)")
+    val scope = CoroutineScope( coroutineContext)
 
     protected val L = Logger(name)
 
     val hasRunningJobs: Boolean
-        get() = contextJob.children.any(Job::isActive)
+        get() = scope.contextJob.children.any(Job::isActive)
 
     @CallSuper
     open suspend fun cancelRunningJob() {
-       if (hasRunningJobs) contextJob.cancelChildrenAndJoin()
+       if (hasRunningJobs) scope.contextJob.cancelChildrenAndJoin()
     }
 }
