@@ -10,6 +10,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.api.DialogApi
+import com.justai.aimybox.api.aimybox.SingleLiveEvent
+import com.justai.aimybox.api.aimybox.UiEvent
 import com.justai.aimybox.components.widget.*
 import com.justai.aimybox.model.reply.ButtonsReply
 import com.justai.aimybox.model.reply.ImageReply
@@ -40,9 +42,15 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private val urlIntentsInternal = Channel<String>()
     val urlIntents = urlIntentsInternal as ReceiveChannel<String>
 
+    private val _uiEvents = SingleLiveEvent<UiEvent>()
+    val uiEvents = _uiEvents.immutable()
+
     init {
         aimybox.stateChannel.observe { L.i(it) }
         aimybox.exceptions.observe { L.e(it) }
+        aimybox.specialEvents.observe {
+            _uiEvents.postValue(it)
+        }
 
         val events = Channel<Any>(Channel.UNLIMITED)
 
