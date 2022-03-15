@@ -74,8 +74,8 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech() {
     @CallSuper
     override suspend fun stop() {
         wasCancelled = true
-        audioSynthesizer.cancel()
         scope.contextJob.cancelChildrenAndJoin()
+        audioSynthesizer.cancel()
     }
 
     @CallSuper

@@ -6,10 +6,7 @@ import com.justai.aimybox.extensions.className
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.texttospeech.TextToSpeech
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -22,22 +19,7 @@ class AudioSynthesizer(private val context: Context) {
 
     private val L = Logger(className)
 
-    // private var mediaPlayer: MediaPlayer? = null
-
     private var mediaPlayer = MediaPlayer()
-
-
-    // override val coroutineContext: CoroutineContext = Dispatchers.Default + Job()
-
-    suspend fun play(source: AudioSpeech) {
-//        L.assert(contextJob.isActive) {
-//            "Can't play $source: AudioSynthesizer is released."
-//        }
-//        L.assert(!contextJob.children.any { it.isActive }) {
-//            "Can't play $source: AudioSynthesizer is busy."
-//        }
-        launchPlayer(source)
-    }
 
     fun cancel() {
         if (mediaPlayer.isPlaying) {
@@ -50,9 +32,7 @@ class AudioSynthesizer(private val context: Context) {
         mediaPlayer.release()
     }
 
-    private suspend fun launchPlayer(source: AudioSpeech) {
-
-        // mediaPlayer = MediaPlayer()
+    suspend fun play(source: AudioSpeech) {
 
         try {
             withContext(Dispatchers.IO) {
@@ -62,6 +42,10 @@ class AudioSynthesizer(private val context: Context) {
 
             }
             suspendCancellableCoroutine<Unit> { continuation ->
+
+                continuation.invokeOnCancellation {
+                    cancel()
+                }
 
                 mediaPlayer.setOnCompletionListener { player ->
                     player.reset()
@@ -78,6 +62,7 @@ class AudioSynthesizer(private val context: Context) {
                 mediaPlayer.setOnPreparedListener { player ->
                         player.start()
                 }
+
 
                 mediaPlayer.prepareAsync()
             }

@@ -283,6 +283,7 @@ class Aimybox(
             }
 
             textToSpeech.speak(speeches, onlyText)
+
         }.apply {
             invokeOnCompletion { cause ->
                 if (cause is CancellationException) {
