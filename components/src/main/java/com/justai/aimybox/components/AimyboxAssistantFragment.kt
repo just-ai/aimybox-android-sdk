@@ -60,6 +60,7 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
         }
 
         revealTimeMs = context.resources.getInteger(R.integer.assistant_reveal_time_ms).toLong()
+        viewModel.delayAfterSpeech = 1000L
     }
 
     override fun onCreateView(

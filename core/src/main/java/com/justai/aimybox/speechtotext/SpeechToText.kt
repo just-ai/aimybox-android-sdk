@@ -17,6 +17,7 @@ abstract class SpeechToText(
     val maxAudioChunks: Int? = null
 ) : CoroutineScope {
 
+
     /**
      * Recognition will be canceled if no results received within this interval.
      * */

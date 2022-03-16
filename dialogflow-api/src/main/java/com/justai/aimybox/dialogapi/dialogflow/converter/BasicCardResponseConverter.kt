@@ -15,7 +15,7 @@ object BasicCardResponseConverter {
             replies.add(ImageResponseConverter.convert(msg.image))
         }
 
-        replies.add(TextReply(msg.formattedText, null, null))
+        replies.add(TextReply(null, msg.formattedText))
 
         if (msg.buttonsList.isNotEmpty()) {
             replies.add(ButtonsReply(msg.buttonsList.map {

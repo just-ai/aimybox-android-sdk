@@ -23,7 +23,7 @@ abstract class TextToSpeech {
     /**
      * Start synthesis of provided [speechSequence] and suspend until it is finished.
      * */
-    abstract suspend fun synthesize(speechSequence: List<Speech>)
+    abstract suspend fun synthesize(speechSequence: List<Speech>, onlyText : Boolean = true)
 
     /**
      * Stop current synthesis.

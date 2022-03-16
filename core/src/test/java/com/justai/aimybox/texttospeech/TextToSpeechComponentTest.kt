@@ -55,7 +55,7 @@ class TextToSpeechComponentTest : BaseCoroutineTest() {
 
             assert(eventChannel.receive() is TextToSpeech.Event.SpeechSequenceCompleted)
 
-            coVerify { mockDelegate.synthesize(testSpeechList) }
+            coVerify { mockDelegate.synthesize(testSpeechList ) }
             checkNoRunningJobs()
         }
     }

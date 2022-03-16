@@ -1,5 +1,6 @@
 package com.justai.aimybox.texttospeech
 
+import android.util.Log
 import androidx.test.filters.SmallTest
 import com.justai.aimybox.model.AudioSpeech
 import com.justai.aimybox.model.TextSpeech
@@ -31,6 +32,17 @@ class SSMLSPeechParserTest {
         val text = "<p>Hello world!</p>Hello again!<p></p>"
         val expected = listOf(TextSpeech("Hello world!"), TextSpeech("Hello again!"))
         assertEquals(expected, parser.extractSSML(text).toList(), "Paragraph extracted correctly")
+    }
+
+    @Test
+    fun testVoiceTagsExtraction(): Unit = runBlocking {
+        val text =  "<p><voice name=\"en-US-JennyNeural\">" +
+                "<audio src=\"https://contoso.com/opinionprompt.wav\"/>" +
+                " Thanks for offering your opinion. Please begin speaking after 2 the beep." +
+                "</voice>" +
+                "</p>"
+        val speechParts =  parser.extractSSML(text).toList()
+        Log.d("SSMLSPeechParserTest", "Extracted tags: $speechParts")
     }
 
 }

@@ -6,7 +6,7 @@ import com.google.gson.JsonObject
 import com.justai.aimybox.model.reply.TextReply
 
 data class AimyboxTextReply(override val json: JsonObject) : TextReply(
-    json["text"].string,
     json["tts"].nullString,
+    json["text"].string,
     json["language"].nullString
 ), AimyboxReply

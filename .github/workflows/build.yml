@@ -1,0 +1,70 @@
+name: Aimybox android sdk CI
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+      - release/*
+      - INT-184-github-actions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+
+      - name: Build with gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+
+      - name: Publish with gradle
+        env:
+          SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SIGNING_KEYID: ${{ secrets.SIGNING_KEYID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          TOKEN: ${{ secrets.TOKEN }}
+          SECRING_GPG: ${{ secrets.SECRING_MEM_GPG }}
+        run: |
+          printf "%s" "$SECRING_GPG" > ${{ github.workspace }}/secring-mem.gpg
+          printf "sonatype.user=$SONATYPE_USER\n" > ${{ github.workspace }}/local.properties
+          printf "sonatype.password=$SONATYPE_PASSWORD\n" >> ${{ github.workspace }}/local.properties
+          printf "signing.keyId=$SIGNING_KEYID\n" >> ${{ github.workspace }}/local.properties
+          printf "signing.password=$SIGNING_PASSWORD\n" >> ${{ github.workspace }}/local.properties
+          printf "github.token=$TOKEN\n" >> ${{ github.workspace }}/local.properties
+          echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
+          ./gradlew publish
+#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+
+#      - name: Save artifact
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: upload
+#          path: ./local.properties
+#          path: ./*.gpg
+
+#      - name: run task
+#        run: |
+#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+
+#      - name: Validate Gradle wrapper
+#        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
+#
+#      - name: Publish packages
+#        uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
+#        with:
+#          arguments: publish
+
+
+#      - name: Publish with gradle
+#        run: |
+#          ./gradlew publish

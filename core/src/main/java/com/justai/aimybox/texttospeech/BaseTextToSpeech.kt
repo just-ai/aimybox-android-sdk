@@ -3,6 +3,7 @@ package com.justai.aimybox.texttospeech
 import android.content.Context
 import androidx.annotation.CallSuper
 import com.justai.aimybox.core.TextToSpeechException
+import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.extensions.contextJob
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.media.AudioSynthesizer
@@ -34,10 +35,11 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
      * */
     abstract suspend fun speak(speech: TextSpeech)
 
-    final override suspend fun synthesize(speechSequence: List<Speech>) = withContext(coroutineContext) {
+    final override suspend fun synthesize(speechSequence: List<Speech>, onlyText : Boolean) = withContext(coroutineContext) {
         wasCancelled = false
         speechSequence.asFlow()
-            .extractSSML()
+            .extractSSML(onlyText)
+            .handleErrors()
             .collect { speech ->
                 if (isActive) {
                     try {
@@ -71,6 +73,7 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
     override suspend fun stop() {
         wasCancelled = true
         audioSynthesizer.cancel()
+        contextJob.cancelChildrenAndJoin()
     }
 
     @CallSuper
@@ -78,10 +81,22 @@ abstract class BaseTextToSpeech(context: Context) : TextToSpeech(), CoroutineSco
         audioSynthesizer.release()
     }
 
-    private fun Flow<Speech>.extractSSML() = map { speech ->
+
+    private fun Flow<Speech>.extractSSML(useOnlyText: Boolean = true) = map { speech ->
         when (speech) {
             is AudioSpeech -> flowOf(speech)
-            is TextSpeech -> parser.extractSSML(speech.text)
+            is TextSpeech -> {
+                if (useOnlyText){
+                    flowOf(speech)
+                } else {
+                    parser.extractSSML(speech.text)
+
+                }
+            }
         }
     }.flattenConcat()
+
+    private fun <T> Flow<T>.handleErrors(): Flow<T> = catch {
+            e -> onException(TextToSpeechException(cause = e))
+    }
 }

@@ -98,6 +98,7 @@ class Aimybox(
      * */
     val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
 
+
     /* Components */
 
     private val speechToText =
@@ -112,6 +113,7 @@ class Aimybox(
 
     private val components = listOf(speechToText, textToSpeech, dialogApi)
 
+
     /* State */
 
     /**
@@ -125,14 +127,16 @@ class Aimybox(
      * Current state of Aimybox.
      * */
     var state: State
+        @Synchronized
         get() = stateChannel.value
+        @Synchronized
         private set(value) {
             when (value) {
                 State.STANDBY -> abandonRequestAudioFocus()
                 State.LISTENING, State.SPEAKING -> requestAudioFocus()
                 State.PROCESSING -> Unit
             }
-            stateChannel.sendBlocking(value)
+            stateChannel.trySendBlocking(value)
         }
 
     /**
@@ -142,10 +146,23 @@ class Aimybox(
     var isMuted = false
         private set
 
+
+    var isVoiceTriggerActivated: Boolean = true
+        set(value) {
+            field = value
+            launch {
+                if (field) {
+                    voiceTrigger.start()
+                } else {
+                    voiceTrigger.stop()
+                }
+            }
+        }
+
     init {
         launch { updateConfiguration(initialConfig) }
 
-        // Fix for Kaldi Voice Trigger behaviour
+        // Fix for Kaldi Voice Trigger behaviour.
 
         exceptions.observe {
             val mustVoiceTriggerBeStarted = state == State.STANDBY ||
@@ -155,10 +172,11 @@ class Aimybox(
             if (it is VoiceTriggerException && mustVoiceTriggerBeStarted) {
                 voiceTrigger.stop()
                 delay(200)
-                voiceTrigger.start()
+                if (isVoiceTriggerActivated) {
+                    voiceTrigger.start()
+                }
             }
         }
-
     }
 
     /* Common */
@@ -188,7 +206,9 @@ class Aimybox(
         state = State.STANDBY
 
         cancelCurrentTask()
-        voiceTrigger.start()
+        if (isVoiceTriggerActivated) {
+            voiceTrigger.start()
+        }
     }
 
     fun mute() = launch {
@@ -201,9 +221,12 @@ class Aimybox(
     }
 
     fun unmute() = launch {
-        voiceTrigger.start()
+        if (isVoiceTriggerActivated) {
+            voiceTrigger.start()
+        }
         isMuted = false
     }
+
 
     /* TTS */
 
@@ -222,8 +245,12 @@ class Aimybox(
      * @see NextAction
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun speak(speech: Speech, nextAction: NextAction = NextAction.STANDBY): Job? =
-        speak(listOf(speech), nextAction)
+    fun speak(
+        speech: Speech,
+        nextAction: NextAction = NextAction.STANDBY,
+        onlyText: Boolean = true
+    ): Job? =
+        speak(listOf(speech), nextAction, onlyText)
 
     /**
      * Start synthesis of the provided [speeches].
@@ -240,7 +267,11 @@ class Aimybox(
      * @see NextAction
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun speak(speeches: List<Speech>, nextAction: NextAction = NextAction.STANDBY): Job? =
+    fun speak(
+        speeches: List<Speech>,
+        nextAction: NextAction = NextAction.STANDBY,
+        onlyText: Boolean = true
+    ): Job? =
         if (!isMuted) launch {
             if (state == State.SPEAKING) return@launch
             state = State.SPEAKING
@@ -251,7 +282,7 @@ class Aimybox(
                 voiceTrigger.stop()
             }
 
-            textToSpeech.speak(speeches)
+            textToSpeech.speak(speeches, onlyText)
         }.apply {
             invokeOnCompletion { cause ->
                 if (cause is CancellationException) {
@@ -266,7 +297,10 @@ class Aimybox(
             }
         } else null
 
-    fun stopSpeaking() = launch { textToSpeech.cancelRunningJob() }
+    fun stopSpeaking() = launch {
+        textToSpeech.cancelRunningJob()
+    }
+
 
     /* STT */
 
@@ -287,21 +321,46 @@ class Aimybox(
     private val audioFocusChangeListener =
         OnAudioFocusChangeListener {
             when (it) {
-                AUDIOFOCUS_GAIN -> L.d("AudioFocus Gain")
-                AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT, AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK ->
+                AUDIOFOCUS_GAIN -> {
+                    L.d("AudioFocus Gain")
+                    hasAudioFocus = true
+                }
+                AUDIOFOCUS_LOSS, AUDIOFOCUS_LOSS_TRANSIENT, AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                     L.d("AudioFocus Loss")
+                    hasAudioFocus = false
+                }
             }
         }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private val audioFocusRequest =
+    private fun buildAudioFocusRequest() =
         AudioFocusRequest.Builder(AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
             .setOnAudioFocusChangeListener(audioFocusChangeListener)
             .build()
 
-    private fun requestAudioFocus() {
+    private var hasAudioFocus: Boolean = false
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private var audioFocusRequest: AudioFocusRequest? = null
+
+    init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mAudioManager?.requestAudioFocus(audioFocusRequest)
+            audioFocusRequest = buildAudioFocusRequest()
+        }
+    }
+
+
+    private fun requestAudioFocus() {
+        if (hasAudioFocus) {
+            return
+        }
+        val requestResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (audioFocusRequest == null) {
+                audioFocusRequest = buildAudioFocusRequest()
+            }
+            audioFocusRequest?.let {
+                mAudioManager?.requestAudioFocus(it)
+            } ?: AUDIOFOCUS_REQUEST_FAILED
         } else {
             mAudioManager?.requestAudioFocus(
                 audioFocusChangeListener,
@@ -310,14 +369,24 @@ class Aimybox(
             )
         }
 
+        if (requestResult == AUDIOFOCUS_REQUEST_GRANTED) {
+            hasAudioFocus = true
+        }
+
     }
 
     private fun abandonRequestAudioFocus() {
+        if (!hasAudioFocus) {
+            return
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mAudioManager?.abandonAudioFocusRequest(audioFocusRequest)
+            audioFocusRequest?.let { focusRequest ->
+                mAudioManager?.abandonAudioFocusRequest(focusRequest)
+            }
         } else {
             mAudioManager?.abandonAudioFocus(audioFocusChangeListener)
         }
+        hasAudioFocus = false
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
@@ -360,6 +429,13 @@ class Aimybox(
      * */
     fun stopRecognition(): Job = launch { speechToText.stopRecognition() }
 
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    fun stopRecognitionAndChangeState(): Job = launch {
+        speechToText.stopRecognition()
+        state = State.STANDBY
+    }
+
+
     /**
      * Cancels the current recognition and discard partial recognition results.
      * */
@@ -393,6 +469,7 @@ class Aimybox(
         speechToText.interruptRecognition()
     }
 
+
     /* API */
 
     /**
@@ -407,11 +484,15 @@ class Aimybox(
         stopSpeaking().join()
 
         if (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE) {
-            voiceTrigger.start()
+            if (isVoiceTriggerActivated) {
+                voiceTrigger.start()
+            }
         }
 
         val response = dialogApi.send(query, this@Aimybox)
-        if (response == null) onEmptyResponse()
+        if (response == null) {
+            onEmptyResponse()
+        }
     }
 
     /**
@@ -428,7 +509,9 @@ class Aimybox(
         stopSpeaking().join()
 
         if (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE) {
-            voiceTrigger.start()
+            if (isVoiceTriggerActivated) {
+                voiceTrigger.start()
+            }
         }
 
         dialogApi.send(query, this@Aimybox, isSilentRequest = true)

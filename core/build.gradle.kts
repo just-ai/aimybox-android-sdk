@@ -23,6 +23,7 @@ dependencies {
     implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.4.3-native-mt")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
     api("com.github.salomonbrys.kotson:kotson" version { kotson })
 
     for (notation in (Library.Test.instrumentedTest + Library.Test.unitTest)) {

@@ -16,11 +16,11 @@ buildscript {
         classpath(Plugin.dokka)
         classpath(Plugin.bintray)
         classpath(Plugin.buildInfoExtractor)
-        classpath(Plugin.protobuf)
+        //classpath(Plugin.protobuf)
     }
 }
 
-val versionProject = "0.17.0"
+val versionProject = "0.17.4"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -37,8 +37,9 @@ allprojects {
         google()
         mavenCentral()
         mavenLocal()
-        maven("https://kotlin.bintray.com/kotlinx")
         maven("https://alphacephei.com/maven")
+        maven("https://houndify.com/maven/") { name = "Houndify" }
+        maven("https://kotlin.bintray.com/kotlinx")
         flatDir {
             setDirs(listOf("pocketsphinx-android-lib"))
         }
@@ -48,5 +49,9 @@ allprojects {
 tasks.register<Delete>("clean") {
     group = "aimybox:util"
     delete(*(allprojects.map { it.buildDir }.toTypedArray()))
-    delete(".gradle")
+//    delete(".gradle")
 }
+
+//tasks.register("clean", Delete::class) {
+//    delete(rootProject.buildDir)
+//}

@@ -17,9 +17,9 @@ fun Project.configureAndroid(closure: BaseExtension.() -> Unit) {
         compileSdkVersion(config.compileSdk)
 
         defaultConfig {
-            minSdkVersion(config.minSdk)
-            targetSdkVersion(config.compileSdk)
-
+            minSdk = config.minSdk
+            targetSdk = config.compileSdk
+           // androidXCore = "1.6.0"
             versionName = config.version
             versionCode = config.versionCode
             testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
