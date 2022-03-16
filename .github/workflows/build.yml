@@ -42,8 +42,17 @@ jobs:
           printf "signing.password=$SIGNING_PASSWORD\n" >> ${{ github.workspace }}/local.properties
           printf "github.token=$TOKEN\n" >> ${{ github.workspace }}/local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
-          ./gradlew publish
-#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+          ./gradlew publishAllPublicationsToMavenCentralRepository
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: mobile-dev-builds
+          SLACK_USERNAME: GitHub Actions
+          SLACK_ICON: https://raw.githubusercontent.com/quintessence/slack-icons/master/images/octocat-spock-slack-icon.png
+          SLACK_COLOR: ${{ job.status }}
+
 
 #      - name: Save artifact
 #        uses: actions/upload-artifact@v2
