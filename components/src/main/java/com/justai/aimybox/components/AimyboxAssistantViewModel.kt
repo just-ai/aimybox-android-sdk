@@ -76,6 +76,10 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         widgetsInternal.value = listOf(ResponseWidget(text))
     }
 
+    fun postUiEvent(event: UiEvent) {
+        _uiEvents.postValue(event)
+    }
+
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun onButtonClick(button: Button) {
         removeButtonWidgets()
@@ -137,21 +141,21 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                         }
                     }
                     recognitionTimeoutJob = launch {
-                            delay(delayAfterSpeech)
-                            aimybox.stopRecognitionAndChangeState()
+                        delay(delayAfterSpeech)
+                        aimybox.stopRecognitionAndChangeState()
                     }
                 }
             }
-        is SpeechToText.Event.EmptyRecognitionResult,
-        SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
-        is SpeechToText.Event.SoundVolumeRmsChanged -> {
-            soundVolumeRmsMutable.postValue(event.rmsDb)
+            is SpeechToText.Event.EmptyRecognitionResult,
+            SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
+            is SpeechToText.Event.SoundVolumeRmsChanged -> {
+                soundVolumeRmsMutable.postValue(event.rmsDb)
+            }
         }
     }
-    }
 
 
-private fun onDialogApiEvent(event: DialogApi.Event) {
+    private fun onDialogApiEvent(event: DialogApi.Event) {
         when (event) {
             is DialogApi.Event.ResponseReceived -> {
                 removeButtonWidgets()
