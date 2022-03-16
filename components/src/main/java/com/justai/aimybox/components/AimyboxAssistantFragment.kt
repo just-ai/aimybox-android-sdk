@@ -80,26 +80,29 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
         adapter = AimyboxAssistantAdapter(viewModel::onButtonClick)
         recycler.adapter = adapter
 
-        viewModel.isAssistantVisible.observe(viewLifecycleOwner, Observer { isVisible ->
+        viewModel.isAssistantVisible.observe(viewLifecycleOwner) { isVisible ->
             coroutineContext.cancelChildren()
             if (isVisible) aimyboxButton.expand() else aimyboxButton.collapse()
-        })
+        }
 
-        viewModel.aimyboxState.observe(viewLifecycleOwner, Observer { state ->
+        viewModel.aimyboxState.observe(viewLifecycleOwner) { state ->
             if (state == Aimybox.State.LISTENING) {
                 aimyboxButton.onRecordingStarted()
             } else {
                 aimyboxButton.onRecordingStopped()
             }
-        })
+        }
+
+        viewModel.uiEvents.observe(viewLifecycleOwner) {
+        }
 
         viewModel.widgets.observe(viewLifecycleOwner, Observer(adapter::setData))
 
-        viewModel.soundVolumeRms.observe(viewLifecycleOwner, Observer { volume ->
+        viewModel.soundVolumeRms.observe(viewLifecycleOwner) { volume ->
             if (::aimyboxButton.isInitialized) {
                 aimyboxButton.onRecordingVolumeChanged(volume)
             }
-        })
+        }
 
         launch {
             viewModel.urlIntents.consumeEach { url ->
