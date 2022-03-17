@@ -11,7 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat.getSystemService
 import com.justai.aimybox.api.DialogApi
-import com.justai.aimybox.api.aimybox.UiEvent
+import com.justai.aimybox.api.aimybox.CustomSkillEvent
 import com.justai.aimybox.core.*
 import com.justai.aimybox.core.Config.*
 import com.justai.aimybox.logging.Logger
@@ -102,7 +102,7 @@ class Aimybox(
     /**
      * Broadcast Channel for receiving UI-specific events
      * */
-    val specialEvents = Channel<UiEvent>().broadcast()
+    val specialEvents = Channel<CustomSkillEvent>().broadcast()
 
     /* Components */
 

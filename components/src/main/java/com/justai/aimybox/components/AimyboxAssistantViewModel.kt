@@ -1,7 +1,6 @@
 package com.justai.aimybox.components
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.LiveData
@@ -11,7 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.api.aimybox.SingleLiveEvent
-import com.justai.aimybox.api.aimybox.UiEvent
+import com.justai.aimybox.api.aimybox.CustomSkillEvent
 import com.justai.aimybox.components.widget.*
 import com.justai.aimybox.model.reply.ButtonsReply
 import com.justai.aimybox.model.reply.ImageReply
@@ -42,7 +41,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private val urlIntentsInternal = Channel<String>()
     val urlIntents = urlIntentsInternal as ReceiveChannel<String>
 
-    private val _uiEvents = SingleLiveEvent<UiEvent>()
+    private val _uiEvents = SingleLiveEvent<CustomSkillEvent>()
     val uiEvents = _uiEvents.immutable()
 
     init {
@@ -76,7 +75,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         widgetsInternal.value = listOf(ResponseWidget(text))
     }
 
-    fun postUiEvent(event: UiEvent) {
+    fun postUiEvent(event: CustomSkillEvent) {
         _uiEvents.postValue(event)
     }
 
