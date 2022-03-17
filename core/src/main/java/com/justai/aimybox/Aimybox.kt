@@ -100,9 +100,9 @@ class Aimybox(
     val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
 
     /**
-     * Broadcast Channel for receiving UI-specific events
+     * Broadcast Channel for receiving CustomSkillEvent events
      * */
-    val specialEvents = Channel<CustomSkillEvent>().broadcast()
+    val сustomSkillEvent = Channel<CustomSkillEvent>().broadcast()
 
     /* Components */
 
