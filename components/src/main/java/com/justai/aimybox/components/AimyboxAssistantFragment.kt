@@ -93,7 +93,7 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
             }
         }
 
-        viewModel.uiEvents.observe(viewLifecycleOwner) {
+        viewModel.customSkillEvent.observe(viewLifecycleOwner) {
         }
 
         viewModel.widgets.observe(viewLifecycleOwner, Observer(adapter::setData))

@@ -41,14 +41,14 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private val urlIntentsInternal = Channel<String>()
     val urlIntents = urlIntentsInternal as ReceiveChannel<String>
 
-    private val _uiEvents = SingleLiveEvent<CustomSkillEvent>()
-    val uiEvents = _uiEvents.immutable()
+    private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
+    val customSkillEvent = _customSkillEvent.immutable()
 
     init {
         aimybox.stateChannel.observe { L.i(it) }
         aimybox.exceptions.observe { L.e(it) }
         aimybox.specialEvents.observe {
-            _uiEvents.postValue(it)
+            _customSkillEvent.postValue(it)
         }
 
         val events = Channel<Any>(Channel.UNLIMITED)
@@ -75,8 +75,8 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         widgetsInternal.value = listOf(ResponseWidget(text))
     }
 
-    fun postUiEvent(event: CustomSkillEvent) {
-        _uiEvents.postValue(event)
+    fun postCustomSkillEvent(event: CustomSkillEvent) {
+        _customSkillEvent.postValue(event)
     }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
