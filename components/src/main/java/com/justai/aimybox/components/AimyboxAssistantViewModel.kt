@@ -1,7 +1,6 @@
 package com.justai.aimybox.components
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.LiveData
@@ -10,6 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.api.DialogApi
+import com.justai.aimybox.api.aimybox.SingleLiveEvent
+import com.justai.aimybox.api.aimybox.CustomSkillEvent
 import com.justai.aimybox.components.widget.*
 import com.justai.aimybox.model.reply.ButtonsReply
 import com.justai.aimybox.model.reply.ImageReply
@@ -40,9 +41,15 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private val urlIntentsInternal = Channel<String>()
     val urlIntents = urlIntentsInternal as ReceiveChannel<String>
 
+    private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
+    val customSkillEvent = _customSkillEvent.immutable()
+
     init {
         aimybox.stateChannel.observe { L.i(it) }
         aimybox.exceptions.observe { L.e(it) }
+        aimybox.сustomSkillEvent.observe {
+            _customSkillEvent.postValue(it)
+        }
 
         val events = Channel<Any>(Channel.UNLIMITED)
 
@@ -66,6 +73,10 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
 
     fun setInitialPhrase(text: String) {
         widgetsInternal.value = listOf(ResponseWidget(text))
+    }
+
+    fun postCustomSkillEvent(event: CustomSkillEvent) {
+        _customSkillEvent.postValue(event)
     }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
@@ -129,21 +140,21 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                         }
                     }
                     recognitionTimeoutJob = launch {
-                            delay(delayAfterSpeech)
-                            aimybox.stopRecognitionAndChangeState()
+                        delay(delayAfterSpeech)
+                        aimybox.stopRecognitionAndChangeState()
                     }
                 }
             }
-        is SpeechToText.Event.EmptyRecognitionResult,
-        SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
-        is SpeechToText.Event.SoundVolumeRmsChanged -> {
-            soundVolumeRmsMutable.postValue(event.rmsDb)
+            is SpeechToText.Event.EmptyRecognitionResult,
+            SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
+            is SpeechToText.Event.SoundVolumeRmsChanged -> {
+                soundVolumeRmsMutable.postValue(event.rmsDb)
+            }
         }
     }
-    }
 
 
-private fun onDialogApiEvent(event: DialogApi.Event) {
+    private fun onDialogApiEvent(event: DialogApi.Event) {
         when (event) {
             is DialogApi.Event.ResponseReceived -> {
                 removeButtonWidgets()
