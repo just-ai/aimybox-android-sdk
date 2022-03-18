@@ -30,6 +30,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     /**
      * Provide your custom skills to this set.
      * */
+    //protected abstract val customSkills: LinkedHashSet<CustomSkill<TRequest, TResponse>>
     protected abstract val customSkills: LinkedHashSet<CustomSkill<TRequest, TResponse>>
 
     /**
@@ -132,6 +133,12 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
         } catch (e: Throwable) {
             L.e("Failed to parse replies from $response", e)
         }
+    }
+
+    fun getCustomSkill(skillName: String) =
+        customSkills.find { skill->
+            skill::class.java.name == skillName
+
     }
 
     /**

@@ -10,6 +10,8 @@ class AimyboxDialogApiAndroidTest {
     private lateinit var dialogApi: AimyboxDialogApi
     private lateinit var uuid : String
 
+   // val setOfSkills = linkedSetOf( AlarmSkill(context))
+
     companion object {
         private const val AIMYBOX_API_KEY = "Ldf0j7WZi3KwNah2aNeXVIACz0lb9qMH"
         private const val DEFAULT_API_URL = "https://api.aimybox.com/"
