@@ -6,7 +6,6 @@ on:
       - master
       - dev
       - release/*
-      - INT-184-github-actions
 
 jobs:
   build:
@@ -42,29 +41,13 @@ jobs:
           printf "signing.password=$SIGNING_PASSWORD\n" >> ${{ github.workspace }}/local.properties
           printf "github.token=$TOKEN\n" >> ${{ github.workspace }}/local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
-          ./gradlew publish
-#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+          ./gradlew publishAllPublicationsToMavenCentralRepository
 
-#      - name: Save artifact
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: upload
-#          path: ./local.properties
-#          path: ./*.gpg
-
-#      - name: run task
-#        run: |
-#          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
-
-#      - name: Validate Gradle wrapper
-#        uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
-#
-#      - name: Publish packages
-#        uses: gradle/gradle-build-action@937999e9cc2425eddc7fd62d1053baf041147db7
-#        with:
-#          arguments: publish
-
-
-#      - name: Publish with gradle
-#        run: |
-#          ./gradlew publish
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: mobile-dev-builds
+          SLACK_USERNAME: GitHub Actions
+          SLACK_ICON: https://raw.githubusercontent.com/quintessence/slack-icons/master/images/octocat-spock-slack-icon.png
+          SLACK_COLOR: ${{ job.status }}
