@@ -232,13 +232,6 @@ class Aimybox(
         isMuted = false
     }
 
-    fun customSkillCanHandleRequest(skillName: String, isPossible: Boolean){
-
-        val customSkill =  dialogApi.getCustomSkill(skillName)
-        customSkill ?: return
-        customSkill.isRequestHandled = isPossible
-
-    }
 
     /* TTS */
 

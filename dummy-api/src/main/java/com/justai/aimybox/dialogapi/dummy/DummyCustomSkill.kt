@@ -9,6 +9,7 @@ import com.justai.aimybox.model.TextSpeech
 
 open class DummyCustomSkill: CustomSkill<DummyRequest, DummyResponse> {
 
+
     override fun canHandle(response: DummyResponse) = true
 
     @SuppressLint("MissingPermission")
@@ -19,4 +20,5 @@ open class DummyCustomSkill: CustomSkill<DummyRequest, DummyResponse> {
     ) {
         aimybox.speak(TextSpeech(response.query ?: ""))
     }
+
 }

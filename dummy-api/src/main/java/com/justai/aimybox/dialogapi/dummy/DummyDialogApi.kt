@@ -9,6 +9,7 @@ class DummyDialogApi(
     private val dummyCustomSkill: DummyCustomSkill = DummyCustomSkill()
 ): DialogApi<DummyRequest, DummyResponse>() {
 
+
     override fun createRequest(query: String) = DummyRequest(query)
 
     override suspend fun send(request: DummyRequest) = DummyResponse(request.query)

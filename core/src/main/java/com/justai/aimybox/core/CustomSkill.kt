@@ -15,10 +15,12 @@ interface CustomSkill<TRequest : Request, in TResponse : Response> {
      * */
     suspend fun onRequest(request: TRequest, aimybox: Aimybox): TRequest = request
 
+
+
     /**
      *
      */
-    var isRequestHandled: Boolean
+    fun canHandleRequest(query: String): Boolean = true
 
     /**
      * Determines whether the current skill can handle the [response].
