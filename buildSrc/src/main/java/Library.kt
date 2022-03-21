@@ -17,6 +17,7 @@ object Library {
         val kotlinJUnit = kotlin("test-junit")
 
         val mockk = "io.mockk:mockk" version { mockk }
+        val mockkAndroid = "io.mockk:mockk-android" version { mockk }
 
         val androidXRunner = "androidx.test:runner" version { androidxTest }
         val androidXRules = "androidx.test:rules" version { androidxTest }
@@ -28,6 +29,7 @@ object Library {
         )
         val instrumentedTest = listOf(
             kotlin,
+            mockkAndroid,
             androidXRunner,
             androidXRules
         )
