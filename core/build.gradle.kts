@@ -29,12 +29,16 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     testImplementation ("org.robolectric:robolectric:4.6")
-    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0")
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
 
     api("com.github.salomonbrys.kotson:kotson" version { kotson })
+    
 
-    for (notation in (Library.Test.instrumentedTest + Library.Test.unitTest)) {
+    for (notation in (Library.Test.instrumentedTest)) {
         androidTestImplementation(notation)
+    }
+
+    for (notation in (Library.Test.unitTest)) {
         testImplementation(notation)
     }
 }
