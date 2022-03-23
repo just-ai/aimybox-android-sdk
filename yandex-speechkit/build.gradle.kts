@@ -55,8 +55,8 @@ dependencies {
     implementation("io.grpc:grpc-stub" version { grpc })
 
     implementation ("com.google.code.gson:gson:2.8.9")
-    compileOnly("javax.annotation:javax.annotation-api:1.3.2")
-    implementation ("com.google.protobuf:protobuf-java:3.19.1")
+    compileOnly ("org.apache.tomcat:annotations-api:6.0.53")
+
 
     for (notation in (Library.Test.instrumentedTest + Library.Test.unitTest)) {
         androidTestImplementation(notation)
@@ -67,7 +67,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.19.1"
+        artifact = "com.google.protobuf:protoc:3.19.4"
 
     }
     plugins {
@@ -88,3 +88,5 @@ protobuf {
         }
     }
 }
+
+
