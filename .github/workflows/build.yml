@@ -41,7 +41,19 @@ jobs:
           printf "signing.password=$SIGNING_PASSWORD\n" >> ${{ github.workspace }}/local.properties
           printf "github.token=$TOKEN\n" >> ${{ github.workspace }}/local.properties
           echo signing.secretKeyRingFile=${{ github.workspace }}/secring-mem.gpg >> ./local.properties
-          ./gradlew publishAllPublicationsToMavenCentralRepository
+          ./gradlew publishComponentsPublicationToMavenCentralRepository
+          ./gradlew publishCorePublicationToMavenCentralRepository
+          ./gradlew publishDialogflow-apiPublicationToMavenCentralRepository
+          ./gradlew publishDummy-apiPublicationToMavenCentralRepository
+          ./gradlew publishGoogle-cloud-speechkitPublicationToMavenCentralRepository
+          ./gradlew publishGoogle-platform-speechkitPublicationToMavenCentralRepository
+          ./gradlew publishHoundify-speechkitPublicationToMavenCentralRepository
+          ./gradlew publishJaicf-apiPublicationToMavenCentralRepository
+          ./gradlew publishKaldi-speechkitPublicationToMavenCentralRepository
+          ./gradlew publishPocketsphinx-speechkitPublicationToMavenCentralRepository
+          ./gradlew publishRasa-apiPublicationToMavenCentralRepository
+          ./gradlew publishSnowboy-speechkitPublicationToMavenCentralRepository
+          ./gradlew publishYandex-speechkitPublicationToMavenCentralRepository
 
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
