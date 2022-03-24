@@ -16,10 +16,11 @@ buildscript {
         classpath(Plugin.dokka)
         classpath(Plugin.bintray)
         classpath(Plugin.buildInfoExtractor)
+        classpath("com.android.tools.build:gradle:7.1.0")
     }
 }
 
-val versionProject = "0.17.5"
+val versionProject = "0.17.5-alpha.2"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
