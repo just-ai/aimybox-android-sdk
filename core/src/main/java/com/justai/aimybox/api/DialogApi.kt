@@ -54,9 +54,10 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     internal suspend fun send(query: String, aimybox: Aimybox, isSilentRequest: Boolean = false) {
         cancelRunningJob()
         withContext(coroutineContext) {
+            val baseRequest = createRequest(query)
             val request =
-                customSkills.filter{it.canHandleRequest(query)}
-                .fold(createRequest(query)) { request, skill ->
+                customSkills.filter{it.canHandleRequest(baseRequest)}
+                .fold(baseRequest) { request, skill ->
                     skill.onRequest(request, aimybox)
                 }
 

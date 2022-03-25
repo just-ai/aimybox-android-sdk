@@ -1,8 +1,10 @@
 package com.justai.aimybox.api.aimybox
 
 
+import android.util.Log
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.core.CustomSkill
+import com.justai.aimybox.model.Request
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import kotlinx.coroutines.runBlocking
@@ -13,8 +15,8 @@ import java.util.*
 
 class HelloRequestHandlerSkill : CustomSkill<AimyboxRequest, AimyboxResponse> {
 
-    override fun canHandleRequest(query: String): Boolean {
-        return query.contains("Hello")
+    override fun canHandleRequest(request: AimyboxRequest): Boolean {
+        return request.query.contains("Hello")
     }
 
     override suspend fun onRequest(request: AimyboxRequest, aimybox: Aimybox): AimyboxRequest {
@@ -25,8 +27,8 @@ class HelloRequestHandlerSkill : CustomSkill<AimyboxRequest, AimyboxResponse> {
 
 class OpenRequestHandlerSkill : CustomSkill<AimyboxRequest, AimyboxResponse> {
 
-    override fun canHandleRequest(query: String): Boolean {
-        return query.contains("Open")
+    override fun canHandleRequest(request: AimyboxRequest): Boolean {
+        return request.query.contains("Open")
     }
 
     override suspend fun onRequest(request: AimyboxRequest, aimybox: Aimybox): AimyboxRequest {
@@ -38,7 +40,7 @@ class SwitchedRequestHandlerSkill : CustomSkill<AimyboxRequest, AimyboxResponse>
 
     var isRequestProcessed = false
 
-    override fun canHandleRequest(query: String): Boolean {
+    override fun canHandleRequest(request: AimyboxRequest): Boolean {
         return isRequestProcessed
     }
 
@@ -66,6 +68,7 @@ class AimyboxDialogApiAndroidTest {
         private const val HELLO_QUERY_STRING = "Hello"
         private const val OPEN_QUERY_STRING = "Open"
         private const val HELLO_AND_OPEN_QUERY_STRING = "Open the door"
+        private const val HELLO_AND_OPEN_QUERY_STRING2 = "Hello Open - "
     }
 
     @Before
@@ -97,9 +100,10 @@ class AimyboxDialogApiAndroidTest {
         val helloRequest = dialogApi.createRequest(HELLO_QUERY_STRING)
         val openRequest = dialogApi.createRequest(OPEN_QUERY_STRING)
         val hAndORequest = dialogApi.createRequest(HELLO_AND_OPEN_QUERY_STRING)
+        val hAndORequest2 = dialogApi.createRequest(HELLO_AND_OPEN_QUERY_STRING2)
 
         val helloResult =
-            customSkills.filter { it.canHandleRequest(HELLO_QUERY_STRING) }
+            customSkills.filter { it.canHandleRequest(helloRequest) }
                 .fold(helloRequest) { request, skill ->
                     skill.onRequest(request, mockAimyBox)
                 }
@@ -107,7 +111,7 @@ class AimyboxDialogApiAndroidTest {
         assertEquals("Hello world!", helloResult.query)
 
         val openResult =
-            customSkills.filter { it.canHandleRequest(OPEN_QUERY_STRING) }
+            customSkills.filter { it.canHandleRequest(openRequest) }
                 .fold(openRequest) { request, skill ->
                     skill.onRequest(request, mockAimyBox)
                 }
@@ -115,12 +119,19 @@ class AimyboxDialogApiAndroidTest {
         assertEquals("Open the table!", openResult.query)
 
         val hAndOResult =
-            customSkills.filter { it.canHandleRequest(HELLO_AND_OPEN_QUERY_STRING) }
+            customSkills.filter { it.canHandleRequest(hAndORequest) }
                 .fold(hAndORequest) { request, skill ->
                     skill.onRequest(request, mockAimyBox)
                 }
 
         assertEquals("Open the door the table!", hAndOResult.query)
+
+        val hAndOResult2 =
+            customSkills.filter { it.canHandleRequest(hAndORequest2) }
+                .fold(hAndORequest2) { request, skill ->
+                    skill.onRequest(request, mockAimyBox)
+                }
+        Log.i("Test", "Test result: ${ hAndOResult2.query}")
 
     }
 
@@ -131,7 +142,7 @@ class AimyboxDialogApiAndroidTest {
         val managedRequest = dialogApi.createRequest(HELLO_AND_OPEN_QUERY_STRING)
 
         val resultRequest1 =
-            customSkills.filter { it.canHandleRequest(HELLO_AND_OPEN_QUERY_STRING) }
+            customSkills.filter { it.canHandleRequest(managedRequest) }
                 .fold(managedRequest) { request, skill ->
                     skill.onRequest(request, mockAimyBox)
                 }
@@ -145,7 +156,7 @@ class AimyboxDialogApiAndroidTest {
         }
 
         val resultRequest2 =
-            customSkills.filter { it.canHandleRequest(HELLO_AND_OPEN_QUERY_STRING) }
+            customSkills.filter { it.canHandleRequest(managedRequest) }
                 .fold(managedRequest) { request, skill ->
                     skill.onRequest(request, mockAimyBox)
                 }
