@@ -47,7 +47,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     init {
         aimybox.stateChannel.observe { L.i(it) }
         aimybox.exceptions.observe { L.e(it) }
-        aimybox.сustomSkillEvent.observe {
+        aimybox.customSkillEvents.observe {
             _customSkillEvent.postValue(it)
         }
 
