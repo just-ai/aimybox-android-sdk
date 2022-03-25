@@ -16,6 +16,7 @@ buildscript {
         classpath(Plugin.dokka)
         classpath(Plugin.bintray)
         classpath(Plugin.buildInfoExtractor)
+        classpath("com.android.tools.build:gradle:7.1.0")
     }
 }
 
