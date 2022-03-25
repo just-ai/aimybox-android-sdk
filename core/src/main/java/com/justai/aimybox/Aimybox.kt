@@ -102,7 +102,7 @@ class Aimybox(
     /**
      * Broadcast Channel for receiving CustomSkillEvent events
      * */
-    val сustomSkillEvent = Channel<CustomSkillEvent>().broadcast()
+    val customSkillEvents = Channel<CustomSkillEvent>().broadcast()
 
     /* Components */
 
@@ -241,6 +241,8 @@ class Aimybox(
      *
      * By default, after synthesis Aimybox will go to [State.STANDBY] state, but you can change the behavior using
      * [nextAction] parameter.
+     * Be careful: [Job] canceling doesn't set Aimybox to [NextAction] state and not return to STANBY.
+     * You must use [stopSpeaking] method for interrupts current call.
      *
      * @param nextAction defines which action runs after synthesis completion
      *
@@ -256,6 +258,7 @@ class Aimybox(
         onlyText: Boolean = true
     ): Job? =
         speak(listOf(speech), nextAction, onlyText)
+
 
     /**
      * Start synthesis of the provided [speeches].
@@ -303,6 +306,11 @@ class Aimybox(
             }
         } else null
 
+    /**
+     * Interrupts the current synthesis.
+     *
+     * @return [Job] which completes when the synthesis is stopped.
+     */
     fun stopSpeaking() = launch {
         textToSpeech.cancelRunningJob()
     }
