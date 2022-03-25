@@ -10,10 +10,16 @@ import com.justai.aimybox.model.Response
  * */
 interface CustomSkill<TRequest : Request, in TResponse : Response> {
     /**
+     * Called if [canHandleRequest] returned true
      * This method will be called just before any request to dialog api.
      * You can modify the request or return it without changes.
      * */
     suspend fun onRequest(request: TRequest, aimybox: Aimybox): TRequest = request
+
+    /**
+     *  Determines whether the current skill can handle the [request].
+     */
+    fun canHandleRequest(request: TRequest): Boolean = true
 
     /**
      * Determines whether the current skill can handle the [response].

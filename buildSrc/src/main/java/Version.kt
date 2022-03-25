@@ -22,7 +22,7 @@ object Version {
 
     const val retrofit = "2.9.0"
     const val okHttp = "4.9.0"
-    const val grpc = "1.42.1"
+    const val grpc = "1.45.0"
     const val kotson = "2.5.0"
 
     // Test

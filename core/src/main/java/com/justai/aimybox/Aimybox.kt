@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat.getSystemService
 import com.justai.aimybox.api.DialogApi
+import com.justai.aimybox.api.aimybox.CustomSkillEvent
 import com.justai.aimybox.core.*
 import com.justai.aimybox.core.Config.*
 import com.justai.aimybox.logging.Logger
@@ -98,6 +99,10 @@ class Aimybox(
      * */
     val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
 
+    /**
+     * Broadcast Channel for receiving CustomSkillEvent events
+     * */
+    val customSkillEvents = Channel<CustomSkillEvent>().broadcast()
 
     /* Components */
 
@@ -236,6 +241,8 @@ class Aimybox(
      *
      * By default, after synthesis Aimybox will go to [State.STANDBY] state, but you can change the behavior using
      * [nextAction] parameter.
+     * Be careful: [Job] canceling doesn't set Aimybox to [NextAction] state and not return to STANBY.
+     * You must use [stopSpeaking] method for interrupts current call.
      *
      * @param nextAction defines which action runs after synthesis completion
      *
@@ -251,6 +258,7 @@ class Aimybox(
         onlyText: Boolean = true
     ): Job? =
         speak(listOf(speech), nextAction, onlyText)
+
 
     /**
      * Start synthesis of the provided [speeches].
@@ -283,6 +291,7 @@ class Aimybox(
             }
 
             textToSpeech.speak(speeches, onlyText)
+
         }.apply {
             invokeOnCompletion { cause ->
                 if (cause is CancellationException) {
@@ -297,6 +306,11 @@ class Aimybox(
             }
         } else null
 
+    /**
+     * Interrupts the current synthesis.
+     *
+     * @return [Job] which completes when the synthesis is stopped.
+     */
     fun stopSpeaking() = launch {
         textToSpeech.cancelRunningJob()
     }

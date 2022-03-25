@@ -16,11 +16,11 @@ buildscript {
         classpath(Plugin.dokka)
         classpath(Plugin.bintray)
         classpath(Plugin.buildInfoExtractor)
-        //classpath(Plugin.protobuf)
+        classpath("com.android.tools.build:gradle:7.1.0")
     }
 }
 
-val versionProject = "0.17.4"
+val versionProject = "0.17.5.1"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
@@ -47,11 +47,5 @@ allprojects {
 }
 
 tasks.register<Delete>("clean") {
-    group = "aimybox:util"
     delete(*(allprojects.map { it.buildDir }.toTypedArray()))
-//    delete(".gradle")
 }
-
-//tasks.register("clean", Delete::class) {
-//    delete(rootProject.buildDir)
-//}

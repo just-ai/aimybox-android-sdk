@@ -30,6 +30,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     /**
      * Provide your custom skills to this set.
      * */
+    //protected abstract val customSkills: LinkedHashSet<CustomSkill<TRequest, TResponse>>
     protected abstract val customSkills: LinkedHashSet<CustomSkill<TRequest, TResponse>>
 
     /**
@@ -53,9 +54,12 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     internal suspend fun send(query: String, aimybox: Aimybox, isSilentRequest: Boolean = false) {
         cancelRunningJob()
         withContext(coroutineContext) {
-            val request = customSkills.fold(createRequest(query)) { request, skill ->
-                skill.onRequest(request, aimybox)
-            }
+            val baseRequest = createRequest(query)
+            val request =
+                customSkills.filter{it.canHandleRequest(baseRequest)}
+                .fold(baseRequest) { request, skill ->
+                    skill.onRequest(request, aimybox)
+                }
 
             val response = try {
                 withTimeout(requestTimeoutMs) {
@@ -88,7 +92,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     private fun handle(response: TResponse, aimybox: Aimybox, isSilentRequest: Boolean = false) {
-        launch {
+        scope.launch {
             val skill = customSkills.find { it.canHandle(response) }
 
             if (skill != null) {
@@ -132,6 +136,12 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
         } catch (e: Throwable) {
             L.e("Failed to parse replies from $response", e)
         }
+    }
+
+    fun getCustomSkill(skillName: String) =
+        customSkills.find { skill->
+            skill::class.java.name == skillName
+
     }
 
     /**

@@ -16,7 +16,7 @@ internal class TextToSpeechComponent(
         provideChannelsForDelegate()
     }
 
-    suspend fun speak(speechList: List<Speech>, onlyText : Boolean = true) {
+    suspend fun speak(speechList: List<Speech>, onlyText: Boolean = true) {
         L.assert(!hasRunningJobs) { "Synthesis is already running" }
         cancelRunningJob()
         eventChannel.send(TextToSpeech.Event.SpeechSequenceStarted(speechList))
