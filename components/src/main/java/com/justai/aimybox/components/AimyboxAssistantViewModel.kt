@@ -41,6 +41,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private val urlIntentsInternal = Channel<String>()
     val urlIntents = urlIntentsInternal as ReceiveChannel<String>
 
+    //TODO  SingleLiveEvent -> StateFlow
     private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
     val customSkillEvent = _customSkillEvent.immutable()
 

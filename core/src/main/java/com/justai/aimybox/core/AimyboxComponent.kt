@@ -8,10 +8,10 @@ import kotlinx.coroutines.*
 
 abstract class AimyboxComponent(name: String)  {
 
-    val coroutineContext = Dispatchers.IO + Job() + CoroutineName("Aimybox($name)")
+    val coroutineContext = Dispatchers.Default + Job() + CoroutineName("Aimybox($name)")
     val scope = CoroutineScope( coroutineContext)
 
-    protected val L = Logger(name)
+    protected val logger = Logger(name)
 
     val hasRunningJobs: Boolean
         get() = scope.contextJob.children.any(Job::isActive)

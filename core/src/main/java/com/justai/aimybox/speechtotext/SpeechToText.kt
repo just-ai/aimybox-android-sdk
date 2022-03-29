@@ -2,11 +2,10 @@ package com.justai.aimybox.speechtotext
 
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.Aimybox
+import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
 
 /**
  * Base class for speech recognizers.
@@ -15,7 +14,7 @@ import kotlinx.coroutines.channels.SendChannel
 abstract class SpeechToText(
     recognitionTimeout: Long = 10000L,
     val maxAudioChunks: Int? = null
-) : CoroutineScope {
+) {
 
 
     /**
@@ -34,8 +33,8 @@ abstract class SpeechToText(
             maxAudioChunks != null && audioChunksBetweenResults >= maxAudioChunks
 
 
-    internal lateinit var eventChannel: SendChannel<Event>
-    internal lateinit var exceptionChannel: SendChannel<AimyboxException>
+    internal lateinit var eventChannel: EventBus<Event>
+    internal lateinit var exceptionChannel: EventBus<AimyboxException>
 
     /**
      * Stop audio recording, but await for final result.
@@ -72,14 +71,14 @@ abstract class SpeechToText(
     open fun destroy() = Unit
 
     private fun onEvent(event: Event) {
-        eventChannel.offer(event)
+        eventChannel.tryInvoke(event)
     }
 
     /**
-     * Send caught [SpeechToTextException] to [Aimybox.exceptions] channel.
+     * TODO Change comment Send caught [SpeechToTextException] to [Aimybox.exceptions] .
      * */
     protected fun onException(exception: SpeechToTextException) {
-        exceptionChannel.offer(exception)
+        exceptionChannel.tryInvoke(exception)
     }
 
     /**

@@ -1,11 +1,11 @@
 object Version {
     // Kotlin
-    const val kotlin = "1.5.31"
+    const val kotlin = "1.6.10"
     const val dokka = "1.4.20"
-    const val coroutines = "1.5.2"
+    const val coroutines = "1.6.0"
 
     //Plugins
-    const val androidPlugin = "7.0.3"
+    const val androidPlugin = "7.1.2"
     const val dexCountPlugin = "0.8.6"
 
     const val bintrayPlugin = "1.8.5"

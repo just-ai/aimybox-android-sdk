@@ -12,6 +12,7 @@ import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat.getSystemService
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.api.aimybox.CustomSkillEvent
+import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.*
 import com.justai.aimybox.core.Config.*
 import com.justai.aimybox.logging.Logger
@@ -24,6 +25,8 @@ import com.justai.aimybox.voicetrigger.VoiceTrigger
 import com.justai.aimybox.voicetrigger.VoiceTriggerComponent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * The main library class, provides access to all library features.
@@ -43,16 +46,10 @@ class Aimybox(
     applicationContext: Context?
 ) : CoroutineScope {
 
-    @Deprecated(
-        "Audio focus cannot be requested. Use constructor with application context instead.",
-        ReplaceWith("Aimybox(initialConfig, context)")
-    )
-    constructor(initialConfig: Config) : this(initialConfig, null)
-
     private val L = Logger()
 
     override val coroutineContext =
-        Dispatchers.IO + SupervisorJob() + CoroutineName("Aimybox Root Scope")
+        Dispatchers.Default + SupervisorJob() + CoroutineName("Aimybox Root Scope")
 
     /**
      * Read only current configuration.
@@ -69,14 +66,17 @@ class Aimybox(
      *
      * @see AimyboxException
      * */
-    val exceptions = Channel<AimyboxException>().broadcast()
+    //val exceptions = Channel<AimyboxException>().broadcast()
+    val exceptions = EventBus<AimyboxException>()
 
     /**
      * Broadcast channel for receiving speech recognition events.
      *
      * @see SpeechToText.Event
      * */
-    val speechToTextEvents = Channel<SpeechToText.Event>().broadcast()
+    //val speechToTextEvents = Channel<SpeechToText.Event>().broadcast()
+    val speechToTextEvents = EventBus<SpeechToText.Event>()
+
 
     /**
      * Broadcast channel for receiving speech synthesis events.
@@ -165,23 +165,26 @@ class Aimybox(
         }
 
     init {
-        launch { updateConfiguration(initialConfig) }
+        launch {
+            updateConfiguration(initialConfig)
 
-        // Fix for Kaldi Voice Trigger behaviour.
+            // Fix for Kaldi Voice Trigger behaviour.
 
-        exceptions.observe {
-            val mustVoiceTriggerBeStarted = state == State.STANDBY ||
-                    (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE
-                            && state != State.LISTENING
-                            )
-            if (it is VoiceTriggerException && mustVoiceTriggerBeStarted) {
-                voiceTrigger.stop()
-                delay(200)
-                if (isVoiceTriggerActivated) {
-                    voiceTrigger.start()
+            exceptions.events.collectLatest {
+                val mustVoiceTriggerBeStarted = state == State.STANDBY ||
+                        (config.recognitionBehavior == RecognitionBehavior.ALLOW_OVERRIDE
+                                && state != State.LISTENING
+                                )
+                if (it is VoiceTriggerException && mustVoiceTriggerBeStarted) {
+                    voiceTrigger.stop()
+                    delay(200)
+                    if (isVoiceTriggerActivated) {
+                        voiceTrigger.start()
+                    }
                 }
             }
         }
+
     }
 
     /* Common */

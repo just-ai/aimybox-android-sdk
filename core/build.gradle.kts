@@ -25,7 +25,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit" version { retrofit })
     implementation("com.squareup.okhttp3:logging-interceptor" version { okHttp })
     implementation("com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.4.3-native-mt")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.6.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     testImplementation ("org.robolectric:robolectric:4.6")

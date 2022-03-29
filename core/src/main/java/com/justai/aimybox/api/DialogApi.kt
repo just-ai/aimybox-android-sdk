@@ -71,22 +71,22 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 }
             } catch (e: TimeoutCancellationException) {
                 val timeoutException = ApiRequestTimeoutException(request, requestTimeoutMs)
-                L.e(timeoutException)
-                aimybox.exceptions.send(timeoutException)
+                logger.e(timeoutException)
+                aimybox.exceptions.invokeEvent(timeoutException)
                 aimybox.standby()
             } catch (e: CancellationException) {
-                L.w("Request was cancelled")
-                L.d(request)
+                logger.w("Request was cancelled")
+                logger.d(request)
                 aimybox.dialogApiEvents.send(Event.RequestCancelled(request))
             } catch (e: Throwable) {
-                L.e("Error during request", e)
-                L.d(request)
-                aimybox.exceptions.send(ApiException(cause = e))
+                logger.e("Error during request", e)
+                logger.d(request)
+                aimybox.exceptions.invokeEvent(ApiException(cause = e))
                 aimybox.standby()
             } as? TResponse
 
             if (response != null) handle(response, aimybox, isSilentRequest)
-            else L.d("Response is empty for $request")
+            else logger.d("Response is empty for $request")
         }
     }
 
@@ -96,14 +96,14 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
             val skill = customSkills.find { it.canHandle(response) }
 
             if (skill != null) {
-                L.i("Found skill \"${skill.className}\" for action \"${response.action}\". ")
+                logger.i("Found skill \"${skill.className}\" for action \"${response.action}\". ")
                 skill.onResponse(
                     response,
                     aimybox,
                     defaultHandler = { response -> handleDefault(response, aimybox) })
             } else {
                 if (!response.action.isNullOrBlank()) {
-                    L.w("No suitable skill found for action \"${response.action}\". Handling by default...")
+                    logger.w("No suitable skill found for action \"${response.action}\". Handling by default...")
                 }
                 if (!isSilentRequest) handleDefault(response, aimybox)
             }
@@ -129,12 +129,12 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 try {
                     aimybox.speak(speeches, nextAction)?.join()
                 } catch (e: CancellationException) {
-                    L.w("Speech cancelled", e)
+                    logger.w("Speech cancelled", e)
                 }
             } ?: aimybox.standby()
 
         } catch (e: Throwable) {
-            L.e("Failed to parse replies from $response", e)
+            logger.e("Failed to parse replies from $response", e)
         }
     }
 

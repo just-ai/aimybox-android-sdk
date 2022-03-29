@@ -17,7 +17,7 @@ internal class TextToSpeechComponent(
     }
 
     suspend fun speak(speechList: List<Speech>, onlyText: Boolean = true) {
-        L.assert(!hasRunningJobs) { "Synthesis is already running" }
+        logger.assert(!hasRunningJobs) { "Synthesis is already running" }
         cancelRunningJob()
         eventChannel.send(TextToSpeech.Event.SpeechSequenceStarted(speechList))
         withContext(coroutineContext) {
@@ -29,7 +29,7 @@ internal class TextToSpeechComponent(
     override suspend fun cancelRunningJob() {
         if (hasRunningJobs) {
             delegate.stop()
-            L.w("Speech cancelled")
+            logger.w("Speech cancelled")
         }
         super.cancelRunningJob()
     }

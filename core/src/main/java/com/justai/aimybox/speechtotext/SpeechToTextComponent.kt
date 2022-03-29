@@ -2,17 +2,17 @@ package com.justai.aimybox.speechtotext
 
 import android.Manifest
 import androidx.annotation.RequiresPermission
+import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.RecognitionTimeoutException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 
 internal class SpeechToTextComponent(
     private var delegate: SpeechToText,
-    private val eventChannel: SendChannel<SpeechToText.Event>,
-    private val exceptionChannel: SendChannel<AimyboxException>
+    private val eventBus: EventBus<SpeechToText.Event>,
+    private val exceptionBus: EventBus<AimyboxException>
 ) : AimyboxComponent("STT") {
 
     init {
@@ -23,13 +23,13 @@ internal class SpeechToTextComponent(
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun recognizeSpeech(): String? {
-        L.assert(!hasRunningJobs) { "Recognition is already running" }
+        logger.assert(!hasRunningJobs) { "Recognition is already running" }
         cancelRunningJob()
         return withContext(coroutineContext) {
 
-            L.i("Begin recognition")
+            logger.i("Begin recognition")
             val recognitionChannel = delegate.startRecognition()
-            eventChannel.send(SpeechToText.Event.RecognitionStarted)
+            eventBus.invokeEvent(SpeechToText.Event.RecognitionStarted)
 
             val timeoutTask = startTimeout(delegate.recognitionTimeoutMs)
 
@@ -44,8 +44,8 @@ internal class SpeechToTextComponent(
                                 if (finalResult != result.text) {
                                     finalResult = result.text
                                     delegate.clearCounter()
-                                    L.d("Partial recognition result: ${result.text}")
-                                    eventChannel.send(
+                                    logger.d("Partial recognition result: ${result.text}")
+                                    eventBus.invokeEvent(
                                         SpeechToText.Event.RecognitionPartialResult(
                                             result.text
                                         )
@@ -54,13 +54,13 @@ internal class SpeechToTextComponent(
                             }
                             is SpeechToText.Result.Final -> {
                                 recognitionChannel.cancel()
-                                L.d("Recognition result: ${result.text}")
+                                logger.d("Recognition result: ${result.text}")
                                 finalResult = result.text
                             }
                             is SpeechToText.Result.Exception -> {
                                 recognitionChannel.cancel()
-                                L.e("Failed to get recognition result", result.exception)
-                                exceptionChannel.send(result.exception)
+                                logger.e("Failed to get recognition result", result.exception)
+                                exceptionBus.invokeEvent(result.exception)
                                 finalResult = null
                             }
                         }
@@ -73,7 +73,7 @@ internal class SpeechToTextComponent(
                 recognitionResult?.await()
             }
             timeoutTask.cancel()
-            eventChannel.send(
+            eventBus.invokeEvent(
                 if (finalResult.isNullOrBlank()) {
                     SpeechToText.Event.EmptyRecognitionResult
                 } else {
@@ -99,7 +99,7 @@ internal class SpeechToTextComponent(
         if (hasRunningJobs) {
             recognitionResult?.cancel()
             delegate.cancelRecognition()
-            eventChannel.send(SpeechToText.Event.RecognitionCancelled)
+            eventBus.invokeEvent(SpeechToText.Event.RecognitionCancelled)
         }
         super.cancelRunningJob()
     }
@@ -108,13 +108,13 @@ internal class SpeechToTextComponent(
 
     private fun startTimeout(timeout: Long) = scope.launch {
         delay(timeout)
-        exceptionChannel.send(RecognitionTimeoutException(timeout))
+        exceptionBus.invokeEvent(RecognitionTimeoutException(timeout))
         cancelRunningJob()
     }
 
     private fun provideChannelsForDelegate() {
-        delegate.eventChannel = eventChannel
-        delegate.exceptionChannel = exceptionChannel
+        delegate.eventChannel = eventBus
+        delegate.exceptionChannel = exceptionBus
     }
 
     internal suspend fun setDelegate(speechToText: SpeechToText) {
