@@ -39,7 +39,7 @@ class HoundifySpeechToText(
     * */
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    override fun startRecognition(): ReceiveChannel<Result> {
+    override fun startRecognition(): Flow<Result> {
         val channel = Channel<Result>()
         voiceSearch = factory.build(channel)
         voiceSearch?.start()

@@ -1,35 +1,35 @@
 package com.justai.aimybox.voicetrigger
 
+import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.VoiceTriggerException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("unused")
 internal class VoiceTriggerComponent(
-    private val events: SendChannel<VoiceTrigger.Event>,
-    private val exceptions: SendChannel<AimyboxException>,
-    private val onTriggered: () -> Job
+    private val eventsBus: EventBus<VoiceTrigger.Event>,
+    private val exceptionsBus: EventBus<AimyboxException>,
+    private val onTriggered: () -> Job  //TODO Replacement candidate
 ) : AimyboxComponent("VT") {
 
     private var delegate: VoiceTrigger? = null
-    var isStarted = AtomicBoolean(false)
-        private set
+    private var isStarted = AtomicBoolean(false)
+
 
     internal suspend fun start() {
         delegate?.let { delegate ->
             if (isStarted.compareAndSet(false, true)) {
-                events.send(VoiceTrigger.Event.Started)
+                eventsBus.invokeEvent(VoiceTrigger.Event.Started)
                 delegate.startDetection(
                     onTriggered = { phrase ->
                         onTriggered()
-                        events.offer(VoiceTrigger.Event.Triggered(phrase))
+                        eventsBus.tryInvoke(VoiceTrigger.Event.Triggered(phrase))
                     },
                     onException = { e ->
-                        exceptions.offer(VoiceTriggerException(cause = e))
+                        exceptionsBus.tryInvoke(VoiceTriggerException(cause = e))
                     }
                 )
             }
@@ -41,7 +41,7 @@ internal class VoiceTriggerComponent(
             if (isStarted.get()) {
                 delegate.stopDetection()
                 isStarted.set(false)
-                events.send(VoiceTrigger.Event.Stopped)
+                eventsBus.invokeEvent(VoiceTrigger.Event.Stopped)
             }
         }
     }

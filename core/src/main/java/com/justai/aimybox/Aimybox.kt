@@ -26,6 +26,8 @@ import com.justai.aimybox.voicetrigger.VoiceTriggerComponent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -83,26 +85,29 @@ class Aimybox(
      *
      * @see TextToSpeech.Event
      * */
-    val textToSpeechEvents = Channel<TextToSpeech.Event>().broadcast()
+    //val textToSpeechEvents = Channel<TextToSpeech.Event>().broadcast()
+    val textToSpeechEvents = EventBus<TextToSpeech.Event>()
 
     /**
      * Broadcast channel for receiving voice trigger events.
      *
      * @see VoiceTrigger.Event
      * */
-    val voiceTriggerEvents = Channel<VoiceTrigger.Event>().broadcast()
+    //val voiceTriggerEvents = Channel<VoiceTrigger.Event>().broadcast()
+    val voiceTriggerEvents = EventBus<VoiceTrigger.Event>()
 
     /**
      * Broadcast channel for receiving dialog API communication events.
      *
      * @see DialogApi.Event
      * */
-    val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
+    //val dialogApiEvents = Channel<DialogApi.Event>().broadcast()
+    val dialogApiEvents = EventBus<DialogApi.Event>()
 
     /**
      * Broadcast Channel for receiving CustomSkillEvent events
      * */
-    val customSkillEvents = Channel<CustomSkillEvent>().broadcast()
+    val customSkillEvents = EventBus<CustomSkillEvent>()
 
     /* Components */
 
@@ -122,11 +127,11 @@ class Aimybox(
     /* State */
 
     /**
-     * Broadcast channel for receiving [Aimybox] state changes.
+     * Flow for receiving [Aimybox] state changes.
      *
      * @see State
      * */
-    val stateChannel = ConflatedBroadcastChannel(State.STANDBY)
+    val stateChannel = MutableStateFlow(State.STANDBY)
 
     /**
      * Current state of Aimybox.
@@ -141,7 +146,7 @@ class Aimybox(
                 State.LISTENING, State.SPEAKING -> requestAudioFocus()
                 State.PROCESSING -> Unit
             }
-            stateChannel.trySendBlocking(value)
+            stateChannel.tryEmit(value)
         }
 
     /**
@@ -540,12 +545,12 @@ class Aimybox(
         if (state == State.PROCESSING) standby()
     }
 
-    private fun <T> BroadcastChannel<T>.observe(action: suspend (T) -> Unit) {
-        val channel = openSubscription()
-        launch {
-            channel.consumeEach { action(it) }
-        }.invokeOnCompletion { channel.cancel() }
-    }
+//    private fun <T> BroadcastChannel<T>.observe(action: suspend (T) -> Unit) {
+//        val channel = openSubscription()
+//        launch {
+//            channel.consumeEach { action(it) }
+//        }.invokeOnCompletion { channel.cancel() }
+//    }
 
 
     /**

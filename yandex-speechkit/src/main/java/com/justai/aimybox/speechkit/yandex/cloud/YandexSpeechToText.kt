@@ -12,7 +12,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
@@ -26,7 +29,7 @@ class YandexSpeechToText(
     recognitionTimeout: Long = 10000L
 ) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+    val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
     private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 
@@ -34,19 +37,19 @@ class YandexSpeechToText(
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 
-    private var recognitionChannel: ReceiveChannel<Result>? = null
+    private var recognitionChannel: SharedFlow<Result>? = null
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    override fun startRecognition(): ReceiveChannel<Result> {
+    override fun startRecognition(): Flow<Result> {
         initCounter()
-        return produce<Result> {
+        return flow {
             try {
                 val requestStream = api.openStream(
                     { response ->
                         val chunk = response.chunksList.first()
                         val text = chunk.alternativesList.first().text
                         val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
-                        sendResult(result)
+                        emit(result)
                     },
                     { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
                     onCompleted = { close() }

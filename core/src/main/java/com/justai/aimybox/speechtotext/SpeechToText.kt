@@ -6,6 +6,7 @@ import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Base class for speech recognizers.
@@ -62,7 +63,7 @@ abstract class SpeechToText(
      * after sending any of these results.
      * */
     @RequiresPermission("android.permission.RECORD_AUDIO")
-    abstract fun startRecognition(): ReceiveChannel<Result>
+    abstract fun startRecognition(): Flow<Result>
 
     /**
      * Free all claimed resources and prepare the object to destroy.

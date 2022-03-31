@@ -56,18 +56,18 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
         withContext(coroutineContext) {
             val baseRequest = createRequest(query)
             val request =
-                customSkills.filter{it.canHandleRequest(baseRequest)}
-                .fold(baseRequest) { request, skill ->
-                    skill.onRequest(request, aimybox)
-                }
+                customSkills.filter { it.canHandleRequest(baseRequest) }
+                    .fold(baseRequest) { request, skill ->
+                        skill.onRequest(request, aimybox)
+                    }
 
             val response = try {
                 withTimeout(requestTimeoutMs) {
                     send(request).also {
-                        aimybox.dialogApiEvents.send(Event.RequestSent(request))
+                        aimybox.dialogApiEvents.invokeEvent(Event.RequestSent(request))
                     }
                 }.also {
-                    aimybox.dialogApiEvents.send(Event.ResponseReceived(it))
+                    aimybox.dialogApiEvents.invokeEvent(Event.ResponseReceived(it))
                 }
             } catch (e: TimeoutCancellationException) {
                 val timeoutException = ApiRequestTimeoutException(request, requestTimeoutMs)
@@ -77,7 +77,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
             } catch (e: CancellationException) {
                 logger.w("Request was cancelled")
                 logger.d(request)
-                aimybox.dialogApiEvents.send(Event.RequestCancelled(request))
+                aimybox.dialogApiEvents.invokeEvent(Event.RequestCancelled(request))
             } catch (e: Throwable) {
                 logger.e("Error during request", e)
                 logger.d(request)
@@ -139,10 +139,10 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     }
 
     fun getCustomSkill(skillName: String) =
-        customSkills.find { skill->
+        customSkills.find { skill ->
             skill::class.java.name == skillName
 
-    }
+        }
 
     /**
      * Events, which you can receive using [Aimybox.dialogApiEvents] channel.

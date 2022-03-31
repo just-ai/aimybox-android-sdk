@@ -21,8 +21,6 @@ import kotlin.math.pow
 /**
  * Coroutine scope audio recorder intended to use in [SpeechToText]
  * */
-@Suppress("unused")
-@ExperimentalCoroutinesApi
 class AudioRecorder(
     /**
      * Name of the recorder
