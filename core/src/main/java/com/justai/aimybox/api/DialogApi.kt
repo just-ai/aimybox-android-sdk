@@ -117,7 +117,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
             val nextAction = Aimybox.NextAction.byQuestion(response.question)
 
             val speeches = response.replies
-                .filter { (it is TextReply)  || it is AudioReply }
+                .filter { it is TextReply || it is AudioReply }
                 .map {
                     when (it) {
                         is TextReply -> it.asTextSpeech()
