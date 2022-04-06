@@ -129,9 +129,11 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
             speeches.takeIf { it.isNotEmpty() }?.let { it ->
 
                 try {
-                    it.filter { speech ->
+                    val filteredSpeeches = it.filter { speech ->
                         !(speech is TextSpeech && speech.text.isEmpty()) }
-                    aimybox.speak(it, nextAction)?.join()
+                    if (filteredSpeeches.isNotEmpty()) {
+                        aimybox.speak(filteredSpeeches, nextAction)?.join()
+                    }
                 } catch (e: CancellationException) {
                     L.w("Speech cancelled", e)
                 }
