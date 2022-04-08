@@ -74,9 +74,10 @@ class YandexSpeechToText(
         }
     }
 
-    override suspend fun stopRecognition() {
-        audioRecorder.stopAudioRecording()
-    }
+    override suspend fun stopRecognition() = cancelRecognition()
+//    {
+//        audioRecorder.stopAudioRecording()
+//    }
 
     override suspend fun cancelRecognition() {
         coroutineContext.cancelChildrenAndJoin()
