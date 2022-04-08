@@ -50,15 +50,17 @@ class AudioRecorder(
      * Output channel capacity in frames. One frame contains [periodMs] milliseconds of audio data.
      * */
     private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
-) : CoroutineScope {
+)   {
 
     companion object {
         private const val MILLISECONDS_IN_SECOND = 1000
     }
 
+    private var isReading = false
+
     private val L = Logger("$className $name")
 
-    override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
+    //val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
     private val bufferSize = calculateBufferSize()
 
@@ -69,37 +71,42 @@ class AudioRecorder(
      * @return a flow of ByteArrays which contains recorded audio data.
      * */
     fun startRecordingBytes(): Flow<ByteArray> {
-        return flow {
 
-            lateinit var recorder: AudioRecord
+        isReading = true
+        val recorder = createRecorder()
+
+        if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+            L.e("Failed to init AudioRecord")
+            recorder.release()
+            throw IOException("Failed to init AudioRecord")
+        }
+
+        return flow {
 
             try {
                 L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
                 val countAttempts = 5
-                retry(countAttempts, delay = 300) { attempt ->
-                    recorder = createRecorder()
-                    if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-                        L.e("Failed to init AudioRecord, attempt $attempt")
-                        recorder.release()
-                        throw IOException("Failed to init AudioRecord after $countAttempts retries")
-                    }
 
                     recorder.startRecording()
-
                     val buffer = ByteArray(bufferSize)
-                    loop@ while (currentCoroutineContext().isActive) {
+                    loop@ while (currentCoroutineContext().isActive && isReading) {
+
+                       // val buffer = ByteArray(bufferSize)
                         val bytesRead = recorder.read(buffer, 0, buffer.size)
                         when {
                             bytesRead <= 0 -> {
                                 recorder.release()
                                 throw IOException("Read $bytesRead bytes from recorder")
                             }
-                            else -> emit(buffer.copyOf())
+                            else -> emit(buffer.copyOf(bytesRead))
+
                         }
+
+
                     }
 
                     recorder.release()
-                }
+
             } catch (e: CancellationException) {
                 // Ignore
             } catch (e: Throwable) {
@@ -107,12 +114,13 @@ class AudioRecorder(
                 L.e("Uncaught AudioRecord exception", e)
             } finally {
                 withContext(NonCancellable) {
+
                     recorder.release()
                     L.i("Recording finished")
                     currentCoroutineContext().cancel()
                 }
             }
-        }
+        }.flowOn(Dispatchers.AudioRecord)
     }
 
     /**
@@ -127,9 +135,12 @@ class AudioRecorder(
      * Stop the current recording.
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
-    suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
-
-    fun interruptAudioRecording() = coroutineContext.cancelChildren()
+    //suspend fun stopAudioRecording() { //= coroutineContext.cancelChildrenAndJoin()
+//    }
+    fun stopAudioRecording(){
+        isReading = false
+    }
+   // fun interruptAudioRecording() = coroutineContext.cancelChildren()
 
     /**
      * Calculates a RMS level from recorded chunk
