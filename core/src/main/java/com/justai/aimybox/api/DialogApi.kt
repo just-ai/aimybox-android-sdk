@@ -54,7 +54,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun send(query: String, aimybox: Aimybox, isSilentRequest: Boolean = false) {
         cancelRunningJob()
-        withContext(coroutineContext) {
+        withContext(Dispatchers.IO) {  //TODO context should be setup from outside
             val baseRequest = createRequest(query)
             val request =
                 customSkills.filter { it.canHandleRequest(baseRequest) }
@@ -92,8 +92,8 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    private fun handle(response: TResponse, aimybox: Aimybox, isSilentRequest: Boolean = false) {
-        scope.launch {
+    private suspend fun handle(response: TResponse, aimybox: Aimybox, isSilentRequest: Boolean = false) {
+      //  scope.launch {
             val skill = customSkills.find { it.canHandle(response) }
 
             if (skill != null) {
@@ -108,7 +108,7 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                 }
                 if (!isSilentRequest) handleDefault(response, aimybox)
             }
-        }
+       // }
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)

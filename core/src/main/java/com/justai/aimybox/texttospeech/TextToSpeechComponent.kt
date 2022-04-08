@@ -17,20 +17,20 @@ internal class TextToSpeechComponent(
     }
 
     suspend fun speak(speechList: List<Speech>, onlyText: Boolean = true) {
-        logger.assert(!hasRunningJobs) { "Synthesis is already running" }
+     //   logger.assert(!hasRunningJobs) { "Synthesis is already running" }
         cancelRunningJob()
         eventBus.invokeEvent(TextToSpeech.Event.SpeechSequenceStarted(speechList))
-        withContext(coroutineContext) {
+    //    withContext(coroutineContext) {  //ToDO check this place!!!
             delegate.synthesize(speechList, onlyText)
-        }
+    //    }
         eventBus.invokeEvent(TextToSpeech.Event.SpeechSequenceCompleted(speechList))
     }
 
     override suspend fun cancelRunningJob() {
-        if (hasRunningJobs) {
+        //if (hasRunningJobs) {
             delegate.stop()
             logger.w("Speech cancelled")
-        }
+      //  }
         super.cancelRunningJob()
     }
 

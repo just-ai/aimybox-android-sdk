@@ -17,7 +17,7 @@ abstract class AimyboxComponent(name: String)  {
 //        get() = scope.contextJob.children.any(Job::isActive)
 //
 //    @CallSuper
-//    open suspend fun cancelRunningJob() {
-//       if (hasRunningJobs) scope.contextJob.cancelChildrenAndJoin()
-//    }
+    open suspend fun cancelRunningJob() {
+     //  if (hasRunningJobs) scope.contextJob.cancelChildrenAndJoin()
+    }
 }
