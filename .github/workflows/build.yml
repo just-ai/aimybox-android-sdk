@@ -55,9 +55,3 @@ jobs:
           ./gradlew publishSnowboy-speechkitPublicationToMavenCentralRepository
           ./gradlew publishYandex-speechkitPublicationToMavenCentralRepository
 
-      - name: Email Notification
-        uses: cinotify/github-action@main
-        with:
-          to: ${{ secrets.EMAIL_FOR_NOTIFICATION }}
-          subject: 'Aimybox android SDK built'
-          body: ${{ job.status }}
