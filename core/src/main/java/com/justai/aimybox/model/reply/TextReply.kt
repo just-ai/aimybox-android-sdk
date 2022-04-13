@@ -20,4 +20,9 @@ open class TextReply(
     val language: String? = null
 ) : Reply
 
-fun TextReply.asTextSpeech() = TextSpeech(tts ?: text, language)
+@Suppress("SENSELESS_COMPARISON")
+fun TextReply.asTextSpeech(): TextSpeech {
+    val txt = tts ?: text
+    return TextSpeech(if (txt != null) txt else "", language)
+}
+

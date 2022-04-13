@@ -55,11 +55,3 @@ jobs:
           ./gradlew publishSnowboy-speechkitPublicationToMavenCentralRepository
           ./gradlew publishYandex-speechkitPublicationToMavenCentralRepository
 
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: mobile-dev-builds
-          SLACK_USERNAME: GitHub Actions
-          SLACK_ICON: https://raw.githubusercontent.com/quintessence/slack-icons/master/images/octocat-spock-slack-icon.png
-          SLACK_COLOR: ${{ job.status }}

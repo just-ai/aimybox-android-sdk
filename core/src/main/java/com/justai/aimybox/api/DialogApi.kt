@@ -8,6 +8,7 @@ import com.justai.aimybox.core.*
 import com.justai.aimybox.extensions.className
 import com.justai.aimybox.model.Request
 import com.justai.aimybox.model.Response
+import com.justai.aimybox.model.TextSpeech
 import com.justai.aimybox.model.reply.AudioReply
 import com.justai.aimybox.model.reply.TextReply
 import com.justai.aimybox.model.reply.asAudioSpeech
@@ -125,9 +126,14 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
                     }
                 }
 
-            speeches.takeIf { it.isNotEmpty() }?.let {
+            speeches.takeIf { it.isNotEmpty() }?.let { it ->
+
                 try {
-                    aimybox.speak(speeches, nextAction)?.join()
+                    val filteredSpeeches = it.filter { speech ->
+                        !(speech is TextSpeech && speech.text.isEmpty()) }
+                    if (filteredSpeeches.isNotEmpty()) {
+                        aimybox.speak(filteredSpeeches, nextAction)?.join()
+                    }
                 } catch (e: CancellationException) {
                     L.w("Speech cancelled", e)
                 }
