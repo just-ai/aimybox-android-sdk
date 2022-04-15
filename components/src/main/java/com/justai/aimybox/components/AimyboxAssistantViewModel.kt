@@ -20,6 +20,9 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 /**
  * Aimybox Fragment's view model.
@@ -31,41 +34,42 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     val isAssistantVisible = isAssistantVisibleInternal.immutable()
 
     private val widgetsInternal = MutableLiveData<List<AssistantWidget>>()
-    val widgets = widgetsInternal.immutable()
+    val widgets =  widgetsInternal.immutable()
 
-    val aimyboxState = aimybox.stateChannel.toLiveData()
+    val aimyboxState = aimybox.stateChannel.asStateFlow()
+    val aimyboxException = aimybox.exceptions
 
     private val soundVolumeRmsMutable = MutableLiveData<Float>()
     val soundVolumeRms: LiveData<Float> = soundVolumeRmsMutable
 
-    private val urlIntentsInternal = Channel<String>()
-    val urlIntents = urlIntentsInternal as ReceiveChannel<String>
+//    private val urlIntentsInternal = Channel<String>()
+//    val urlIntents = urlIntentsInternal as ReceiveChannel<String>
 
     //TODO  SingleLiveEvent -> StateFlow
-    private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
-    val customSkillEvent = _customSkillEvent.immutable()
+//    private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
+//    val customSkillEvent = _customSkillEvent.immutable()
+
+    val customSkillEvent = aimybox.customSkillEvents
 
     init {
-        aimybox.stateChannel.observe { L.i(it) }
-        aimybox.exceptions.observe { L.e(it) }
-        aimybox.customSkillEvents.observe {
-            _customSkillEvent.postValue(it)
-        }
+//        aimybox.stateChannel .observe { L.i(it) }
+//        aimybox.exceptions.observe { L.e(it) }
+//        aimybox.customSkillEvents.observe {
+//            _customSkillEvent.postValue(it)
+//        }
 
-        val events = Channel<Any>(Channel.UNLIMITED)
+            aimybox.dialogApiEvents.events.onEach{ event ->
+                 onDialogApiEvent(event)
+            }.launchIn(this)
 
-        aimybox.speechToTextEvents.observe { events.send(it) }
-        aimybox.dialogApiEvents.observe { events.send(it) }
+        aimybox.speechToTextEvents.events.onEach{ event ->
+                onSpeechToTextEvent(event)
+        }.launchIn(this)
 
-        launch {
-            events.consumeEach {
-                when (it) {
-                    is SpeechToText.Event -> onSpeechToTextEvent(it)
-                    is DialogApi.Event -> onDialogApiEvent(it)
-                    is VoiceTrigger.Event.Triggered -> isAssistantVisibleInternal.postValue(true)
-                }
-            }
-        }
+        aimybox.voiceTriggerEvents.events.onEach{ event ->
+             isAssistantVisibleInternal.postValue(true)
+        }.launchIn(this)
+
     }
 
     fun muteAimybox() = aimybox.mute()
@@ -76,9 +80,9 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         widgetsInternal.value = listOf(ResponseWidget(text))
     }
 
-    fun postCustomSkillEvent(event: CustomSkillEvent) {
-        _customSkillEvent.postValue(event)
-    }
+//    fun postCustomSkillEvent(event: CustomSkillEvent) {
+//        _customSkillEvent.postValue(event)
+//    }
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
     fun onButtonClick(button: Button) {
@@ -86,7 +90,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         when (button) {
             is ResponseButton -> aimybox.sendRequest(button.text)
             is PayloadButton -> aimybox.sendRequest(button.payload)
-            is LinkButton -> urlIntentsInternal.safeOffer(button.url)
+           // is LinkButton -> urlIntentsInternal.safeOffer(button.url)
         }
     }
 
@@ -194,22 +198,22 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         super.onCleared()
         coroutineContext.cancel()
     }
-
-    private fun <T> BroadcastChannel<T>.observe(action: suspend (T) -> Unit) {
-        val channel = openSubscription()
-        launch {
-            channel.consumeEach { action(it) }
-        }.invokeOnCompletion { channel.cancel() }
-    }
-
-    private fun <T> BroadcastChannel<T>.toLiveData(): LiveData<T> = MutableLiveData<T>().apply {
-        observe { postValue(it) }
-    }
-
+//
+//    private fun <T> BroadcastChannel<T>.observe(action: suspend (T) -> Unit) {
+//        val channel = openSubscription()
+//        launch {
+//            channel.consumeEach { action(it) }
+//        }.invokeOnCompletion { channel.cancel() }
+//    }
+//
+//    private fun <T> BroadcastChannel<T>.toLiveData(): LiveData<T> = MutableLiveData<T>().apply {
+//        observe { postValue(it) }
+//    }
+//
     private fun <T> MutableLiveData<T>.immutable() = this as LiveData<T>
-
-    private fun <T> SendChannel<T>.safeOffer(value: T) =
-        takeUnless(SendChannel<T>::isClosedForSend)?.offer(value) ?: false
+//
+//    private fun <T> SendChannel<T>.safeOffer(value: T) =
+//        takeUnless(SendChannel<T>::isClosedForSend)?.offer(value) ?: false
 
     class Factory private constructor(private val aimybox: Aimybox) : ViewModelProvider.Factory {
 

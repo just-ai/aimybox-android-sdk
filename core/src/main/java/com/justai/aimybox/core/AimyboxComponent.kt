@@ -9,15 +9,27 @@ import kotlinx.coroutines.*
 abstract class AimyboxComponent(name: String)  {
 //
 //    val coroutineContext = Dispatchers.Default + Job() + CoroutineName("Aimybox($name)")
-//    val scope = CoroutineScope( coroutineContext)
+    //val scope = CoroutineScope( coroutineContext)
+
+    val componentContext = Dispatchers.Default + Job() + CoroutineName("Aimybox-($name)")
 
     protected val logger = Logger(name)
 
 //    val hasRunningJobs: Boolean
 //        get() = scope.contextJob.children.any(Job::isActive)
+
+    val hasRunningChildrenJobs: Boolean
+        get() = componentContext.job.children.any(Job::isActive)
 //
 //    @CallSuper
+//    open suspend fun cancelRunningJob() {
+//     //  if (hasRunningJobs) scope.contextJob.cancelChildrenAndJoin()
+//
+//    }
+
     open suspend fun cancelRunningJob() {
-     //  if (hasRunningJobs) scope.contextJob.cancelChildrenAndJoin()
+        if (hasRunningChildrenJobs)
+            componentContext.cancelChildrenAndJoin()
+
     }
 }

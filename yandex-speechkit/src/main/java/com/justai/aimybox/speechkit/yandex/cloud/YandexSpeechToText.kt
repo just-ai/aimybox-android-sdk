@@ -6,18 +6,13 @@ import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SampleRate
 import com.justai.aimybox.speechtotext.SpeechToText
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.*
+import yandex.cloud.api.ai.stt.v2.SttServiceOuterClass
+
 
 @Suppress("unused")
 class YandexSpeechToText(
@@ -29,7 +24,9 @@ class YandexSpeechToText(
     recognitionTimeout: Long = 10000L
 ) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
-    val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+    //val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+
+    private val coroutineContext = Dispatchers.IO + Job() + CoroutineName("Aimybox-(YandexSTT)")
 
     private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 
@@ -37,69 +34,58 @@ class YandexSpeechToText(
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 
-    private var recognitionChannel: SharedFlow<Result>? = null
+    //private var recognitionChannel: SharedFlow<Result>? = null
+
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): Flow<Result> {
         initCounter()
-        return flow {
-            try {
+        return  callbackFlow {
                 val requestStream = api.openStream(
                     { response ->
                         val chunk = response.chunksList.first()
                         val text = chunk.alternativesList.first().text
                         val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
-                        emit(result)
+                        trySendBlocking(result)
                     },
-                    { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
-                    onCompleted = { close() }
+                    { exp ->
+                        val exception = YandexCloudSpeechToTextException(cause = exp)
+                        trySendBlocking(Result.Exception(exception))
+                        onException(exception)
+                    },
+                    onCompleted = { channel.close() }
                 )
 
-                val audioData = audioRecorder.startRecordingBytes()
-
-                launch {
-                    audioData.collect { data ->
+                audioRecorder.startRecordingBytes().collect { data ->  //collectIN
                         requestStream.onNext(YandexRecognitionApi.createRequest(data))
                         onAudioBufferReceived(data)
                         if (mustInterruptRecognition) {
                             L.w( "Interrupting stream")
-                            this@produce.cancel()
+                            channel.close()
                         }
                     }
-                }
 
-                invokeOnClose {
+                awaitClose {
                     requestStream.onCompleted()
                 }
-            } catch (e: Exception) {
-                sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = e)))
-            }
+            }.catch { e ->
+                onException(YandexCloudSpeechToTextException(cause = e))
+            }.flowOn(coroutineContext)
         }
-    }
+
+
+
 
     override suspend fun stopRecognition() = cancelRecognition()
-//    {
-//        audioRecorder.stopAudioRecording()
-//    }
 
     override suspend fun cancelRecognition() {
         coroutineContext.cancelChildrenAndJoin()
     }
 
     override fun destroy() {
-        api.cancel()
         coroutineContext.cancel()
     }
 
-    private fun SendChannel<Result>.sendResult(result: Result) {
-        if (isClosedForSend) {
-            L.w("Channel $this is closed. Omitting $result.")
-        } else {
-            offer(result).let { success ->
-                if (!success) L.w("Failed to send $result to $this")
-            }
-        }
-    }
 
     data class Config(
         val apiUrl: String = "stt.api.cloud.yandex.net",

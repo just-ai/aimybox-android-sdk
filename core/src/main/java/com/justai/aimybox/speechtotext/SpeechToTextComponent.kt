@@ -6,11 +6,12 @@ import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxComponent
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.RecognitionTimeoutException
+import com.justai.aimybox.core.SpeechToTextException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 
 internal class SpeechToTextComponent(
     private var delegate: SpeechToText,
@@ -18,107 +19,85 @@ internal class SpeechToTextComponent(
     private val exceptionBus: EventBus<AimyboxException>
 ) : AimyboxComponent("STT") {
 
-    init {
-        provideChannelsForDelegate()
-    }
+//    init {
+//        provideChannelsForDelegate()
+//    }
 
-    private var recognitionResult: Deferred<String?>? = null
+    private var recognitionResult: Job? = null
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun recognizeSpeech(): String? {
         //    logger.assert(!hasRunningJobs) { "Recognition is already running" }
         cancelRunningJob()
-        //   return withContext(coroutineContext) {
+        return withContext(componentContext) {
 
-        logger.i("Begin recognition")
-        val recognitionChannel = delegate.startRecognition()
-        eventBus.invokeEvent(SpeechToText.Event.RecognitionStarted)
+            logger.i("Begin recognition")
+            val recognitionFlow = delegate.startRecognition()
+            eventBus.invokeEvent(SpeechToText.Event.RecognitionStarted)
 
-        val timeoutTask = startTimeout(delegate.recognitionTimeoutMs)
-        var finalResult: String? = null
+            val timeoutTask = launch {
+                startTimeout(delegate.recognitionTimeoutMs)
+            }
 
-        recognitionChannel
-            .catch {  }
-            .collect { result->
-                when (result) {
-                        is SpeechToText.Result.Partial -> {
-                            if (finalResult != result.text) {
-                        //        finalResult = result.text
-                                delegate.clearCounter()
-                                logger.d("Partial recognition result: ${result.text}")
-                                eventBus.invokeEvent(
-                                    SpeechToText.Event.RecognitionPartialResult(
-                                        result.text
+            var textResult: String? = ""
+
+            recognitionResult?.cancel()
+            recognitionResult = launch {
+
+                recognitionFlow
+                    .catch { e ->
+                        exceptionBus.invokeEvent(SpeechToTextException(cause = e))
+                        currentCoroutineContext().cancel()
+                    }
+                    .onEach { result ->
+                        if (timeoutTask.isActive){
+                            timeoutTask.cancel()
+                        }
+                        when (result) {
+                            is SpeechToText.Result.Partial -> {
+                                if (textResult != result.text) {
+                                    textResult = result.text
+                                    delegate.clearCounter()
+                                    logger.d("Partial recognition result: ${result.text}")
+                                    eventBus.invokeEvent(
+                                        SpeechToText.Event.RecognitionPartialResult(
+                                            result.text
+                                        )
                                     )
-                                )
+                                }
+                            }
+                            is SpeechToText.Result.Final -> {
+                                logger.d("Recognition result: ${result.text}")
+                                textResult = result.text
+                                cancel()
+                            }
+                            is SpeechToText.Result.Exception -> {
+                                logger.e("Failed to get recognition result", result.exception)
+                                exceptionBus.invokeEvent(result.exception)
+                                cancel()
                             }
                         }
-                        is SpeechToText.Result.Final -> {
-                        //    recognitionChannel.cancel()
-                            logger.d("Recognition result: ${result.text}")
-                            //finalResult = result.text
-                        }
-                        is SpeechToText.Result.Exception -> {
-                           // recognitionChannel.cancel()
-                            logger.e("Failed to get recognition result", result.exception)
-                            exceptionBus.invokeEvent(result.exception)
-                           // finalResult = null
-                        }
                     }
+                    .collect()
+            }
+
+            try {
+                recognitionResult?.join()
+            } catch (e: CancellationException) {
+                e.printStackTrace()
+                eventBus.invokeEvent(
+                    if (textResult.isNullOrBlank()) {
+                        SpeechToText.Event.EmptyRecognitionResult
+                    } else {
+                        SpeechToText.Event.RecognitionResult(textResult)
+                    }
+                )
+            }
+            textResult
         }
 
-
-//        recognitionResult?.cancel()
-//        recognitionResult = async {
-//            var finalResult: String? = null
-//            tryOrNull {
-//                recognitionChannel.consumeEach { result ->
-//                    timeoutTask.cancel()
-//                    when (result) {
-//                        is SpeechToText.Result.Partial -> {
-//                            if (finalResult != result.text) {
-//                                finalResult = result.text
-//                                delegate.clearCounter()
-//                                logger.d("Partial recognition result: ${result.text}")
-//                                eventBus.invokeEvent(
-//                                    SpeechToText.Event.RecognitionPartialResult(
-//                                        result.text
-//                                    )
-//                                )
-//                            }
-//                        }
-//                        is SpeechToText.Result.Final -> {
-//                            recognitionChannel.cancel()
-//                            logger.d("Recognition result: ${result.text}")
-//                            finalResult = result.text
-//                        }
-//                        is SpeechToText.Result.Exception -> {
-//                            recognitionChannel.cancel()
-//                            logger.e("Failed to get recognition result", result.exception)
-//                            exceptionBus.invokeEvent(result.exception)
-//                            finalResult = null
-//                        }
-//                    }
-//                }
-//            }
-//            finalResult
-  //      }
-
-//        val finalResult = tryOrNull {
-//            recognitionResult?.await()
-//        }
-//        timeoutTask.cancel()
-        eventBus.invokeEvent(
-            if (finalResult.isNullOrBlank()) {
-                SpeechToText.Event.EmptyRecognitionResult
-            } else {
-                SpeechToText.Event.RecognitionResult(finalResult)
-            }
-        )
-
-        return finalResult
-        // }
     }
+
 
     private suspend fun <T> tryOrNull(action: suspend () -> T): T? = try {
         action()
@@ -131,14 +110,14 @@ internal class SpeechToTextComponent(
     }
 
     override suspend fun cancelRunningJob() {
-        //     if (hasRunningJobs) {
-        recognitionResult?.cancel()
-        delegate.cancelRecognition()
-        eventBus.invokeEvent(SpeechToText.Event.RecognitionCancelled)
-    }
-    //    super.cancelRunningJob()
+        if (hasRunningChildrenJobs) {
+            recognitionResult?.cancel()
+            delegate.cancelRecognition()
+            eventBus.invokeEvent(SpeechToText.Event.RecognitionCancelled)
+        }
+        super.cancelRunningJob()
 
-    // }
+    }
 
 
     fun interruptRecognition() = recognitionResult?.cancel()
@@ -146,7 +125,7 @@ internal class SpeechToTextComponent(
     private suspend fun startTimeout(timeout: Long) {
         delay(timeout)
         exceptionBus.invokeEvent(RecognitionTimeoutException(timeout))
-        //cancelRunningJob()
+        cancelRunningJob()
     }
 
     private fun provideChannelsForDelegate() {

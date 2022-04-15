@@ -18,7 +18,7 @@ internal class YandexRecognitionApi(
     private val folderId: String,
     private var language: Language,
     private val config: YandexSpeechToText.Config
-) : CoroutineScope {
+) {
 
     companion object {
         fun createRequest(data: ByteArray) = SttServiceOuterClass.StreamingRecognitionRequest.newBuilder().apply {
@@ -26,8 +26,8 @@ internal class YandexRecognitionApi(
         }.build()!!
     }
 
-    private val job = Job()
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + job
+   // private val job = Job()
+   // val coroutineContext: CoroutineContext = Dispatchers.IO + job
 
     private val channel = PinnedChannelBuilder
         .build(config.apiUrl, config.apiPort, config.pinningConfig)
