@@ -5,12 +5,22 @@ import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.logging.Logger
-import io.mockk.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.withIndex
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 
 class SpeechToTextComponentTest : BaseCoroutineTest() {
@@ -20,15 +30,10 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
     private lateinit var exceptionBus: EventBus<AimyboxException>
     private lateinit var result: EventBus<SpeechToText.Result>
     private lateinit var component: SpeechToTextComponent
-    private lateinit var logger : Logger
+    private lateinit var logger: Logger
 
-    private val events = listOf(SpeechToText.Result.Partial("1"),
-        SpeechToText.Result.Partial("1 2"),
-        SpeechToText.Result.Partial("1 2 3"),
-        SpeechToText.Result.Final("Final")
-    )
-
-    private val exceptionEvents = listOf(SpeechToText.Result.Exception(SpeechToTextException("Error")))
+    private val exceptionEvents =
+        listOf(SpeechToText.Result.Exception(SpeechToTextException("Error")))
 
     @Before
     fun setUp() {
@@ -40,17 +45,32 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
 
         logger = Logger("Test")
 
-        every {  mockDelegate.startRecognition() } returns result.events
-        every { mockDelegate.recognitionTimeoutMs } returns 2000
+        every { mockDelegate.startRecognition() } returns result.events
+        every { mockDelegate.recognitionTimeoutMs } returns 5000
     }
 
     @Test
     fun `Regular recognition`() {
         runInTestContext {
 
-            every {  mockDelegate.startRecognition() } returns  result.events
+            eventBus.events
+                .withIndex()
+                .onEach { indexedEvent ->
+                    when (indexedEvent.index) {
+                        0 -> assertTrue(indexedEvent.value is SpeechToText.Event.RecognitionStarted)
+                    }
+                }
+                .launchIn(this)
 
-            logger.i("Begin test")
+            result.events
+                .withIndex()
+                .onEach { indexedEvent ->
+                    when (indexedEvent.index) {
+                        0, 1, 2 -> assertTrue(indexedEvent.value is SpeechToText.Result.Partial)
+                        else -> assertTrue(indexedEvent.value is SpeechToText.Result.Final)
+                    }
+                }
+                .launchIn(this)
 
             val deferred = async {
                 val recognizedSpeech = component.recognizeSpeech()
@@ -58,28 +78,16 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
                 recognizedSpeech
             }
 
-            delay(7000)
+            delay(500)
 
-                logger.i("Start sending events")
-                result.invokeEvent(SpeechToText.Result.Partial("1"))
-                result.invokeEvent(SpeechToText.Result.Partial("1 2"))
-                result.invokeEvent(SpeechToText.Result.Partial("1 2 3"))
+            result.invokeEvent(SpeechToText.Result.Partial("1"))
+            result.invokeEvent(SpeechToText.Result.Partial("1 2"))
+            result.invokeEvent(SpeechToText.Result.Partial("1 2 3"))
 
-                result.invokeEvent(SpeechToText.Result.Final("Final"))
+            result.invokeEvent(SpeechToText.Result.Final("Final"))
 
-            launch {
-                eventBus.events.collect { event ->
-                         logger.i("event: $event")
-                    }
-            }
+            assertEquals("Final", deferred.await())
 
-           val speech = deferred.await()
-           logger.i("recognition result: $speech")
-
-
-            //     assertEquals("Final", deferred.await())
-        //    assertEquals("Final", (eventBus.events.last() as SpeechToText.Event.RecognitionResult).text)
-            //    checkNoRunningJobs()
             coroutineContext.cancelChildren()
         }
     }
@@ -87,93 +95,76 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
     @Test
     fun `Recognition with error`() {
         runInTestContext {
+
+            eventBus.events
+                .withIndex()
+                .onEach { indexedEvent ->
+                    logger.e("Events bus: index: ${indexedEvent.index}, value: ${indexedEvent.value}")
+                    when (indexedEvent.index) {
+                        0 -> assertTrue(indexedEvent.value is SpeechToText.Event.RecognitionStarted)
+                    }
+                }
+                .launchIn(this)
+
+            result.events
+                .withIndex()
+                .onEach { indexedEvent ->
+                    logger.e("Result bus: index: ${indexedEvent.index}, value: ${indexedEvent.value}")
+                }
+                .launchIn(this)
+
+            exceptionBus.events
+                .onEach { event ->
+                    logger.e("Exception bus: ${event}")
+                }
+                .launchIn(this)
+
             val deferred = async {
-                component.recognizeSpeech()
+                val recognizedSpeech = component.recognizeSpeech()
                 verify { mockDelegate.startRecognition() }
+                recognizedSpeech
             }
 
             delay(500)
 
-            launch {
-                eventBus.events.collect { event ->
-                    logger.i("event: $event")
-                }
-            }
-
-
-           // assertSame(eventBus.receive(), SpeechToText.Event.RecognitionStarted)
-            eventBus.events.collect { event ->
-                assertSame(event, SpeechToText.Event.RecognitionStarted)
-            }
-
-
-            //
-
             result.invokeEvent(SpeechToText.Result.Exception(SpeechToTextException("Error")))
 
-            eventBus.events.collect { event ->
-                assertSame(event, SpeechToText.Event.EmptyRecognitionResult)
-                assert(event is SpeechToTextException)
-            }
+            val result = deferred.await()
+            assertNull(result)
 
-//            assertSame(eventBus.receive(), SpeechToText.Event.EmptyRecognitionResult)
-//            assert(exceptionBus.receive() is SpeechToTextException)
-
-          //  assertNull(deferred.await())
-           // assert(result.isClosedForSend)
-           // checkNoRunningJobs()
+            coroutineContext.cancelChildren()
         }
     }
 
     @Test
     fun `Recognition canceled`() {
         runInTestContext {
-            //val deferred = async { component.recognizeSpeech() }
-            component.recognizeSpeech()
+            eventBus.events
+                .withIndex()
+                .onEach { indexedEvent ->
+                    logger.e("Events bus: index: ${indexedEvent.index}, value: ${indexedEvent.value}")
+                    when (indexedEvent.index) {
+                        0 -> assertTrue(indexedEvent.value is SpeechToText.Event.RecognitionStarted)
+                    }
+                }
+                .launchIn(this)
 
-            //assertSame(eventBus.receive(), SpeechToText.Event.RecognitionStarted)
-            eventBus.events.collect { event ->
-                assertSame(event, SpeechToText.Event.RecognitionStarted)
+            val deferred = async {
+                val recognizedSpeech = component.recognizeSpeech()
+                verify { mockDelegate.startRecognition() }
+                recognizedSpeech
             }
 
-            verify { mockDelegate.startRecognition() }
+            delay(500)
 
             component.cancelRunningJob()
 
-            //assertSame(eventBus.receive(), SpeechToText.Event.RecognitionCancelled)
-
-            eventBus.events.collect { event ->
-                assertSame(event, SpeechToText.Event.RecognitionCancelled)
-            }
-
             coVerify { mockDelegate.cancelRecognition() }
 
-//            assertFails { deferred.await() }
-//            assert(result.isClosedForSend)
-//            checkNoRunningJobs()
+            assertNull(deferred.await())
+
+            coroutineContext.cancelChildren()
         }
     }
-
-//    @Test
-//    fun `Recognition result channel closed`() {
-//        runInTestContext {
-//            val deferred = async { component.recognizeSpeech() }
-//            assertSame(eventBus.receive(), SpeechToText.Event.RecognitionStarted)
-//
-//            verify { mockDelegate.startRecognition() }
-//
-//            result.close()
-//
-//            assertSame(eventBus.receive(), SpeechToText.Event.EmptyRecognitionResult)
-//
-//            assertNull(deferred.await())
-//            assert(result.isClosedForSend)
-//            checkNoRunningJobs()
-//        }
-//    }
-//
-//    private fun checkNoRunningJobs() = assertFalse(
-//        component.hasRunningJobs,
-//        "Component has running jobs ${component.coroutineContext[Job]?.children?.toList()}"
-//    )
+    
 }

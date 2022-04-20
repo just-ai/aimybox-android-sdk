@@ -11,7 +11,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 
 internal class SpeechToTextComponent(
     private var delegate: SpeechToText,
@@ -19,11 +18,12 @@ internal class SpeechToTextComponent(
     private val exceptionBus: EventBus<AimyboxException>
 ) : AimyboxComponent("STT") {
 
-//    init {
-//        provideChannelsForDelegate()
-//    }
+    init {
+        provideChannelsForDelegate()
+    }
 
     private var recognitionResult: Job? = null
+    private var timeoutTask: Job? = null
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     internal suspend fun recognizeSpeech(): String? {
@@ -35,11 +35,11 @@ internal class SpeechToTextComponent(
             val recognitionFlow = delegate.startRecognition()
             eventBus.invokeEvent(SpeechToText.Event.RecognitionStarted)
 
-            val timeoutTask = launch {
+            timeoutTask = launch {
                 startTimeout(delegate.recognitionTimeoutMs)
             }
 
-            var textResult: String? = ""
+            var textResult: String? = null
 
             recognitionResult?.cancel()
             recognitionResult = launch {
@@ -50,8 +50,8 @@ internal class SpeechToTextComponent(
                         currentCoroutineContext().cancel()
                     }
                     .onEach { result ->
-                        if (timeoutTask.isActive){
-                            timeoutTask.cancel()
+                        if (timeoutTask?.isActive == true){
+                            timeoutTask?.cancel()
                         }
                         when (result) {
                             is SpeechToText.Result.Partial -> {
@@ -111,11 +111,12 @@ internal class SpeechToTextComponent(
 
     override suspend fun cancelRunningJob() {
         if (hasRunningChildrenJobs) {
+            timeoutTask?.cancel()
             recognitionResult?.cancel()
             delegate.cancelRecognition()
             eventBus.invokeEvent(SpeechToText.Event.RecognitionCancelled)
         }
-        super.cancelRunningJob()
+       // super.cancelRunningJob()
 
     }
 
@@ -129,8 +130,8 @@ internal class SpeechToTextComponent(
     }
 
     private fun provideChannelsForDelegate() {
-        delegate.eventChannel = eventBus
-        delegate.exceptionChannel = exceptionBus
+        delegate.eventBus = eventBus
+        delegate.exceptionBus = exceptionBus
     }
 
     internal suspend fun setDelegate(speechToText: SpeechToText) {

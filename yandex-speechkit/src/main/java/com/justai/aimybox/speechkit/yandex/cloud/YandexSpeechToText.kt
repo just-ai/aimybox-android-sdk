@@ -26,7 +26,7 @@ class YandexSpeechToText(
 
     //val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
-    private val coroutineContext = Dispatchers.IO + Job() + CoroutineName("Aimybox-(YandexSTT)")
+    private val coroutineContext = Dispatchers.IO + CoroutineName("Aimybox-(YandexSTT)")
 
     private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 

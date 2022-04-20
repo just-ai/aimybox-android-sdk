@@ -5,7 +5,6 @@ import com.justai.aimybox.Aimybox
 import com.justai.aimybox.api.aimybox.EventBus
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -34,8 +33,8 @@ abstract class SpeechToText(
             maxAudioChunks != null && audioChunksBetweenResults >= maxAudioChunks
 
 
-    internal lateinit var eventChannel: EventBus<Event>
-    internal lateinit var exceptionChannel: EventBus<AimyboxException>
+    internal lateinit var eventBus: EventBus<Event>
+    internal lateinit var exceptionBus: EventBus<AimyboxException>
 
     /**
      * Stop audio recording, but await for final result.
@@ -72,14 +71,14 @@ abstract class SpeechToText(
     open fun destroy() = Unit
 
     private fun onEvent(event: Event) {
-        eventChannel.tryInvoke(event)
+        eventBus.tryInvoke(event)
     }
 
     /**
      * TODO Change comment Send caught [SpeechToTextException] to [Aimybox.exceptions] .
      * */
     protected fun onException(exception: SpeechToTextException) {
-        exceptionChannel.tryInvoke(exception)
+        exceptionBus.tryInvoke(exception)
     }
 
     /**

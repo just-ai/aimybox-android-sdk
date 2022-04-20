@@ -3,24 +3,21 @@ package com.justai.aimybox.components
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.*
 import androidx.recyclerview.widget.RecyclerView
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.components.adapter.AimyboxAssistantAdapter
 import com.justai.aimybox.components.extensions.isPermissionGranted
-import com.justai.aimybox.components.extensions.startActivityIfExist
 import com.justai.aimybox.components.view.AimyboxButton
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
@@ -63,6 +60,28 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
         viewModel.delayAfterSpeech = 1000L
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.aimyboxState
+                    .onEach { state ->
+                        if (state == Aimybox.State.LISTENING) {
+                            aimyboxButton.onRecordingStarted()
+                        } else {
+                            aimyboxButton.onRecordingStopped()
+                        }
+                    }
+                    .launchIn(this)
+
+                viewModel.customSkillEvent.events.collect {
+
+                }
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -85,16 +104,7 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
             if (isVisible) aimyboxButton.expand() else aimyboxButton.collapse()
         }
 
-        viewModel.aimyboxState.observe(viewLifecycleOwner) { state ->
-            if (state == Aimybox.State.LISTENING) {
-                aimyboxButton.onRecordingStarted()
-            } else {
-                aimyboxButton.onRecordingStopped()
-            }
-        }
 
-        viewModel.customSkillEvent.observe(viewLifecycleOwner) {
-        }
 
         viewModel.widgets.observe(viewLifecycleOwner, Observer(adapter::setData))
 
@@ -104,11 +114,11 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
             }
         }
 
-        launch {
-            viewModel.urlIntents.consumeEach { url ->
-                context?.startActivityIfExist(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-            }
-        }
+//        launch {
+//            viewModel.urlIntents.consumeEach { url ->
+//                context?.startActivityIfExist(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+//            }
+//        }
     }
 
     @SuppressLint("MissingPermission")
@@ -132,9 +142,10 @@ class AimyboxAssistantFragment : Fragment(), CoroutineScope {
             }
         }
     }
+
     /**
-    * Use the method to set custom initial phrase for the assistant
-    * */
+     * Use the method to set custom initial phrase for the assistant
+     * */
     fun putArguments(initialPhrase: String) = apply {
         arguments = Bundle().apply { putString(ARGUMENTS_KEY, initialPhrase) }
     }

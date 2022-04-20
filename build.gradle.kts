@@ -20,12 +20,12 @@ buildscript {
     }
 }
 
-val versionProject = "0.17.5.2-alpha.3"
+val versionProject = "0.18.0.0-alpha.1"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
     versionCode = 1
-    compileSdk = 30
+    compileSdk = 31
     minSdk = 21
     groupId = "com.just-ai.aimybox"
 }
