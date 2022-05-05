@@ -90,7 +90,7 @@ internal class YandexRecognitionApi(
         sampleRate: Long,
         rawResults: Boolean,
         literatureText: Boolean
-    ): SttServiceOuterClass.RecognitionSpec = SttServiceOuterClass.RecognitionSpec.newBuilder().apply {
+        ): SttServiceOuterClass.RecognitionSpec = SttServiceOuterClass.RecognitionSpec.newBuilder().apply {
         languageCode = language.stringValue
         model = voiceModel.stringValue
         profanityFilter = enableProfanityFilter
