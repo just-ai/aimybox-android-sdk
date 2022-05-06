@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import yandex.cloud.api.ai.stt.v3.Stt
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
@@ -30,7 +31,7 @@ class YandexSpeechToText(
 
     private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
 
-    private val api = YandexRecognitionApi(iAmTokenProvider, folderId, language, config)
+    private val api = YandexRecognitionApiV3(iAmTokenProvider, folderId, language, config)
 
     fun setLanguage(language: Language) = api.setLanguage(language)
 
@@ -43,12 +44,32 @@ class YandexSpeechToText(
             try {
                 val requestStream = api.openStream(
                     { response ->
-                        val chunk = response.chunksList.first()
-                        val text = chunk.alternativesList.first().text
-                        val result = if (chunk.final) Result.Final(text) else Result.Partial(text)
-                        sendResult(result)
+                        when (response.eventCase) {
+                            Stt.StreamingResponse.EventCase.PARTIAL -> {
+                                val alternativesList = response.partial.alternativesList
+                                if (alternativesList.isNotEmpty()) {
+                                    sendResult(Result.Partial(alternativesList.first().text))
+                                }
+                            }
+                            Stt.StreamingResponse.EventCase.FINAL -> {
+                                val alternativesList = response.final.alternativesList
+                                if (alternativesList.isNotEmpty()) {
+                                    sendResult(Result.Final(alternativesList.first().text))
+                                }
+                            }
+                            else -> {
+                            }
+                        }
                     },
-                    { exception -> sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = exception))) },
+                    { exception ->
+                        sendResult(
+                            Result.Exception(
+                                YandexCloudSpeechToTextException(
+                                    cause = exception
+                                )
+                            )
+                        )
+                    },
                     onCompleted = { close() }
                 )
 
@@ -56,17 +77,17 @@ class YandexSpeechToText(
 
                 launch {
                     audioData.collect { data ->
-                        requestStream.onNext(YandexRecognitionApi.createRequest(data))
+                        requestStream?.onNext(YandexRecognitionApiV3.createRequest(data))
                         onAudioBufferReceived(data)
                         if (mustInterruptRecognition) {
-                            L.w( "Interrupting stream")
+                            L.w("Interrupting stream")
                             this@produce.cancel()
                         }
                     }
                 }
 
                 invokeOnClose {
-                    requestStream.onCompleted()
+                    requestStream?.onCompleted()
                 }
             } catch (e: Exception) {
                 sendResult(Result.Exception(YandexCloudSpeechToTextException(cause = e)))
@@ -83,7 +104,6 @@ class YandexSpeechToText(
     }
 
     override fun destroy() {
-        api.cancel()
         coroutineContext.cancel()
     }
 
@@ -91,7 +111,7 @@ class YandexSpeechToText(
         if (isClosedForSend) {
             L.w("Channel $this is closed. Omitting $result.")
         } else {
-            offer(result).let { success ->
+            trySend(result).isSuccess.let { success ->
                 if (!success) L.w("Failed to send $result to $this")
             }
         }
