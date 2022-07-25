@@ -12,6 +12,12 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import java.util.*
 
 @Suppress("unused")
@@ -22,24 +28,24 @@ class GooglePlatformSpeechToText(
     recognitionTimeout: Long = 10000L
 ) : SpeechToText(recognitionTimeout) {
 
-    override val coroutineContext = Dispatchers.Main + Job()
+    private val coroutineContext = Dispatchers.Main + CoroutineName("Aimybox-(GoogleSTT)")
 
     private var recognizer: SpeechRecognizer? = null
 
     @RequiresPermission(android.Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): Flow<Result> {
-        val channel = Channel<Result>()
-        launch {
+        return  callbackFlow {
             if (recognizer == null) {
                 L.i("Initializing Google Platform STT")
                 recognizer = SpeechRecognizer.createSpeechRecognizer(context)
                 L.i("Google Platform STT is initialized")
             }
             recognizer?.setRecognitionListener(createRecognitionListener(channel))
-
             recognizer?.startListening(createRecognizerIntent(language.toString(), preferOffline))
-        }
-        return channel
+        }.catch { e ->
+            onException(GooglePlatformSpeechToTextException(code = 100 , cause = e))
+        }.flowOn(coroutineContext)
+
     }
 
     override suspend fun stopRecognition() {
@@ -55,17 +61,17 @@ class GooglePlatformSpeechToText(
     }
 
     override fun destroy() {
-        launch(Dispatchers.Main) { recognizer?.destroy() }
+        recognizer?.destroy()
         coroutineContext.cancel()
     }
 
-    private fun createRecognitionListener(resultChannel: Channel<Result>) =
+    private fun createRecognitionListener(resultChannel: SendChannel<Result>) =
         object : RecognitionListener {
             override fun onPartialResults(partialResults: Bundle?) {
                 val text = partialResults
                     ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     ?.firstOrNull()
-                sendResult(Result.Partial(text))
+                resultChannel.trySendBlocking(Result.Partial(text))
             }
 
             override fun onBeginningOfSpeech() = onSpeechStart()
@@ -76,25 +82,15 @@ class GooglePlatformSpeechToText(
 
             override fun onError(code: Int) {
                 val exception = GooglePlatformSpeechToTextException(code, code.errorText)
-                sendResult(Result.Exception(exception))
+                resultChannel.trySendBlocking(Result.Exception(exception))
                 finish()
             }
 
             override fun onResults(results: Bundle?) {
                 val text =
                     results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                sendResult(Result.Final(text))
+                resultChannel.trySendBlocking((Result.Final(text)))
                 finish()
-            }
-
-            private fun sendResult(result: Result) {
-                if (resultChannel.isClosedForSend) {
-                    L.w("Channel $resultChannel is closed for send. Omitting $result")
-                } else {
-                    resultChannel.offer(result).let { success ->
-                        if (!success) L.w("Failed to send $result to $resultChannel")
-                    }
-                }
             }
 
             override fun onEvent(eventType: Int, params: Bundle?) {}

@@ -5,8 +5,9 @@ import androidx.annotation.RequiresPermission
 import com.justai.aimybox.core.SpeechToTextException
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import org.vosk.Model
 import org.vosk.Recognizer
 import org.vosk.android.RecognitionListener
@@ -39,19 +40,17 @@ class KaldiSpeechToText(
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): Flow<Result> {
-        val channel = Channel<Result>()
-        launch {
+       return return  callbackFlow {
             val model = initialization.await()
             val kaldiRecognizer = Recognizer(model, 16000f)
             recognizer = SpeechService(kaldiRecognizer, 16000f).apply {
                 startListening(RecognizerListener(channel))
             }
         }
-        return channel
     }
 
     internal class RecognizerListener(
-        private val channel: Channel<Result>
+        private val channel: SendChannel<Result>
     ): RecognitionListener, CoroutineScope {
 
         override val coroutineContext = Dispatchers.IO
@@ -86,7 +85,7 @@ class KaldiSpeechToText(
         }
 
         private fun finish() {
-            channel.cancel()
+            channel.close()
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.justai.aimybox.speechkit.kaldi
 
 import android.Manifest
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.justai.aimybox.recorder.AudioRecorder
 import com.justai.aimybox.speechtotext.SpeechToText
@@ -10,10 +9,9 @@ import com.neovisionaries.ws.client.WebSocketAdapter
 import com.neovisionaries.ws.client.WebSocketFactory
 import com.neovisionaries.ws.client.WebSocketFrame
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
@@ -24,7 +22,7 @@ class KaldiWebsocketSpeechToText(
     recognitionTimeout: Long = 10000L
 ): SpeechToText(recognitionTimeout, maxAudioChunks) {
 
-    override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+    private val coroutineContext: CoroutineContext = Dispatchers.IO + CoroutineName("Aimybox-(KaldiWebsocket)")
 
     private lateinit var ws: WebSocket
     private val audioRecorder = AudioRecorder("Kaldi", sampleRate)
@@ -40,10 +38,9 @@ class KaldiWebsocketSpeechToText(
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): Flow<Result> {
         initCounter()
-        return produce<Result> {
+        return  callbackFlow {
             val audioData = audioRecorder.startRecordingBytes()
 
-            launch {
                 ws = WebSocketFactory().createSocket(uri).addListener(
                     SocketListener(channel)
                 ).connectAsynchronously()
@@ -53,14 +50,11 @@ class KaldiWebsocketSpeechToText(
                     onAudioBufferReceived(data)
                     if (mustInterruptRecognition) {
                         L.d("Interrupting stream")
-                        this@produce.cancel()
+                        channel.close()
                     }
                 }
 
-                ws.disconnect()
-            }
-
-            invokeOnClose {
+            awaitClose {
                 ws.disconnect()
             }
         }
@@ -77,10 +71,10 @@ class KaldiWebsocketSpeechToText(
         override fun onTextMessage(websocket: WebSocket?, text: String?) {
             text?.parsePartial().takeIf { it?.isNotEmpty()!! }?.let {
                 val result = if (mustInterruptRecognition) Result.Final(it) else Result.Partial(it)
-                channel.offer(result)
+                channel.trySendBlocking(result)
             }
             text?.parseResult().takeIf { it?.isNotEmpty()!! }?.let {
-                channel.offer(Result.Final(it))
+                channel.trySendBlocking(Result.Final(it))
             }
         }
 

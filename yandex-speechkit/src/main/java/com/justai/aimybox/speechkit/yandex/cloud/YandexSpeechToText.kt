@@ -24,8 +24,6 @@ class YandexSpeechToText(
     recognitionTimeout: Long = 10000L
 ) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
-    //val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
-
     private val coroutineContext = Dispatchers.IO + CoroutineName("Aimybox-(YandexSTT)")
 
     private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
@@ -33,9 +31,6 @@ class YandexSpeechToText(
     private val api = YandexRecognitionApi(iAmTokenProvider, folderId, language, config)
 
     fun setLanguage(language: Language) = api.setLanguage(language)
-
-    //private var recognitionChannel: SharedFlow<Result>? = null
-
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): Flow<Result> {

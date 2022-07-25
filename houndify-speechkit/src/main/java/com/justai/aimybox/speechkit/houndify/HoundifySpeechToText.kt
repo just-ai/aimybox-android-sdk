@@ -11,11 +11,14 @@ import com.hound.core.model.sdk.HoundResponse
 import com.hound.core.model.sdk.PartialTranscript
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import java.util.*
 
 private val L = Logger("Houndify Speechkit")
@@ -28,7 +31,7 @@ class HoundifySpeechToText(
     recognitionTimeout: Long = 10000L
 ) : SpeechToText(recognitionTimeout) {
 
-    override val coroutineContext = Dispatchers.IO + Job()
+    private val coroutineContext = Dispatchers.IO + CoroutineName("Aimybox-(HoundifySTT)")
 
     private val factory = createVoiceFactory(context, clientId, clientKey)
     private var voiceSearch: VoiceSearch? = null
@@ -40,10 +43,12 @@ class HoundifySpeechToText(
 
     @RequiresPermission("android.permission.RECORD_AUDIO")
     override fun startRecognition(): Flow<Result> {
-        val channel = Channel<Result>()
-        voiceSearch = factory.build(channel)
-        voiceSearch?.start()
-        return channel
+        return  callbackFlow {
+            voiceSearch = factory.build(channel)
+            voiceSearch?.start()
+        }.catch { e ->
+            onException(HoundifySpeechToTextException(cause = e))
+        }.flowOn(coroutineContext)
     }
 
     override suspend fun stopRecognition() {
@@ -65,36 +70,26 @@ class HoundifySpeechToText(
                 private var lastResult: String? = null
 
                 override fun onResponse(response: HoundResponse?, info: VoiceSearchInfo?) {
-                    sendResult(Result.Final(lastResult))
+                    resultChannel.trySendBlocking(Result.Final(lastResult))
                     resultChannel.close()
                 }
 
                 override fun onAbort(info: VoiceSearchInfo) {
-                    sendResult(Result.Exception(HoundifySpeechToTextException("Houndify is aborted")))
+                    resultChannel.trySendBlocking(Result.Exception(HoundifySpeechToTextException("Houndify is aborted")))
                     resultChannel.close()
                 }
 
                 override fun onError(e: Exception, info: VoiceSearchInfo) {
-                    sendResult(Result.Exception(HoundifySpeechToTextException(cause = e)))
+                    resultChannel.trySendBlocking(Result.Exception(HoundifySpeechToTextException(cause = e)))
                     resultChannel.close()
                 }
 
                 override fun onTranscriptionUpdate(transcript: PartialTranscript) {
                     lastResult = transcript.partialTranscript
-                    sendResult(Result.Partial(lastResult))
+                    resultChannel.trySendBlocking(Result.Partial(lastResult))
                 }
 
                 override fun onRecordingStopped() {}
-
-                private fun sendResult(result: Result) {
-                    if (resultChannel.isClosedForSend) {
-                        L.w("Channel $resultChannel is closed for send. Omitting $result")
-                    } else {
-                        resultChannel.offer(result).let { success ->
-                            if (!success) L.w("Failed to send $result to $resultChannel")
-                        }
-                    }
-                }
             })
             setAudioSource(audioStream)
         }.build()
