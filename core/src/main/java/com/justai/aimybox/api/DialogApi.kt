@@ -52,7 +52,12 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
     abstract suspend fun send(request: TRequest): TResponse
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    internal suspend fun send(query: String, aimybox: Aimybox, isSilentRequest: Boolean = false) {
+    internal suspend fun send(
+        query: String,
+        aimybox: Aimybox,
+        isSilentRequest: Boolean = false,
+        sendRequestEvent: Boolean = true
+    ) {
         cancelRunningJob()
         withContext(coroutineContext) {
             val baseRequest = createRequest(query)
@@ -65,7 +70,8 @@ abstract class DialogApi<TRequest : Request, TResponse : Response> :
             val response = try {
                 withTimeout(requestTimeoutMs) {
                     send(request).also {
-                        aimybox.dialogApiEvents.send(Event.RequestSent(request))
+                        if (sendRequestEvent)
+                            aimybox.dialogApiEvents.send(Event.RequestSent(request))
                     }
                 }.also {
                     aimybox.dialogApiEvents.send(Event.ResponseReceived(it))

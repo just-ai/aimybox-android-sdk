@@ -492,7 +492,10 @@ class Aimybox(
      * @return [Job] which completes when the response is received.
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun sendRequest(query: String) = launch {
+    fun sendRequest(
+        query: String,
+        sendRequestEvent: Boolean = true
+    ) = launch {
         state = State.PROCESSING
         cancelRecognition().join()
         stopSpeaking().join()
@@ -503,7 +506,11 @@ class Aimybox(
             }
         }
 
-        val response = dialogApi.send(query, this@Aimybox)
+        val response = dialogApi.send(
+            query,
+            aimybox = this@Aimybox,
+            sendRequestEvent = sendRequestEvent
+        )
         if (response == null) {
             onEmptyResponse()
         }
@@ -516,7 +523,10 @@ class Aimybox(
      * @return [Job] which completes when the response is received.
      * */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun sendSilentRequest(query: String) = launch {
+    fun sendSilentRequest(
+        query: String,
+        sendRequestEvent: Boolean = true,
+    ) = launch {
         state = State.PROCESSING
 
         cancelRecognition().join()
@@ -528,7 +538,10 @@ class Aimybox(
             }
         }
 
-        dialogApi.send(query, this@Aimybox, isSilentRequest = true)
+        dialogApi.send(
+            query, this@Aimybox,
+            isSilentRequest = true, sendRequestEvent = sendRequestEvent
+        )
     }
 
     fun cancelPendingRequest() = launch { dialogApi.cancelRunningJob() }

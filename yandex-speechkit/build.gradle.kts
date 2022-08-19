@@ -25,7 +25,7 @@ project.configureAndroid {
     sourceSets{
         getByName("main"){
             proto {
-                srcDir("src/main/protobuf")
+                srcDirs("src/main/proto/yandex/cloud/ai/tts/v3", "src/main/proto/yandex/cloud/ai/stt/v3")
             }
         }
     }
