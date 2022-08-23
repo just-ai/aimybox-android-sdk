@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -97,9 +98,13 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
             component.cancelRunningJob()
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionCancelled)
 
-            //coVerify { mockDelegate.cancelRecognition() }
+            coVerify { mockDelegate.cancelRecognition() }
 
-             assertFails { deferred.await() }
+            try {
+                assertFails { deferred.await() }
+            } catch (e: CancellationException) {
+                print("Request was cancelled")
+            }
 
             assert(resultChannel.isClosedForSend)
             checkNoRunningJobs()
