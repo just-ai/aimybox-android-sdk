@@ -1,0 +1,186 @@
+syntax = "proto3";
+
+package tinkoff.cloud.stt.v1;
+option go_package = "github.com/Tinkoff/voicekit-examples/golang/pkg/tinkoff/cloud/stt/v1";
+option objc_class_prefix = 'TVKSR';
+
+import "google/protobuf/duration.proto";
+import "google/api/annotations.proto";
+import "tinkoff/cloud/longrunning/v1/longrunning.proto";
+
+service SpeechToText { // Speech recognition.
+  rpc Recognize(RecognizeRequest) returns (RecognizeResponse) { // Method to recognize whole audio at once: sending complete audio, getting complete recognition result.
+    option (google.api.http) = {
+      post: "/v1/stt:recognize"
+      body: "*"
+    };
+  }
+  rpc StreamingRecognize(stream StreamingRecognizeRequest)
+    returns (stream StreamingRecognizeResponse); // Method for streaming recognition.
+
+  rpc LongRunningRecognize(LongRunningRecognizeRequest) returns (longrunning.v1.Operation) { // Method to create longrunning recognition operation. Created operation will persist for a limited time and will be deleted after that time has expired.
+    option (google.api.http) = {
+      post: "/v1/stt:longrunningrecognize"
+      body: "*"
+    };
+  }
+
+  rpc StreamingUnaryRecognize(stream StreamingUnaryRecognizeRequest) returns (RecognizeResponse) { // Method to synchronous recognize audio stream. Returns recognition result after all audio has been sent and processed.
+    option (google.api.http) = {
+      post: "/v1/stt:streaming_unary_recognize";
+      body: "*";
+    };
+  }
+}
+
+enum AudioEncoding { // Audio encoding. Defines both codec and container.
+  ENCODING_UNSPECIFIED = 0; // <i>Unspecified - invalid value.</i> Used as default value to avoid accidental errors.
+  LINEAR16 = 1; // Raw PCM with signed integer 16-bit linear audio samples.
+  reserved "FLAC"; reserved 2;
+  MULAW = 3; // Raw PCM with Mu-law mapped 8-bit audio samples.
+  reserved "AMR"; reserved 4;
+  reserved "AMR_WB"; reserved 5;
+  reserved "OGG_OPUS"; reserved 6;
+  reserved "SPEEX_WITH_HEADER_BYTE"; reserved 7;
+  ALAW = 8; // Raw PCM with A-law mapped 8-bit audio samples.
+  reserved "LINEAR32F"; reserved 9; // Deprecated.
+  reserved "OGG_VORBIS"; reserved 10;
+  RAW_OPUS = 11; // Opus frames packed into Protobuf messages.<br/> NOTE: each Opus frame must be packed into "content" field of RecognitionAudio. Each Opus frame must be sent individually exactly as encoded since boundary information isn't included in Opus frame. I. e. you can't just concatenate multiple encoded Opus frames and put it as a single chunk inside "content".
+  MPEG_AUDIO = 12; // MPEG audio bitstream.
+  ADTS_AAC = 13; // AAC audio in ADTS stream
+  RAW_AAC_LC = 14; // Raw AAC LC (Low Complexity) frames packed into Protobuf messages. Supported only in steam methods.<br/> NOTE: Like in RAW_OPUS encoding, each frame must be sent individually in stream
+  RAW_ER_AAC_LD = 15; // Raw ER AAC LD frames packed into Protobuf messages. Supported only in steam methods.<br/> NOTE: Like in RAW_OPUS encoding, each frame must be sent individually in stream
+}
+
+message RecognitionAudio { // Audio to recognize.
+  oneof audio_source {
+    bytes content = 1; // Input audio data chunk.
+    string uri = 2; // Currently only supported for LongRunningRecognizeRequest. Input audio URI.<br/>URI format is ```storage://s3.api.tinkoff.ai/inbound/<file_name>```
+  }
+}
+
+message SpeechContextPhrase { // Phrase to recognize with higher (or lower) probability.
+  string text = 1; // Phrase text. Specifying phrases shorter than 5 characters is discouraged.
+  float score = 2; // Phrase score. Recommended range of scores is `[1.0, 10.0]`, `1.0` is used if no value is provided. Specifying higher score for a phrase increases its chances to be recognised, but large values might degrade overall recognition quality.  Specifying negative values in the range `[-10.0, -1.0]` reduces chances for a phrase to be recognised. In this case, smaller score corresponds to more significant reduction in recognition probability for the phrase.
+}
+
+message SpeechContext { // Declares a set of phrases to be recognized with higher (or lower) probability.
+  reserved 1; // Deprecated.
+  reserved 2; // Deprecated.
+  repeated SpeechContextPhrase phrases = 3; // Phrases to recognize with higher (or lower) probability.
+}
+
+message WordInfo { // Detailed information on recognized word.
+  google.protobuf.Duration start_time = 1; // Word start time inside input audiostream.
+  google.protobuf.Duration end_time = 2; // Word end time inside input audiostream.
+  string word = 3; // Word inside phrase.
+  float confidence = 4; // Relative confidence factor (relative to other words of the phrase and to words of other alternatives for requests configuration with max_alternatives > 1). Value may be negative.
+}
+
+message VoiceActivityDetectionConfig { // Structure to customize VAD (every field is optional).
+  float min_speech_duration = 1; // <i>Currently ignored.</i> Minimal duration of phrase to detect by VAD in seconds.
+  float max_speech_duration = 2; // <i>Currently ignored.</i> Maximal duration of phrase to detect by VAD in seconds.
+  float silence_duration_threshold = 3; // Duration of silence in seconds to consider phrase ended. Default value depends on service configuration.
+  float silence_prob_threshold = 4; // Threshold value for silence probability (in range from 0.0 to 1.0). If silence probability is below threshold and audio fragment is considered silence. Default value depends on service configuration.
+  float aggressiveness = 5; // Currently unused.
+}
+
+message RecognitionConfig { // Common recognition configuration.
+  AudioEncoding encoding = 1; // Audio encoding. Specifies both container and codec. Must be specified explicitly.
+  uint32 sample_rate_hertz = 2; // Sample rate of input audio in Hertz. Must match actual bitstream sample rate for MPEG_AUDIO. Must be specified explicitly.
+  string language_code = 3; // <i>Currently ignored.</i> Language to recognize.
+  uint32 max_alternatives = 4; // Maximal number of phrase alternatives to return at each moment both for final and interim recognition results. Default value: 1.
+  bool profanity_filter = 5; // Enables profanity filter for first (most probable) alternative of final result. Words filtered out will contain the first letter and asterisks for the remaining characters.
+  repeated SpeechContext speech_contexts = 6; // A set of phrases to be recognised with higher (or lower) probability.
+  reserved "enable_word_time_offsets"; reserved 7;
+  bool enable_automatic_punctuation = 8; // Enables automatic punctuation and capitalization for first (most probable) alternative of final result.
+  reserved "metadata"; reserved 9;
+  string model = 10; // Recognition model. Default model is used if not specified.
+  reserved "use_enhanced"; reserved 11;
+  uint32 num_channels = 12; // Channel count for input audio. Must match actual bitstream channel count for MPEG_AUDIO.
+  oneof vad {
+    bool do_not_perform_vad = 13; // Flag to disable phrase range detection. All speech shall be recognized as single phrase with this flag set to true.
+    VoiceActivityDetectionConfig vad_config = 14; // Structure to customize VAD settings.
+  }
+  reserved 15;
+  bool enable_denormalization = 16; // Enables automatic conversion of numerals from text to numeric form. Applies only to the first (most likely) version of hypothesis.
+  bool enable_sentiment_analysis = 17; // Enables sentiment analysis. Emotions supported: negative and neutral. Applies to every final hypothesis. Currently in beta. Works only in Recognize.
+  bool enable_gender_identification = 18; // Enables gender identification: male or female. Applies to every final hypothesis. Currently in beta.
+}
+
+message RecognizeRequest { // Request to recognize using Recognize method. Max message size — 32 MB.
+  RecognitionConfig config = 1; // Recognition configuration.
+  RecognitionAudio audio = 2; // Audio to recognize.
+}
+
+message SpeechRecognitionAlternative { // Version of recognized text (or part of text in case of interim result).
+  string transcript = 1; // Recognized text.
+  float confidence = 2; // Relative confidence factor.
+  repeated WordInfo words = 3; // Array of individual words inside phrase.
+}
+
+message SpeechSentimentAnalysisResult { // Sentiment analysis results.
+  float negative_prob_audio = 1; // Probability of negative emotion derived from audio phrase.
+  float negative_prob_audio_text  = 2; // Probability of negative emotion derived from audio phrase and recognized text.
+}
+
+message SpeechGenderIdentificationResult {  // Gender identification results.
+  float male_proba = 1; // Probability that speaker is male.
+  float female_proba = 2; // Probability that speaker is female. The following is always true: male_proba + female_proba = 1.
+}
+
+message SpeechRecognitionResult { // Phrase recognized for channel specified here.
+  repeated SpeechRecognitionAlternative alternatives = 1; // Array of phrase alternatives sorted by confidence in descending order.
+  int32 channel = 2; // Channel where phrase alternative relates to (starting from 0).
+  google.protobuf.Duration start_time = 3; // Phrase start time inside input audiostream.
+  google.protobuf.Duration end_time = 4; // Phrase end time inside input audiostream.
+  SpeechSentimentAnalysisResult sentiment_analysis_result = 5; // Sentiment analysis results.
+  SpeechGenderIdentificationResult gender_identification_result = 6; // Gender identification results.
+}
+
+message RecognizeResponse { // Response with recognized phrases using Recognize method.
+  repeated SpeechRecognitionResult results = 1; // Recognized phrases.
+}
+
+message InterimResultsConfig { // Configuration of interim results.
+  bool enable_interim_results = 1; // Flag to enable sending interim results. Disabled by default.
+  float interval = 2; // Desired interval in seconds for sending interim results. Actual interval between interim results depends on service internals and is selected for optimal give out of relevant data.
+}
+
+message LongRunningRecognizeRequest { // Request for longrunning recognition using LongRunningRecognize method.
+  RecognitionConfig config = 1; // Recognition configuration.
+  RecognitionAudio audio = 2; // Audio to recognize.
+  string group = 3; // Group to assign to created operation.
+}
+
+message StreamingRecognitionConfig { // Recognition configuration using StreamingRecognition method. Must be sent as first message only.
+  RecognitionConfig config = 1; // Recognition configuration.
+  bool single_utterance = 2; // Flag to enable single utterance mode. Recognition is finished by service at first recognized phrase in this mode.
+  InterimResultsConfig interim_results_config = 3; // Configuration of interim results. I. e., recognized text so far at a moment when only part of phrase audio was sent.
+}
+
+message StreamingRecognizeRequest { // Recognition request using StreamingRecognize method (message from client to server).<br/>First message must be sent with `streaming_config` filled while all next messages must be sent with `audio_content` filled. Max message size — 32 MB.
+  oneof streaming_request {
+    StreamingRecognitionConfig streaming_config = 1; // Recognition configuration for streaming RPC. Must be sent as first message only.
+    bytes audio_content = 2; // Input audio data chunk. Must come after recognition configuration message.
+  }
+}
+
+message StreamingRecognitionResult { // Recognized phrase using StreamingRecognize method.
+  SpeechRecognitionResult recognition_result = 1; // Recognition result.
+  bool is_final = 2; // Set to true if final version of phrase is recognized. Value of false means interim result.
+  float stability = 3; // <i>Currently unused.</i> Stability factor.
+}
+
+message StreamingRecognizeResponse { // Response with recognized phrases (message from server to client).
+  reserved 1;
+  repeated StreamingRecognitionResult results = 2; // Recognition results for streaming request.
+  reserved 3;
+}
+
+message StreamingUnaryRecognizeRequest { // Recognition request using StreamingUnaryRecognize method (message from client to server).<br/>First message must be sent with `config` filled while all next messages must be sent with `audio_content` filled. Max message size — 32 MB.
+  oneof streaming_unary_request {
+    RecognitionConfig config = 1; // Recognition configuration. Must be sent as first message only.
+    bytes audio_content = 2; // Input audio data chunk. Must come after recognition configuration message.
+  }
+}

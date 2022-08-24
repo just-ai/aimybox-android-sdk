@@ -91,6 +91,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
             is ResponseButton -> aimybox.sendRequest(button.text)
             is PayloadButton -> aimybox.sendRequest(button.payload)
            // is LinkButton -> urlIntentsInternal.safeOffer(button.url)
+            else ->{}
         }
     }
 
@@ -151,10 +152,11 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                 }
             }
             is SpeechToText.Event.EmptyRecognitionResult,
-            SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
+               SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
             is SpeechToText.Event.SoundVolumeRmsChanged -> {
                 soundVolumeRmsMutable.postValue(event.rmsDb)
             }
+            else -> {}
         }
     }
 
@@ -170,6 +172,8 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                     plus(RequestWidget(event.request.query))
                 }
             }
+
+            is DialogApi.Event.RequestCancelled -> {}
         }
     }
 

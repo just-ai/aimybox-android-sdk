@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package tinkoff.cloud.tts.v1;
+option go_package = "github.com/Tinkoff/voicekit-examples/golang/pkg/tinkoff/cloud/tts/v1";
+option objc_class_prefix = 'TVKSS';
+
+import "google/api/annotations.proto";
+
+service TextToSpeech { // Speech synthesis.
+  rpc ListVoices(ListVoicesRequest) returns (ListVoicesResponses) { // Method for retrieving available voices list.
+    option (google.api.http) = {
+      get: "/v1/tts:list_voices"
+    };
+  }
+  rpc Synthesize(SynthesizeSpeechRequest) returns (SynthesizeSpeechResponse) { // Method for the non-streaming synthesis.
+    option (google.api.http) = {
+      post: "/v1/tts:synthesize"
+      body: "*"
+    };
+  }
+  rpc StreamingSynthesize(SynthesizeSpeechRequest) returns (stream StreamingSynthesizeSpeechResponse); // Method for streaming synthesis.
+}
+
+enum AudioEncoding { // Audio encoding. Defines both codec and container.
+  ENCODING_UNSPECIFIED = 0; // <i>Invalid value.</i>
+  LINEAR16 = 1; // Raw PCM with signed integer 16-bit linear audio samples.
+  reserved "FLAC"; reserved 2;
+  reserved "MULAW"; reserved 3;
+  reserved "AMR"; reserved 4;
+  reserved "AMR_WB"; reserved 5;
+  reserved "OGG_OPUS"; reserved 6;
+  reserved "SPEEX_WITH_HEADER_BYTE"; reserved 7;
+  ALAW = 8; // Raw PCM with A-law mapped 8-bit audio samples (aka PCMA).
+  reserved "LINEAR32F"; reserved 9;
+  reserved "OGG_VORBIS"; reserved 10;
+  RAW_OPUS = 11; // Opus frames packed into Protobuf messages.<br/><b>NOTE</b>: each Opus frame is packed into separate message with `audio_content` field. I. e., you can't just concatenate encoded Opus frames and push it as a single chunk into Opus decoder. Also although Opus is sample rate agnostic, estimated duration of synthesized audio is calculated in samples of specified sample rate.<br/><b>NOTE</b>: Not supported in the Synthesize method.
+  reserved "MPEG_AUDIO"; reserved 12;
+}
+
+message Voice { // Voice description obtained by available voice request.
+  reserved "language_codes"; reserved 1;
+  string name = 2; // Voice name.
+  reserved "ssml_gender"; reserved 3;
+  reserved "natural_sample_rate_hertz"; reserved 4;
+}
+
+message ListVoicesRequest { // Request for available voices.
+  reserved "language_code"; reserved 1;
+}
+
+message ListVoicesResponses { // Response with voice list.
+  repeated Voice voices = 1; // Array of voices.
+}
+
+message SynthesisInput { // Synthesis input.
+  string text = 1; // Raw text to synthesize.
+  string ssml = 2; // The SSML document to synthesize.
+}
+
+message VoiceSelectionParams { // Configuration of preferred synthesis voice.
+  reserved "language_code"; reserved 1;
+  string name = 2; // Exact voice name.
+  reserved "ssml_gender"; reserved 3;
+}
+
+message AudioConfig { // Configuration of synthesized audio.
+  AudioEncoding audio_encoding = 1; // Audio encoding. Specifies both container and codec. Must be specified explicitly.
+  reserved "speaking_rate"; reserved 2;
+  reserved "pitch"; reserved 3;
+  reserved "volume_gain_db"; reserved 4;
+  int32 sample_rate_hertz = 5; // Sample rate of generated audio in Hertz. Must be specified explicitly. Only sample rates in inclusive range from 1000 Hz to 48000 Hz are supported.
+}
+
+message SynthesizeSpeechRequest { // Request for `Synthesize` and `StreamingSynthesize` methods.
+  SynthesisInput input = 1; // Input to synthesize.
+  VoiceSelectionParams voice = 2; // Voice selection parameters.
+  AudioConfig audio_config = 3; // Audio configuration.  Must be specified explicitly.
+}
+
+message SynthesizeSpeechResponse { // Response in `Synthesize` method.
+  bytes audio_content = 1; // Whole synthesized audio.
+}
+
+message StreamingSynthesizeSpeechResponse { // Chunk of synthesized audio using `StreamingSynthesize` method. See `AudioEncoding = RAW_OPUS` for specificity of raw Opus encoding.
+  bytes audio_chunk = 1; // Chunk of synthesized audio: either samples for `LINEAR16` or single frame for `RAW_OPUS`.
+}

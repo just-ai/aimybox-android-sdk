@@ -76,6 +76,11 @@ internal class SpeechToTextComponent(
                                 exceptionBus.invokeEvent(result.exception)
                                 cancel()
                             }
+
+                            is SpeechToText.Result.Interrupted -> {
+
+                                cancel()
+                            }
                         }
                     }
                     .collect()

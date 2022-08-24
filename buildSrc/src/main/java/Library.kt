@@ -1,6 +1,6 @@
 object Library {
     object Kotlin {
-        val stdLib = kotlin("stdlib")
+        val stdLib = kotlin("stdlib", "1.6.21")
 
         val coroutines =
             kotlinx("coroutines-android", Version.coroutines)

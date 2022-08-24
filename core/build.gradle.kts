@@ -32,6 +32,10 @@ dependencies {
     testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
 
     api("com.github.salomonbrys.kotson:kotson" version { kotson })
+
+    api("io.grpc:grpc-okhttp" version { grpc })
+    api("io.grpc:grpc-protobuf" version { grpc })
+    api("io.grpc:grpc-stub" version { grpc })
     
 
     for (notation in (Library.Test.instrumentedTest)) {
