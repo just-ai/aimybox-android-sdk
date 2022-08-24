@@ -3,13 +3,12 @@ package com.justai.aimybox.speechtotext
 import com.justai.aimybox.BaseCoroutineTest
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -83,8 +82,10 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
         }
     }
 
+
     @Test
-    fun `Recognition canceled`() {
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun `Recognition canceled`() = runTest {
         runInTestContext {
             val deferred = async { component.recognizeSpeech() }
             assertSame(eventChannel.receive(), SpeechToText.Event.RecognitionStarted)
@@ -96,7 +97,15 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
 
             coVerify { mockDelegate.cancelRecognition() }
 
-            assertFails { deferred.await() }
+            try {
+                assertFails { deferred.await() }
+            } catch (e: CancellationException) {
+                print("Request was cancelled")
+            }
+            finally {
+                resultChannel.close()
+            }
+
             assert(resultChannel.isClosedForSend)
             checkNoRunningJobs()
         }
