@@ -3,10 +3,7 @@ package com.justai.aimybox.speechtotext
 import com.justai.aimybox.BaseCoroutineTest
 import com.justai.aimybox.core.AimyboxException
 import com.justai.aimybox.core.SpeechToTextException
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -104,6 +101,9 @@ class SpeechToTextComponentTest : BaseCoroutineTest() {
                 assertFails { deferred.await() }
             } catch (e: CancellationException) {
                 print("Request was cancelled")
+            }
+            finally {
+                resultChannel.close()
             }
 
             assert(resultChannel.isClosedForSend)
