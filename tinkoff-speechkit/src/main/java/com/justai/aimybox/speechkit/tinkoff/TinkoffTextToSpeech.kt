@@ -27,7 +27,7 @@ class TinkoffTextToSpeech(
 ) : BaseTextToSpeech(context){
 
 
-    private val channel = ManagedChannelBuilder.forTarget("api.tinkoff.ai:443").build()
+    private val channel = ManagedChannelBuilder.forTarget(config.apiUrl).build()
     private var clientTTS: TextToSpeechGrpc.TextToSpeechStub? = null
 
     override suspend fun speak(speech: TextSpeech) {
@@ -36,13 +36,15 @@ class TinkoffTextToSpeech(
             val interceptor = attachHeadersToMetadata()
             clientTTS = TextToSpeechGrpc.newStub(channel).withInterceptors(interceptor)
             val audioData = request(speech.text)
-            audioSynthesizer.play(AudioSpeech.Bytes(audioData))
+            audioData?.let { data ->
+                audioSynthesizer.play(AudioSpeech.Bytes(data))
+            }
         } catch (e: Throwable){
             throw  TinkoffCloudTextToSpeechException(cause = e)
         }
     }
 
-    private suspend fun request(text: String): ByteArray{
+    private suspend fun request(text: String): ByteArray? {
 
         val audioConfig = Tts.AudioConfig.newBuilder()
             .setAudioEncoding(Tts.AudioEncoding.LINEAR16)
@@ -57,15 +59,52 @@ class TinkoffTextToSpeech(
             requestBuilder.setVoice(voiceSelctionParam)
         }
 
-        val inputText = Tts.SynthesisInput.newBuilder()
-            .setSsml(text)
+        val inputTextBuilder = Tts.SynthesisInput.newBuilder()
+            .apply {
+                clearText()
+                if (config.inputInSSML){
+                    ssml = text
+                } else {
+                    setText(text)
+                }
+            }
 
-        requestBuilder.setInput(inputText)
 
-        return suspendCancellableCoroutine { continuation ->
-            val streamObserver = StreamObserverImpl(continuation)
-            clientTTS?.streamingSynthesize(requestBuilder.build(), streamObserver)
+        requestBuilder.setInput(inputTextBuilder)
+
+        val res =  suspendCancellableCoroutine { continuation ->
+            val streamObserver = object : StreamObserver<Tts.StreamingSynthesizeSpeechResponse> {
+                override fun onNext(value: Tts.StreamingSynthesizeSpeechResponse) {
+                    when {
+                        value.audioChunk.isEmpty -> {}
+                        else -> {
+                            val byteData = value.audioChunk.newInput()
+                            continuation.resume(byteData)
+                        }
+                    }
+                }
+
+                override fun onError(t: Throwable?) {
+                    L.e("Exception occurred during API request.")
+                    if (t != null) {
+                        continuation.resumeWithException(t)
+                    }
+                }
+
+                override fun onCompleted() {}
+            }
+
+            continuation.invokeOnCancellation {
+                clientTTS?.streamingSynthesize(requestBuilder.build(), streamObserver)
+            }
         }.use(InputStream::readBytes)
+
+//        return suspendCancellableCoroutine { continuation ->
+//            val streamObserver = StreamObserverImpl(continuation)
+//            clientTTS?.streamingSynthesize(requestBuilder.build(), streamObserver)
+//        }.use(InputStream::readBytes)
+
+        return res
    }
 
     private
@@ -79,17 +118,17 @@ class TinkoffTextToSpeech(
 
 
     class Config {
-        val apiUrl: String = "api.tinkoff.ai:443"
-        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ
-        val voiceName: String = ""
+        val apiUrl = "api.tinkoff.ai:443"
+        val sampleRate = SampleRate.SAMPLE_RATE_48KHZ
+        val voiceName = "maxim"
+        val inputInSSML = false
 
     }
 
     class StreamObserverImpl(val continuation: CancellableContinuation<InputStream>): StreamObserver<Tts.StreamingSynthesizeSpeechResponse> {
 
-        override fun onNext(value: Tts.StreamingSynthesizeSpeechResponse?) {
+        override fun onNext(value: Tts.StreamingSynthesizeSpeechResponse) {
             when {
-                value == null -> { }
                 value.audioChunk.isEmpty -> {}
                 else -> {
                     val byteData = value.audioChunk.newInput()

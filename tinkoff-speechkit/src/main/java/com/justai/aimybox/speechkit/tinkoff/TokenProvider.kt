@@ -6,7 +6,7 @@ import org.apache.commons.codec.binary.Base64
 import java.util.*
 
 interface TokenProvider {
-    suspend fun generateToken() : String
+    fun generateToken() : String
 }
 
 class TokenProviderImpl (
@@ -16,7 +16,7 @@ class TokenProviderImpl (
     private val timeExpiration : Long = 10 * 60 * 1000
 ) : TokenProvider {
 
-    override suspend fun generateToken() : String {
+    override fun generateToken() : String {
 
         return JWT.create()
             .withKeyId(apiKey)

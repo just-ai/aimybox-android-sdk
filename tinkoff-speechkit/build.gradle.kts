@@ -89,6 +89,7 @@ dependencies {
 
     implementation(Library.Kotlin.stdLib)
     implementation(Library.Kotlin.coroutines)
+    implementation(Library.Android.appCompat)
 
     implementation("com.squareup.okhttp3:okhttp" version { okHttp })
     implementation("com.squareup.okhttp3:logging-interceptor" version { okHttp })
