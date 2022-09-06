@@ -19,7 +19,7 @@ import kotlin.coroutines.CoroutineContext
  * */
 abstract class BaseTextToSpeech(context: Context) : TextToSpeech() {
 
-    val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
+    val coroutineContext: CoroutineContext = Dispatchers.IO // + CoroutineName("TTS")
 
     val scope = CoroutineScope(coroutineContext) + CoroutineName("BaseTextToSpeech")
 

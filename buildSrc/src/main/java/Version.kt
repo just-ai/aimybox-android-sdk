@@ -27,7 +27,9 @@ object Version {
 
     // Test
     const val mockk = "1.12.2"
-    const val androidxTest = "1.4.0"
+    const val androidxTestCore = "1.4.0"
+    const val androidxTestExtJunit = "1.1.3"
+
 }
 
 infix fun String.version(versionProvider: Version.() -> String) =

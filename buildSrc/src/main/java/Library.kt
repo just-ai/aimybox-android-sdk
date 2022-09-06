@@ -15,23 +15,27 @@ object Library {
     object Test {
         val kotlin = kotlin("test")
         val kotlinJUnit = kotlin("test-junit")
+        val kotlinCoroutinesTest = "org.jetbrains.kotlinx:kotlinx-coroutines-test" version { Version.coroutines }
 
         val mockk = "io.mockk:mockk" version { mockk }
         val mockkAndroid = "io.mockk:mockk-android" version { mockk }
 
-        val androidXRunner = "androidx.test:runner" version { androidxTest }
-        val androidXRules = "androidx.test:rules" version { androidxTest }
+        val androidXRunner = "androidx.test:core" version { androidxTestCore }
+        val androidXRules = "androidx.test:rules" version { androidxTestCore }
+        val androidXExtJunit = "androidx.test.ext:junit" version { androidxTestExtJunit }
 
         val unitTest = listOf(
             kotlin,
             kotlinJUnit,
+            kotlinCoroutinesTest,
             mockk
         )
         val instrumentedTest = listOf(
             kotlin,
             mockkAndroid,
             androidXRunner,
-            androidXRules
+            androidXRules,
+            androidXExtJunit
         )
 
     }
