@@ -141,7 +141,9 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                     }
                     recognitionTimeoutJob = launch {
                         delay(delayAfterSpeech)
-                        aimybox.stopRecognitionAndChangeState()
+                        if (isActive) {
+                       //     aimybox.stopRecognitionAndChangeState()
+                        }
                     }
                 }
             }
