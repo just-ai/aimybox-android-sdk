@@ -52,7 +52,7 @@ class AudioRecorder(
      * Output channel capacity in frames. One frame contains [periodMs] milliseconds of audio data.
      * */
     private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
-) : CoroutineScope {
+)  {
 
     companion object {
         private const val MILLISECONDS_IN_SECOND = 1000
@@ -60,7 +60,9 @@ class AudioRecorder(
 
     private val L = Logger("$className $name")
 
-    override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
+    private val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
+
+    private val scope = CoroutineScope(coroutineContext)
 
     private val bufferSize = calculateBufferSize()
 
@@ -71,7 +73,7 @@ class AudioRecorder(
      * @return a flow of ByteArrays which contains recorded audio data.
      * */
     fun startRecordingBytes(): Flow<ByteArray> {
-        return flow {
+        return flow<ByteArray> {
 
             lateinit var recorder: AudioRecord
 
@@ -114,7 +116,7 @@ class AudioRecorder(
                     currentCoroutineContext().cancel()
                 }
             }
-        }
+        }.flowOn(Dispatchers.AudioRecord)
     }
 
     /**
@@ -129,9 +131,9 @@ class AudioRecorder(
      * Stop the current recording.
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
-    suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
+    suspend fun stopAudioRecording() = scope.coroutineContext.cancelChildrenAndJoin()
 
-    fun interruptAudioRecording() = coroutineContext.cancelChildren()
+    fun interruptAudioRecording() = scope.coroutineContext.cancelChildren()
 
     /**
      * Calculates a RMS level from recorded chunk

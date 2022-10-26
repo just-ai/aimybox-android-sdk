@@ -40,7 +40,7 @@ class YandexSpeechToText(
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): ReceiveChannel<Result> {
         initCounter()
-        return produce<Result> {
+        return produce<Result> (context = coroutineContext){
             try {
                 val requestStream = api.openStream(
                     { response ->

@@ -1,12 +1,10 @@
 package com.justai.aimybox.components
 
 import android.annotation.SuppressLint
+import android.support.v4.os.IResultReceiver.Default
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresPermission
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
 import com.justai.aimybox.Aimybox
 import com.justai.aimybox.api.DialogApi
 import com.justai.aimybox.api.aimybox.SingleLiveEvent
@@ -20,12 +18,16 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import com.justai.aimybox.voicetrigger.VoiceTrigger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.LocalDateTime
+import java.util.*
+
 
 /**
  * Aimybox Fragment's view model.
  * */
-open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
-    CoroutineScope by MainScope() {
+open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
 
     private val isAssistantVisibleInternal = MutableLiveData<Boolean>()
     val isAssistantVisible = isAssistantVisibleInternal.immutable()
@@ -44,6 +46,14 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
     val customSkillEvent = _customSkillEvent.immutable()
 
+    @Volatile
+    private var recognitionEventTime : Long = 0
+//    private val eventTimeMutex = Mutex()
+    @Volatile
+    private var cancelRecognitionJob: Deferred<Unit>? = null
+
+    private val timer = Timer()
+
     init {
         aimybox.stateChannel.observe { L.i(it) }
         aimybox.exceptions.observe { L.e(it) }
@@ -55,8 +65,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
 
         aimybox.speechToTextEvents.observe { events.send(it) }
         aimybox.dialogApiEvents.observe { events.send(it) }
-
-        launch {
+        viewModelScope.launch {
             events.consumeEach {
                 when (it) {
                     is SpeechToText.Event -> onSpeechToTextEvent(it)
@@ -117,7 +126,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     }
 
     private var recognitionTimeoutJob: Job? = null
-    var delayAfterSpeech: Long = aimybox.config.speechToText.recognitionTimeoutMs
+    var delayAfterSpeech: Long = 1000
 
     @SuppressLint("MissingPermission")
     private fun onSpeechToTextEvent(event: SpeechToText.Event) {
@@ -132,20 +141,36 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                     ?.let { text ->
                         removeRecognitionWidgets { plus(RecognitionWidget(text, previousText)) }
                     }
-
-                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
-                    recognitionTimeoutJob?.let { job ->
-                        if (job.isActive) {
-                            launch { job.cancelAndJoin() }
+                    recognitionEventTime = Date().time
+                    if (cancelRecognitionJob != null) {
+                        viewModelScope.async {
+                            val def = cancelRecognitionJob
+                            L.i("cancelRecognitionJob  checking ${def?.isCancelled}")
+                            if (def?.isCancelled == false) {
+                                def?.cancelAndJoin()
+                                L.i("Canceling cancelRecognitionJob $def")
+                            }
                         }
                     }
-                    recognitionTimeoutJob = launch {
+                    cancelRecognitionJob = viewModelScope.async(Dispatchers.Default) {
                         delay(delayAfterSpeech)
-                        if (isActive) {
-                       //     aimybox.stopRecognitionAndChangeState()
+                        L.i("cancelRecognitionJob ${cancelRecognitionJob?.isCancelled} prep to cancel")
+                        if (cancelRecognitionJob?.isCancelled == false) {
+                            aimybox.stopRecognition().join()
+                            L.i("cancelRecognitionJob $cancelRecognitionJob canceled")
                         }
+                        L.i("cancelRecognitionJob $cancelRecognitionJob finished")
+                        cancelRecognitionJob = null
                     }
-                }
+                    L.i("Started Job $cancelRecognitionJob ")
+
+
+//                    L.i("Event time: $recognitionEventTime")
+//                    val task = EventHandlerTask(
+//                        eventTime = Long(recognitionEventTime),
+//                        aimybox = aimybox
+//                    )
+//                    timer.schedule(task, delayAfterSpeech)
             }
             is SpeechToText.Event.EmptyRecognitionResult,
             SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
@@ -193,12 +218,11 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     @CallSuper
     override fun onCleared() {
         super.onCleared()
-        coroutineContext.cancel()
     }
 
     private fun <T> BroadcastChannel<T>.observe(action: suspend (T) -> Unit) {
         val channel = openSubscription()
-        launch {
+        viewModelScope.launch {
             channel.consumeEach { action(it) }
         }.invokeOnCompletion { channel.cancel() }
     }
@@ -212,7 +236,8 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
     private fun <T> SendChannel<T>.safeOffer(value: T) =
         takeUnless(SendChannel<T>::isClosedForSend)?.offer(value) ?: false
 
-    class Factory private constructor(private val aimybox: Aimybox) : ViewModelProvider.Factory {
+    class Factory private constructor(private val aimybox: Aimybox) :
+        ViewModelProvider.Factory {
 
         companion object {
             private lateinit var instance: Factory
@@ -223,11 +248,23 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
         }
 
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(AimyboxAssistantViewModel::class.java.isAssignableFrom(modelClass)) { "$modelClass is not a subclass of AimyboxAssistantViewModel" }
             require(modelClass.constructors.size == 1) { "AimyboxAssistantViewModel must have only one constructor" }
             val constructor = checkNotNull(modelClass.constructors[0])
             return constructor.newInstance(aimybox) as T
         }
     }
+
+    inner class EventHandlerTask(var eventTime: Long, val aimybox: Aimybox) : TimerTask(){
+        override fun run() {
+            val timeDst =  recognitionEventTime - eventTime
+            if (timeDst <= 10L) {
+                aimybox.stopRecognition()
+                L.i("EventHandlerTask stop $timeDst $recognitionEventTime, $eventTime ")
+            }
+        }
+
+    }
+
 }
