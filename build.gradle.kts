@@ -20,7 +20,7 @@ buildscript {
     }
 }
 
-val versionProject = "0.17.6"
+val versionProject = "0.17.7-alpha.1"
 configureRootProject {
     kotlinVersion = Version.kotlin
     version = versionProject
