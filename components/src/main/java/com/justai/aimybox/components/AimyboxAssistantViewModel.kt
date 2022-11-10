@@ -139,11 +139,23 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                             launch { job.cancelAndJoin() }
                         }
                     }
+                    val startTime = System.currentTimeMillis()
                     recognitionTimeoutJob = launch {
-                        delay(delayAfterSpeech)
-                        if (isActive) {
-                       //     aimybox.stopRecognitionAndChangeState()
+                        val finishTime = startTime + delayAfterSpeech
+                        while (isActive) {
+                            delay(1)
+                            if (System.currentTimeMillis() >=  finishTime) {
+                                aimybox.stopRecognition()
+                                cancel()
+                            }
                         }
+                    }
+                }
+            }
+            is SpeechToText.Event.RecognitionResult ->{
+                recognitionTimeoutJob?.let { job ->
+                    if (job.isActive) {
+                        launch { job.cancelAndJoin() }
                     }
                 }
             }
