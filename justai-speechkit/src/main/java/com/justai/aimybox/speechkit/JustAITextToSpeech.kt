@@ -10,7 +10,18 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 
+/**
+ * Example:
+ *  var client = OkHttpClient()
+ *  val config = JustAITextToSpeech.Config(token = "111111222233")
+ *  val tts = JustAITextToSpeech(context, config, client)
+ */
 
+/**
+ * @property context - Android application context
+ *  @property config - configuration
+ *  @property okHttpClient - OkHttpClient
+ */
 class JustAITextToSpeech(context: Context,
                          private val config: Config,
                          private val okHttpClient: OkHttpClient) : BaseTextToSpeech(context) {
@@ -36,6 +47,10 @@ class JustAITextToSpeech(context: Context,
             responseBody.bytes()
         }
 
+    /**
+     *  @property token - a token to access to the voice
+     *  @property baseUrl - the base TTS API url
+     */
     data class Config(
         val token: String,
         val baseUrl: String = "https://aimyvoice.com/api/v1/"
