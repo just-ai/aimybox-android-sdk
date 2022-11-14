@@ -133,24 +133,24 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel(),
                         removeRecognitionWidgets { plus(RecognitionWidget(text, previousText)) }
                     }
 
-                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
-                    recognitionTimeoutJob?.let { job ->
-                        if (job.isActive) {
-                            launch { job.cancelAndJoin() }
-                        }
-                    }
-                    val startTime = System.currentTimeMillis()
-                    recognitionTimeoutJob = launch {
-                        val finishTime = startTime + delayAfterSpeech
-                        while (isActive) {
-                            delay(1)
-                            if (System.currentTimeMillis() >=  finishTime) {
-                                aimybox.stopRecognition()
-                                cancel()
-                            }
-                        }
-                    }
-                }
+//                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
+//                    recognitionTimeoutJob?.let { job ->
+//                        if (job.isActive) {
+//                            launch { job.cancelAndJoin() }
+//                        }
+//                    }
+//                    val startTime = System.currentTimeMillis()
+//                    recognitionTimeoutJob = launch {
+//                        val finishTime = startTime + delayAfterSpeech
+//                        while (isActive) {
+//                            delay(1)
+//                            if (System.currentTimeMillis() >=  finishTime) {
+//                                aimybox.stopRecognition()
+//                                cancel()
+//                            }
+//                        }
+//                    }
+//                }
             }
             is SpeechToText.Event.RecognitionResult ->{
                 recognitionTimeoutJob?.let { job ->

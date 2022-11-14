@@ -1,11 +1,11 @@
 package com.justai.aimybox.recorder
 
 import android.media.AudioFormat
+import android.media.AudioFormat.CHANNEL_IN_MONO
+import android.media.AudioFormat.CHANNEL_IN_STEREO
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import com.justai.aimybox.extensions.cancelChildrenAndJoin
 import com.justai.aimybox.extensions.className
-import com.justai.aimybox.extensions.retry
 import com.justai.aimybox.logging.Logger
 import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
@@ -15,7 +15,6 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.CancellationException
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.pow
 
 /**
@@ -47,12 +46,12 @@ class AudioRecorder(
     /**
      * Data chunk duration in milliseconds.
      * */
-    private val periodMs: Int = 400,
+    private val periodMs: Long = 1000,
     /**
      * Output channel capacity in frames. One frame contains [periodMs] milliseconds of audio data.
      * */
     private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
-) : CoroutineScope {
+) {
 
     companion object {
         private const val MILLISECONDS_IN_SECOND = 1000
@@ -60,9 +59,11 @@ class AudioRecorder(
 
     private val L = Logger("$className $name")
 
-    override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
+    // override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
     private val bufferSize = calculateBufferSize()
+
+    private var isRecording = false
 
     /**
      * Launch new coroutine and start audio recording.
@@ -71,37 +72,41 @@ class AudioRecorder(
      * @return a flow of ByteArrays which contains recorded audio data.
      * */
     fun startRecordingBytes(): Flow<ByteArray> {
-        return flow {
+        L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
+        // val countAttempts = 5
+        // retry(countAttempts, delay = 300) { attempt ->
 
-            lateinit var recorder: AudioRecord
+        val recorder = createRecorder()
+        if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+            L.e("Failed to init AudioRecord")
+            recorder.release()
+            throw IOException("Failed to init AudioRecord")
+        }
 
+        recorder.startRecording()
+        isRecording = true
+        return flow<ByteArray> {
             try {
-                L.i("Start recording: SampleRate=$sampleRate, FrameSize: $periodMs ms, BufferSize: $bufferSize bytes")
-                val countAttempts = 5
-                retry(countAttempts, delay = 300) { attempt ->
-                    recorder = createRecorder()
-                    if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-                        L.e("Failed to init AudioRecord, attempt $attempt")
-                        recorder.release()
-                        throw IOException("Failed to init AudioRecord after $countAttempts retries")
-                    }
-
-                    recorder.startRecording()
-
-                    val buffer = ByteArray(bufferSize)
-                    loop@ while (currentCoroutineContext().isActive) {
-                        val bytesRead = recorder.read(buffer, 0, buffer.size)
-                        when {
-                            bytesRead <= 0 -> {
-                                recorder.release()
-                                throw IOException("Read $bytesRead bytes from recorder")
-                            }
-                            else -> emit(buffer.copyOf())
+                val buffer = ByteArray(bufferSize)
+                var bytesCount = 0
+                loop@ while (isRecording) {
+                    val bytesRead = recorder.read(buffer, 0, buffer.size)
+                    L.w("Reads byte: $bytesRead")
+                    when {
+                        bytesRead == 0 -> {
+                            delay(periodMs)
                         }
+                        bytesRead < 0 -> {
+                            recorder.release()
+                            throw IOException("Read $bytesRead bytes from recorder")
+                        }
+                        else -> emit(buffer.copyOf())
                     }
 
-                    recorder.release()
                 }
+
+                //recorder.release()
+                //  }
             } catch (e: CancellationException) {
                 // Ignore
             } catch (e: Throwable) {
@@ -129,9 +134,11 @@ class AudioRecorder(
      * Stop the current recording.
      * This feature is synchronous, ensuring that all resources are released when it returns.
      * */
-    suspend fun stopAudioRecording() = coroutineContext.cancelChildrenAndJoin()
+    suspend fun stopAudioRecording() {
+        isRecording = false
+    } //coroutineContext.cancelChildrenAndJoin()
 
-    fun interruptAudioRecording() = coroutineContext.cancelChildren()
+    //fun interruptAudioRecording()  coroutineContext.cancelChildren()
 
     /**
      * Calculates a RMS level from recorded chunk
@@ -148,13 +155,21 @@ class AudioRecorder(
         return (averageMeanSquare.pow(0.5) + 0.5).toInt()
     }
 
-    private fun createRecorder() = AudioRecord(
-        MediaRecorder.AudioSource.MIC,
-        sampleRate,
-        channelCount,
-        AudioFormat.ENCODING_PCM_16BIT,
-        bufferSize
-    )
+    private fun createRecorder():  AudioRecord {
+        val channelConfig = when (channelCount) {
+            1 -> CHANNEL_IN_MONO
+            else -> CHANNEL_IN_STEREO
+        }
+        val buffSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4
+
+        return AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate,
+            channelCount,
+            AudioFormat.ENCODING_PCM_16BIT,
+            buffSize
+        )
+    }
 
     private fun calculateBufferSize(): Int {
         val sampleSize = when (audioFormat) {
@@ -167,16 +182,18 @@ class AudioRecorder(
         val frameSize = sampleSize * channelCount
         val dataRate = frameSize * sampleRate
 
-        return dataRate * periodMs / MILLISECONDS_IN_SECOND
+        return dataRate * periodMs.toInt() / MILLISECONDS_IN_SECOND
+
     }
 
-    private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->
-        check(audioBytes.size % 2 == 0)
-        val audioData = ShortArray(audioBytes.size / 2)
-        ByteBuffer.wrap(audioBytes)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .asShortBuffer()
-            .get(audioData)
-        audioData
-    }
+
+private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->
+    check(audioBytes.size % 2 == 0)
+    val audioData = ShortArray(audioBytes.size / 2)
+    ByteBuffer.wrap(audioBytes)
+        .order(ByteOrder.LITTLE_ENDIAN)
+        .asShortBuffer()
+        .get(audioData)
+    audioData
+}
 }
