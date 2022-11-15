@@ -37,6 +37,9 @@ class YandexSpeechToText(
 
     private var recognitionChannel: ReceiveChannel<Result>? = null
 
+    override val recognitionTimeoutMs: Long = maxOf(1000, recognitionTimeout)
+
+
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     override fun startRecognition(): ReceiveChannel<Result> {
         initCounter()
@@ -48,13 +51,16 @@ class YandexSpeechToText(
                             Stt.StreamingResponse.EventCase.PARTIAL -> {
                                 val alternativesList = response.partial.alternativesList
                                 if (alternativesList.isNotEmpty()) {
+                                    L.w("Result P ${alternativesList.first().text}")
                                     sendResult(Result.Partial(alternativesList.first().text))
                                 }
                             }
                             Stt.StreamingResponse.EventCase.FINAL -> {
                                 val alternativesList = response.final.alternativesList
                                 if (alternativesList.isNotEmpty()) {
+                                    L.w("Result F ${alternativesList.first().text}")
                                     sendResult(Result.Final(alternativesList.first().text))
+
                                 }
                             }
                             else -> {
@@ -73,10 +79,9 @@ class YandexSpeechToText(
                     onCompleted = { close() }
                 )
 
-                val audioData = audioRecorder.startRecordingBytes()
-
-                launch {
-                    audioData.collect { data ->
+               // launch {
+                    audioRecorder.startRecordingBytes().collect { data ->
+                        L.w("Send request")
                         requestStream?.onNext(YandexRecognitionApiV3.createRequest(data))
                         onAudioBufferReceived(data)
                         if (mustInterruptRecognition) {
@@ -84,7 +89,7 @@ class YandexSpeechToText(
                             this@produce.cancel()
                         }
                     }
-                }
+               // }
 
                 invokeOnClose {
                     requestStream?.onCompleted()

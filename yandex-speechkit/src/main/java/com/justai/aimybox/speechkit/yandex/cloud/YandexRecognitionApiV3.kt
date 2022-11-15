@@ -14,6 +14,7 @@ class YandexRecognitionApiV3(
     private val config: YandexSpeechToText.Config
 ) {
 
+
     companion object {
         fun createRequest(data: ByteArray) = Stt.StreamingRequest.newBuilder().apply {
             this.chunk = Stt.AudioChunk.newBuilder()
@@ -24,11 +25,11 @@ class YandexRecognitionApiV3(
         }.build()!!
     }
 
+
+
     private val channel = PinnedChannelBuilder
         .build(config.apiUrl, config.apiPort, config.pinningConfig)
-
     private val stub = RecognizerGrpc.newStub(channel)
-
     private var recognitionConfig: Stt.StreamingOptions? = null
 
     internal fun setLanguage(language: Language) {
@@ -58,7 +59,7 @@ class YandexRecognitionApiV3(
             this.sessionOptions = sessionConfig
         }.build())
 
-
+        L.w("stream opened")
         return requestStream
     }
 
@@ -113,10 +114,18 @@ class YandexRecognitionApiV3(
             .setTextNormalization(textNormalization)
             .setAudioFormat(audioFormatOptions)
             .setLanguageRestriction(languageRestrictionOptions)
+            .setAudioProcessingType(Stt.RecognitionModelOptions.AudioProcessingType.REAL_TIME)
             .build()
+
+        val eouClassifierOptions = Stt.EouClassifierOptions.newBuilder().apply {
+            defaultClassifier = Stt.DefaultEouClassifier.newBuilder().apply {
+                type = Stt.DefaultEouClassifier.EouSensitivity.HIGH
+            }.build()
+        }.build()
 
         return Stt.StreamingOptions.newBuilder()
             .setRecognitionModel(recognitionModel)
+            .setEouClassifier(eouClassifierOptions)
             .build()
 
     }

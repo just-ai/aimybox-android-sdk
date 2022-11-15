@@ -141,36 +141,32 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
                     ?.let { text ->
                         removeRecognitionWidgets { plus(RecognitionWidget(text, previousText)) }
                     }
-                    recognitionEventTime = Date().time
-                    if (cancelRecognitionJob != null) {
-                        viewModelScope.async {
-                            val def = cancelRecognitionJob
-                            L.i("cancelRecognitionJob  checking ${def?.isCancelled}")
-                            if (def?.isCancelled == false) {
-                                def?.cancelAndJoin()
-                                L.i("Canceling cancelRecognitionJob $def")
-                            }
-                        }
-                    }
-                    cancelRecognitionJob = viewModelScope.async(Dispatchers.Default) {
-                        delay(delayAfterSpeech)
-                        L.i("cancelRecognitionJob ${cancelRecognitionJob?.isCancelled} prep to cancel")
-                        if (cancelRecognitionJob?.isCancelled == false) {
-                            aimybox.stopRecognition().join()
-                            L.i("cancelRecognitionJob $cancelRecognitionJob canceled")
-                        }
-                        L.i("cancelRecognitionJob $cancelRecognitionJob finished")
-                        cancelRecognitionJob = null
-                    }
-                    L.i("Started Job $cancelRecognitionJob ")
 
-
-//                    L.i("Event time: $recognitionEventTime")
-//                    val task = EventHandlerTask(
-//                        eventTime = Long(recognitionEventTime),
-//                        aimybox = aimybox
-//                    )
-//                    timer.schedule(task, delayAfterSpeech)
+//                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
+//                    recognitionTimeoutJob?.let { job ->
+//                        if (job.isActive) {
+//                            launch { job.cancelAndJoin() }
+//                        }
+//                    }
+//                    val startTime = System.currentTimeMillis()
+//                    recognitionTimeoutJob = launch {
+//                        val finishTime = startTime + delayAfterSpeech
+//                        while (isActive) {
+//                            delay(1)
+//                            if (System.currentTimeMillis() >=  finishTime) {
+//                                aimybox.stopRecognition()
+//                                cancel()
+//                            }
+//                        }
+//                    }
+//                }
+            }
+            is SpeechToText.Event.RecognitionResult ->{
+                recognitionTimeoutJob?.let { job ->
+                    if (job.isActive) {
+                        launch { job.cancelAndJoin() }
+                    }
+                }
             }
             is SpeechToText.Event.EmptyRecognitionResult,
             SpeechToText.Event.RecognitionCancelled -> removeRecognitionWidgets()
