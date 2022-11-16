@@ -46,11 +46,12 @@ class AudioRecorder(
     /**
      * Data chunk duration in milliseconds.
      * */
-    private val periodMs: Long = 1000,
+    private val periodMs: Long = 400,
     /**
      * Output channel capacity in frames. One frame contains [periodMs] milliseconds of audio data.
      * */
     private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
+
 ) {
 
     companion object {
@@ -61,11 +62,15 @@ class AudioRecorder(
 
     // override val coroutineContext: CoroutineContext = Dispatchers.AudioRecord + Job()
 
-    private val scope = CoroutineScope(coroutineContext)
+    //private val scope = CoroutineScope(coroutineContext)
+
+    private val frameSize = getSampleSize() * channelCount
 
     private val bufferSize = calculateBufferSize()
 
     private var isRecording = false
+
+    private var internalBufferSize = 0
 
     /**
      * Launch new coroutine and start audio recording.
@@ -87,12 +92,13 @@ class AudioRecorder(
 
         recorder.startRecording()
         isRecording = true
+        val buffer = ByteArray(bufferSize)
         return flow<ByteArray> {
             try {
-                val buffer = ByteArray(bufferSize)
                 var bytesCount = 0
                 loop@ while (isRecording) {
-                    val bytesRead = recorder.read(buffer, 0, buffer.size)
+                    val bytesRead = recorder.read(buffer, 0, bufferSize)
+                    bytesCount += bytesRead
                     L.w("Reads byte: $bytesRead")
                     when {
                         bytesRead == 0 -> {
@@ -102,9 +108,11 @@ class AudioRecorder(
                             recorder.release()
                             throw IOException("Read $bytesRead bytes from recorder")
                         }
-                        else -> emit(buffer.copyOf())
+                        else -> {
+                            emit(buffer.copyOf())
+                        }
                     }
-
+                    delay(periodMs)
                 }
 
                 //recorder.release()
@@ -157,39 +165,46 @@ class AudioRecorder(
         return (averageMeanSquare.pow(0.5) + 0.5).toInt()
     }
 
+
     private fun createRecorder():  AudioRecord {
         val channelConfig = when (channelCount) {
             1 -> CHANNEL_IN_MONO
             else -> CHANNEL_IN_STEREO
         }
-        val buffSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4
+        internalBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4
 
-        return AudioRecord(
+        val recoder = AudioRecord(
             MediaRecorder.AudioSource.MIC,
             sampleRate,
             channelCount,
             AudioFormat.ENCODING_PCM_16BIT,
-            buffSize
+            internalBufferSize
         )
+
+        return recoder
     }
 
-    private fun calculateBufferSize(): Int {
-        val sampleSize = when (audioFormat) {
-            AudioFormat.ENCODING_PCM_FLOAT -> 2
-            AudioFormat.ENCODING_PCM_16BIT -> 2
-            AudioFormat.ENCODING_PCM_8BIT -> 1
-            else -> throw IllegalArgumentException("Unsupported format")
-        }
 
-        val frameSize = sampleSize * channelCount
+    private fun calculateBufferSize(): Int {
+
         val dataRate = frameSize * sampleRate
 
         return dataRate * periodMs.toInt() / MILLISECONDS_IN_SECOND
 
     }
 
+    private fun getSampleSize(): Int {
+        val sampleSize = when (audioFormat) {
+            AudioFormat.ENCODING_PCM_FLOAT -> 2
+            AudioFormat.ENCODING_PCM_16BIT -> 2
+            AudioFormat.ENCODING_PCM_8BIT -> 1
+            else -> throw IllegalArgumentException("Unsupported format")
+        }
+        return sampleSize
+    }
 
-private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->
+
+    private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->
     check(audioBytes.size % 2 == 0)
     val audioData = ShortArray(audioBytes.size / 2)
     ByteBuffer.wrap(audioBytes)

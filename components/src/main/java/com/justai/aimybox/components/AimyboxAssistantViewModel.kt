@@ -164,7 +164,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
             is SpeechToText.Event.RecognitionResult ->{
                 recognitionTimeoutJob?.let { job ->
                     if (job.isActive) {
-                        launch { job.cancelAndJoin() }
+                        viewModelScope.launch { job.cancelAndJoin() }
                     }
                 }
             }

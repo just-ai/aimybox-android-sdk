@@ -79,7 +79,7 @@ class YandexSpeechToText(
                     onCompleted = { close() }
                 )
 
-               // launch {
+                launch {
                     audioRecorder.startRecordingBytes().collect { data ->
                         L.w("Send request")
                         requestStream?.onNext(YandexRecognitionApiV3.createRequest(data))
@@ -89,7 +89,7 @@ class YandexSpeechToText(
                             this@produce.cancel()
                         }
                     }
-               // }
+               }
 
                 invokeOnClose {
                     requestStream?.onCompleted()
@@ -128,7 +128,7 @@ class YandexSpeechToText(
         val voiceModel: VoiceModel = VoiceModel.GENERAL,
         val enableProfanityFilter: Boolean = true,
         val enablePartialResults: Boolean = true,
-        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_48KHZ,
+        val sampleRate: SampleRate = SampleRate.SAMPLE_RATE_16KHZ,
         val rawResults: Boolean = false,
         val literatureText: Boolean = false,
         val enableLoggingData: Boolean = false,
