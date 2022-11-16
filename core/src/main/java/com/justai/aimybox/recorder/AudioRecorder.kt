@@ -11,6 +11,8 @@ import com.justai.aimybox.speechtotext.SpeechToText
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -50,12 +52,15 @@ class AudioRecorder(
     /**
      * Output channel capacity in frames. One frame contains [periodMs] milliseconds of audio data.
      * */
-    private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED
+    private val outputChannelBufferSizeChunks: Int = Channel.UNLIMITED,
+
+    private val speechRecord: File? = null
 
 ) {
 
     companion object {
         private const val MILLISECONDS_IN_SECOND = 1000
+        private const val BITS_PER_SAMPLE: Short = 16
     }
 
     private val L = Logger("$className $name")
@@ -71,6 +76,9 @@ class AudioRecorder(
     private var isRecording = false
 
     private var internalBufferSize = 0
+
+    private val BYTE_RATE = sampleRate * channelCount * 16 / 8
+
 
     /**
      * Launch new coroutine and start audio recording.
@@ -93,6 +101,12 @@ class AudioRecorder(
         recorder.startRecording()
         isRecording = true
         val buffer = ByteArray(bufferSize)
+        val fileStream = FileOutputStream(speechRecord)
+        val recordBuffer = arrayListOf<Byte>()
+        for (byte in wavFileHeader()) {
+            recordBuffer.add(byte)
+        }
+
         return flow<ByteArray> {
             try {
                 var bytesCount = 0
@@ -110,9 +124,12 @@ class AudioRecorder(
                         }
                         else -> {
                             emit(buffer.copyOf())
+                            recordBuffer.addAll(buffer.asList())
+                            updateHeaderInformation(recordBuffer)
+
                         }
                     }
-                    delay(periodMs)
+                    delay(periodMs / 2)
                 }
 
                 //recorder.release()
@@ -126,10 +143,12 @@ class AudioRecorder(
                 withContext(NonCancellable) {
                     recorder.release()
                     L.i("Recording finished")
+                    fileStream.write(recordBuffer.toByteArray())
+                    fileStream.close()
                     currentCoroutineContext().cancel()
                 }
             }
-        }.flowOn(Dispatchers.AudioRecord)
+        }.flowOn(Dispatchers.IO)
     }
 
     /**
@@ -166,12 +185,13 @@ class AudioRecorder(
     }
 
 
-    private fun createRecorder():  AudioRecord {
+    private fun createRecorder(): AudioRecord {
         val channelConfig = when (channelCount) {
             1 -> CHANNEL_IN_MONO
             else -> CHANNEL_IN_STEREO
         }
-        internalBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4
+        internalBufferSize =
+            AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4
 
         val recoder = AudioRecord(
             MediaRecorder.AudioSource.MIC,
@@ -205,12 +225,91 @@ class AudioRecorder(
 
 
     private fun Flow<ByteArray>.convertBytesToShorts() = map { audioBytes ->
-    check(audioBytes.size % 2 == 0)
-    val audioData = ShortArray(audioBytes.size / 2)
-    ByteBuffer.wrap(audioBytes)
-        .order(ByteOrder.LITTLE_ENDIAN)
-        .asShortBuffer()
-        .get(audioData)
-    audioData
+        check(audioBytes.size % 2 == 0)
+        val audioData = ShortArray(audioBytes.size / 2)
+        ByteBuffer.wrap(audioBytes)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .asShortBuffer()
+            .get(audioData)
+        audioData
+    }
+
+    private fun wavFileHeader(): ByteArray {
+        val headerSize = 44
+        val header = ByteArray(headerSize)
+
+        header[0] = 'R'.toByte() // RIFF/WAVE header
+        header[1] = 'I'.toByte()
+        header[2] = 'F'.toByte()
+        header[3] = 'F'.toByte()
+
+        header[4] = (0 and 0xff).toByte() // Size of the overall file, 0 because unknown
+        header[5] = (0 shr 8 and 0xff).toByte()
+        header[6] = (0 shr 16 and 0xff).toByte()
+        header[7] = (0 shr 24 and 0xff).toByte()
+
+        header[8] = 'W'.toByte()
+        header[9] = 'A'.toByte()
+        header[10] = 'V'.toByte()
+        header[11] = 'E'.toByte()
+
+        header[12] = 'f'.toByte() // 'fmt ' chunk
+        header[13] = 'm'.toByte()
+        header[14] = 't'.toByte()
+        header[15] = ' '.toByte()
+
+        header[16] = 16 // Length of format data
+        header[17] = 0
+        header[18] = 0
+        header[19] = 0
+
+        header[20] = 1 // Type of format (1 is PCM)
+        header[21] = 0
+
+        header[22] = channelCount.toByte()
+        header[23] = 0
+
+        header[24] = (sampleRate and 0xff).toByte() // Sampling rate
+        header[25] = (sampleRate shr 8 and 0xff).toByte()
+        header[26] = (sampleRate shr 16 and 0xff).toByte()
+        header[27] = (sampleRate shr 24 and 0xff).toByte()
+
+        header[28] = (BYTE_RATE and 0xff).toByte() // Byte rate = (Sample Rate * BitsPerSample * Channels) / 8
+        header[29] = (BYTE_RATE shr 8 and 0xff).toByte()
+        header[30] = (BYTE_RATE shr 16 and 0xff).toByte()
+        header[31] = (BYTE_RATE shr 24 and 0xff).toByte()
+
+        header[32] = (channelCount * BITS_PER_SAMPLE / 8).toByte() //  16 Bits stereo
+        header[33] = 0
+
+        header[34] = BITS_PER_SAMPLE.toByte() // Bits per sample
+        header[35] = 0
+
+        header[36] = 'd'.toByte()
+        header[37] = 'a'.toByte()
+        header[38] = 't'.toByte()
+        header[39] = 'a'.toByte()
+
+        header[40] = (0 and 0xff).toByte() // Size of the data section.
+        header[41] = (0 shr 8 and 0xff).toByte()
+        header[42] = (0 shr 16 and 0xff).toByte()
+        header[43] = (0 shr 24 and 0xff).toByte()
+
+        return header
+    }
+
+    private fun updateHeaderInformation(data: ArrayList<Byte>) {
+        val fileSize = data.size
+        val contentSize = fileSize - 44
+
+        data[4] = (fileSize and 0xff).toByte() // Size of the overall file
+        data[5] = (fileSize shr 8 and 0xff).toByte()
+        data[6] = (fileSize shr 16 and 0xff).toByte()
+        data[7] = (fileSize shr 24 and 0xff).toByte()
+
+        data[40] = (contentSize and 0xff).toByte() // Size of the data section.
+        data[41] = (contentSize shr 8 and 0xff).toByte()
+        data[42] = (contentSize shr 16 and 0xff).toByte()
+        data[43] = (contentSize shr 24 and 0xff).toByte()
 }
 }

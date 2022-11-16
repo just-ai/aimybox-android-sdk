@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import yandex.cloud.api.ai.stt.v3.Stt
+import java.io.File
 import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
@@ -24,12 +25,17 @@ class YandexSpeechToText(
     language: Language,
     config: Config = Config(),
     maxAudioChunks: Int? = null,
-    recognitionTimeout: Long = 10000L
+    recognitionTimeout: Long = 10000L,
+    speechRecord: File? = null,
 ) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
-    private val audioRecorder = AudioRecorder("Yandex", config.sampleRate.intValue)
+    private val audioRecorder = AudioRecorder(
+        name= "Yandex",
+        sampleRate = config.sampleRate.intValue,
+        speechRecord = speechRecord
+    )
 
     private val api = YandexRecognitionApiV3(iAmTokenProvider, folderId, language, config)
 
@@ -63,7 +69,14 @@ class YandexSpeechToText(
 
                                 }
                             }
+                            Stt.StreamingResponse.EventCase.FINAL_REFINEMENT -> {
+                                val alternativesList = response.final.alternativesList
+                                if (alternativesList.isNotEmpty()) {
+                                    L.w("Result REFINEMENT ${alternativesList.first().text}")
+                                }
+                            }
                             else -> {
+
                             }
                         }
                     },

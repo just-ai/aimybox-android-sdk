@@ -106,7 +106,7 @@ class YandexRecognitionApiV3(
         val languageRestrictionOptions = Stt.LanguageRestrictionOptions.newBuilder()
             .apply {
                 restrictionType = Stt.LanguageRestrictionOptions.LanguageRestrictionType.WHITELIST
-                addLanguageCode(language.stringValue)
+                addLanguageCode("ru-RU") //(language.stringValue)
             }
             .build()
 
@@ -119,7 +119,7 @@ class YandexRecognitionApiV3(
 
         val eouClassifierOptions = Stt.EouClassifierOptions.newBuilder().apply {
             defaultClassifier = Stt.DefaultEouClassifier.newBuilder().apply {
-                type = Stt.DefaultEouClassifier.EouSensitivity.HIGH
+                //type = Stt.DefaultEouClassifier.EouSensitivity.HIGH
             }.build()
         }.build()
 
