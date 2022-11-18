@@ -101,11 +101,7 @@ class AudioRecorder(
         recorder.startRecording()
         isRecording = true
         val buffer = ByteArray(bufferSize)
-        val fileStream = FileOutputStream(speechRecord)
-        val recordBuffer = arrayListOf<Byte>()
-        for (byte in wavFileHeader()) {
-            recordBuffer.add(byte)
-        }
+//        val fileStream = FileOutputStream(speechRecord)
 
         return flow<ByteArray> {
             try {
@@ -124,16 +120,13 @@ class AudioRecorder(
                         }
                         else -> {
                             emit(buffer.copyOf())
-                            recordBuffer.addAll(buffer.asList())
-                            updateHeaderInformation(recordBuffer)
+//                            fileStream.write(buffer)
 
                         }
                     }
                     delay(periodMs / 2)
                 }
 
-                //recorder.release()
-                //  }
             } catch (e: CancellationException) {
                 // Ignore
             } catch (e: Throwable) {
@@ -143,8 +136,7 @@ class AudioRecorder(
                 withContext(NonCancellable) {
                     recorder.release()
                     L.i("Recording finished")
-                    fileStream.write(recordBuffer.toByteArray())
-                    fileStream.close()
+                   // fileStream.close()
                     currentCoroutineContext().cancel()
                 }
             }

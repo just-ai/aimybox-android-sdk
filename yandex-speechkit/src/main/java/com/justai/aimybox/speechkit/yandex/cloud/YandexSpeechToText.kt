@@ -26,7 +26,7 @@ class YandexSpeechToText(
     config: Config = Config(),
     maxAudioChunks: Int? = null,
     recognitionTimeout: Long = 10000L,
-    speechRecord: File? = null,
+   // speechRecord: File? = null,
 ) : SpeechToText(recognitionTimeout, maxAudioChunks) {
 
     override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
@@ -34,7 +34,7 @@ class YandexSpeechToText(
     private val audioRecorder = AudioRecorder(
         name= "Yandex",
         sampleRate = config.sampleRate.intValue,
-        speechRecord = speechRecord
+    //    speechRecord = speechRecord
     )
 
     private val api = YandexRecognitionApiV3(iAmTokenProvider, folderId, language, config)

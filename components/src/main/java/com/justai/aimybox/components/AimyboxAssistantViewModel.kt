@@ -46,14 +46,6 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
     private val _customSkillEvent = SingleLiveEvent<CustomSkillEvent>()
     val customSkillEvent = _customSkillEvent.immutable()
 
-    @Volatile
-    private var recognitionEventTime : Long = 0
-//    private val eventTimeMutex = Mutex()
-    @Volatile
-    private var cancelRecognitionJob: Deferred<Unit>? = null
-
-    private val timer = Timer()
-
     init {
         aimybox.stateChannel.observe { L.i(it) }
         aimybox.exceptions.observe { L.e(it) }
@@ -125,6 +117,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
         widgetsInternal.value = currentList.plus(widget)
     }
 
+    @Volatile
     private var recognitionTimeoutJob: Job? = null
     var delayAfterSpeech: Long = 1000
 
@@ -142,24 +135,24 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
                         removeRecognitionWidgets { plus(RecognitionWidget(text, previousText)) }
                     }
 
-//                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
-//                    recognitionTimeoutJob?.let { job ->
-//                        if (job.isActive) {
-//                            launch { job.cancelAndJoin() }
-//                        }
-//                    }
-//                    val startTime = System.currentTimeMillis()
-//                    recognitionTimeoutJob = launch {
-//                        val finishTime = startTime + delayAfterSpeech
-//                        while (isActive) {
-//                            delay(1)
-//                            if (System.currentTimeMillis() >=  finishTime) {
-//                                aimybox.stopRecognition()
-//                                cancel()
-//                            }
-//                        }
-//                    }
-//                }
+                if (delayAfterSpeech != aimybox.config.speechToText.recognitionTimeoutMs) {
+                    recognitionTimeoutJob?.let { job ->
+                        if (job.isActive) {
+                            viewModelScope.launch { job.cancelAndJoin() }
+                        }
+                    }
+                    val startTime = System.currentTimeMillis()
+                    recognitionTimeoutJob = viewModelScope.launch {
+                        val finishTime = startTime + delayAfterSpeech
+                        while (isActive) {
+                            delay(1)
+                            if (System.currentTimeMillis() >=  finishTime) {
+                                aimybox.stopRecognition().join()
+                                cancel()
+                            }
+                        }
+                    }
+                }
             }
             is SpeechToText.Event.RecognitionResult ->{
                 recognitionTimeoutJob?.let { job ->
@@ -250,17 +243,6 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
             val constructor = checkNotNull(modelClass.constructors[0])
             return constructor.newInstance(aimybox) as T
         }
-    }
-
-    inner class EventHandlerTask(var eventTime: Long, val aimybox: Aimybox) : TimerTask(){
-        override fun run() {
-            val timeDst =  recognitionEventTime - eventTime
-            if (timeDst <= 10L) {
-                aimybox.stopRecognition()
-                L.i("EventHandlerTask stop $timeDst $recognitionEventTime, $eventTime ")
-            }
-        }
-
     }
 
 }
