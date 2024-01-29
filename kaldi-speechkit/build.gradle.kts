@@ -29,7 +29,7 @@ dependencies {
     implementation(Library.Android.appCompat)
     implementation(Library.Kotlin.coroutines)
 
-    implementation("com.alphacephei:vosk-android:0.3.23")
+    implementation("com.alphacephei:vosk-android:0.3.47")
     implementation ("net.java.dev.jna:jna:5.8.0@aar")
     implementation("com.neovisionaries:nv-websocket-client:2.9")
 }

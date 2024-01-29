@@ -136,6 +136,7 @@ class Aimybox(
         get() = stateChannel.value
         @Synchronized
         private set(value) {
+            L.i("Aimybox set state: $value")
             when (value) {
                 State.STANDBY -> abandonRequestAudioFocus()
                 State.LISTENING, State.SPEAKING -> requestAudioFocus()
@@ -208,6 +209,7 @@ class Aimybox(
      * Stop recognition, synthesis, API call and launch voice trigger if present.
      * */
     fun standby() = launch {
+        L.i("Aimybox standby()")
         state = State.STANDBY
 
         cancelCurrentTask()
@@ -217,6 +219,7 @@ class Aimybox(
     }
 
     fun mute() = launch {
+        L.i("Aimybox mute()")
         state = State.STANDBY
 
         voiceTrigger.stop()
@@ -226,6 +229,7 @@ class Aimybox(
     }
 
     fun unmute() = launch {
+        L.i("Aimybox unmute()")
         if (isVoiceTriggerActivated) {
             voiceTrigger.start()
         }
@@ -283,7 +287,7 @@ class Aimybox(
         if (!isMuted) launch {
             if (state == State.SPEAKING) return@launch
             state = State.SPEAKING
-
+            L.i("Aimybox speak()")
             stopSpeaking().join()
 
             if (config.recognitionBehavior == RecognitionBehavior.SYNCHRONOUS) {
@@ -312,6 +316,7 @@ class Aimybox(
      * @return [Job] which completes when the synthesis is stopped.
      */
     fun stopSpeaking() = launch {
+        L.i("Aimybox stopspeaking()")
         textToSpeech.cancelRunningJob()
     }
 
@@ -406,6 +411,7 @@ class Aimybox(
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun startRecognition(): Job? = if (!isMuted) launch {
         if (state == State.LISTENING) return@launch
+        L.i("Aimybox startRecognition()")
         state = State.LISTENING
 
         stopSpeaking().join()
@@ -433,7 +439,7 @@ class Aimybox(
     }
 
     private fun onRecognitionCancelled() {
-        L.w("Recognition cancelled")
+        L.i("Recognition cancelled")
         if (state == State.LISTENING) standby()
     }
 
@@ -441,10 +447,14 @@ class Aimybox(
      * Stops the current recognition, but not cancels it completely. If something was recognized,
      * then the request to a dialog API will be executed asynchronously after calling this method.
      * */
-    fun stopRecognition(): Job = launch { speechToText.stopRecognition() }
+    fun stopRecognition(): Job = launch {
+        L.i("Aimybox stopRecognition()")
+        speechToText.stopRecognition()
+    }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun stopRecognitionAndChangeState(): Job = launch {
+        L.i("Aimybox stopRecognitionAndChangeState()")
         speechToText.stopRecognition()
         state = State.STANDBY
     }
@@ -453,7 +463,10 @@ class Aimybox(
     /**
      * Cancels the current recognition and discard partial recognition results.
      * */
-    fun cancelRecognition(): Job = launch { speechToText.cancelRunningJob() }
+    fun cancelRecognition(): Job = launch {
+        L.i("Aimybox cancelRecognition()")
+        speechToText.cancelRunningJob()
+    }
 
     /**
      * Toggle speech recognition.
@@ -465,6 +478,7 @@ class Aimybox(
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun toggleRecognition(): Job = launch {
         val state = state
+        L.i("Aimybox toogleRecognition() state: $state")
         when {
             state != State.LISTENING -> {
                 config.earcon?.start()
@@ -480,6 +494,7 @@ class Aimybox(
     }
 
     fun interruptRecognition(): Job = launch {
+        L.i("Aimybox toogleRecognition() state: $state")
         speechToText.interruptRecognition()
     }
 
@@ -497,6 +512,7 @@ class Aimybox(
         sendRequestEvent: Boolean = true
     ) = launch {
         state = State.PROCESSING
+        L.i("Aimybox sending request")
         cancelRecognition().join()
         stopSpeaking().join()
 
@@ -528,6 +544,7 @@ class Aimybox(
         sendRequestEvent: Boolean = true,
     ) = launch {
         state = State.PROCESSING
+        L.i("Aimybox sending silent request")
 
         cancelRecognition().join()
         stopSpeaking().join()
@@ -544,9 +561,13 @@ class Aimybox(
         )
     }
 
-    fun cancelPendingRequest() = launch { dialogApi.cancelRunningJob() }
+    fun cancelPendingRequest() = launch {
+        L.i("Aimybox cancel pending request")
+        dialogApi.cancelRunningJob()
+    }
 
     private fun onEmptyResponse() {
+        L.i("Aimybox processing empty response")
         if (state == State.PROCESSING) standby()
     }
 
