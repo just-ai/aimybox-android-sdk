@@ -21,6 +21,7 @@ import java.util.*
 private val L = Logger("Houndify Speechkit")
 
 @Suppress("unused")
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class HoundifySpeechToText(
     context: Context,
     clientId: String,
@@ -90,9 +91,7 @@ class HoundifySpeechToText(
                     if (resultChannel.isClosedForSend) {
                         L.w("Channel $resultChannel is closed for send. Omitting $result")
                     } else {
-                        resultChannel.offer(result).let { success ->
-                            if (!success) L.w("Failed to send $result to $resultChannel")
-                        }
+                        resultChannel.trySend(result)
                     }
                 }
             })

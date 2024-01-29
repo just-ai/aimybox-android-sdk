@@ -1,6 +1,6 @@
 object Version {
     // Kotlin
-    const val kotlin = "1.5.31"
+    const val kotlin = "1.8.21"//"1.5.31"
     const val dokka = "1.4.20"
     const val coroutines = "1.5.2"
 

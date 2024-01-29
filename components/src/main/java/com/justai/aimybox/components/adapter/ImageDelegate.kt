@@ -21,7 +21,7 @@ object ImageDelegate :
             check(itemView is ImageView)
             Glide.with(context)
                 .load(item.url)
-                .into(itemView)
+                .into(itemView as ImageView)
         }
     }
 }
