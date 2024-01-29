@@ -166,6 +166,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
             is SpeechToText.Event.SoundVolumeRmsChanged -> {
                 soundVolumeRmsMutable.postValue(event.rmsDb)
             }
+            else -> {}
         }
     }
 
@@ -181,6 +182,7 @@ open class AimyboxAssistantViewModel(val aimybox: Aimybox) : ViewModel() {
                     plus(RequestWidget(event.request.query))
                 }
             }
+            else -> {}
         }
     }
 

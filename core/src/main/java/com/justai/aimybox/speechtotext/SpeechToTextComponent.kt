@@ -63,6 +63,9 @@ internal class SpeechToTextComponent(
                                 exceptionChannel.send(result.exception)
                                 finalResult = null
                             }
+                            is SpeechToText.Result.Interrupted -> {
+                                L.e("Interrupted")
+                            }
                         }
                     }
                 }
