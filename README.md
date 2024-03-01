@@ -75,8 +75,8 @@ Now you can start talking with your voice assistant using `startRecognition()` m
 
 # More details
 
-Please refer to the [demo voice assistant](https://github.com/aimybox/aimybox-android-assistant) to see how to use Aimybox library in your project. There are much more features described in [our Android SDK documentation](https://help.aimybox.com/en/article/android-sdk-overview-1ih4xn7/).
+Please refer to the [demo voice assistant](https://github.com/aimybox/aimybox-android-assistant) to see how to use Aimybox library in your project. There are much more features described in [our Android SDK documentation](https://github.com/just-ai/aimybox-android-sdk/wiki).
 
 # Documentation
 
-There is a full Aimybox documentation available [here](https://help.aimybox.com)
+There is a full Aimybox documentation available [here](https://github.com/just-ai/aimybox-android-sdk/wiki)
